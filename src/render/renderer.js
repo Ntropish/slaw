@@ -1,13 +1,15 @@
 const fs = require('fs-extra')
 const path = require('path')
-// const { hello } = require('../../build/Release/engine')
-// console.log(`Hello, ${hello()}!`)
+const addon = require('../../build/Release/engine')
+
+console.log(addon)
 
 let filePath = ''
 let originalContent = ''
 
 const { remote } = require('electron')
 const mainProcess = remote.require('../main/index.js')
+remote.getCurrentWindow().toggleDevTools()
 
 const fileDump = document.querySelector('#file-dump')
 
@@ -16,7 +18,6 @@ const buttons = makeButtons(['open'])
 buttons.open.addEventListener('click', onClickOpen)
 
 async function onClickOpen() {
-  console.log('click')
   const file = await mainProcess.getColeFile()
 
   let content
