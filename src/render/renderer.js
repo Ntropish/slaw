@@ -4,6 +4,8 @@ const path = require('path')
 // const addon = require('../../build/Release/engine')
 // console.log(addon) //eslint-disable-line
 
+console.log('hi.')
+
 let filePath = ''
 let originalContent = '' //eslint-disable-line
 

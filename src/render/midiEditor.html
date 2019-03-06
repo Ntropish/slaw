@@ -1,0 +1,11 @@
+<script>
+  console.log('hello')((window, document) => {
+    const thisDoc = document.currentScript.ownerDocument
+
+    class VerificationInput extends HTMLElement {}
+
+    window.customElements.define('x-verification-input', VerificationInput)
+  })(window, document)
+</script>
+
+<template id="custom-element-template"> </template>
