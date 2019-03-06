@@ -1,17 +1,17 @@
 const fs = require('fs-extra')
 const path = require('path')
-const addon = require('../../build/Release/engine')
 
-console.log(addon)
+// const addon = require('../../build/Release/engine')
+// console.log(addon) //eslint-disable-line
 
 let filePath = ''
-let originalContent = ''
+let originalContent = '' //eslint-disable-line
 
 const { remote } = require('electron')
 const mainProcess = remote.require('../main/index.js')
 remote.getCurrentWindow().toggleDevTools()
 
-const fileDump = document.querySelector('#file-dump')
+// const fileDump = document.querySelector('#file-dump')
 
 const buttons = makeButtons(['open'])
 
@@ -30,7 +30,7 @@ async function onClickOpen() {
     content = 'File not JSON :['
   }
 
-  fileDump.innerHTML = `<pre><code>${JSON.stringify(content)}</pre></code>`
+  // fileDump.innerHTML = `<pre><code>${JSON.stringify(content)}</pre></code>`
 
   updateUserInterface()
 }

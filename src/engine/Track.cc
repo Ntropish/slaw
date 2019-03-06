@@ -7,7 +7,7 @@ Napi::Object Track::Init(Napi::Env env, Napi::Object exports)
 {
     Napi::HandleScope scope(env);
 
-    Napi::Function func = DefineClass(env, "Track", {InstanceMethod("addNote", &Track::addNote)});
+    Napi::Function func = DefineClass(env, "Track", {InstanceMethod("addNote", &Track::addNote), InstanceAccessor("notes", &Track::notesGetter, &Track::notesSetter)});
 
     constructor = Napi::Persistent(func);
     constructor.SuppressDestruct();
@@ -20,6 +20,25 @@ Track::Track(const Napi::CallbackInfo &info) : Napi::ObjectWrap<Track>(info)
 {
     Napi::Env env = info.Env();
     Napi::HandleScope scope(env);
+}
+
+Napi::Value Track::notesGetter(const Napi::CallbackInfo &info)
+{
+    return Napi::String::New(info.Env(), "notes");
+}
+
+void Subscribe(const Napi::CallbackInfo &info)
+{
+    if (info.Length() <= 0 || !info[0].IsFunction())
+    {
+    }
+    else
+    {
+    }
+}
+
+void Track::notesSetter(const Napi::CallbackInfo &info, const Napi::Value &value)
+{
 }
 
 Napi::Value Track::addNote(const Napi::CallbackInfo &info)
