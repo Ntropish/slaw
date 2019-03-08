@@ -7,15 +7,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta http-equiv="Content-Security-Policy" content="script-src 'self'" />
     <link rel="stylesheet" type="text/css" media="screen" href="renderer.css" />
-    <script src="renderer.js" defer></script>
+    <script src="vueRenderer.js" defer></script>
   </head>
   <body>
-    <div id="toolbar">
-      <button id="open-button">Open</button>
-    </div>
-
-    <div id="tracks">
-      Slaw!
+    <div id="app" v-cloak>
+      {{ message }}
     </div>
   </body>
 </html>

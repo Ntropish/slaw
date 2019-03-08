@@ -20,7 +20,7 @@ const setupRefresh = browserWindow => {
   const renderGlob = path.join(__dirname, '../render')
 
   chokidar.watch(renderGlob, chokidarSettings).on('change', () => {
-    browserWindow.loadFile(`${__dirname}/../render/index.html`)
+    // browserWindow.loadFile(`${__dirname}/../render/index.html`)
     if (isNotProd()) browserWindow.webContents.openDevTools()
   })
 }
