@@ -18,10 +18,11 @@
     "rxjs": "^6.4.0",
     "vue": "^2.6.8",
     "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3",
     "webpack-dev-server": "^3.2.1"
   },
   "scripts": {
-    "webpack": "npx webpack-dev-server --open --config ./config/webpack.config.js",
-    "electron": "run-s \"electron .\" \"echo hello\""
+    "webpack": "webpack-dev-server --open --config ./config/webpack.config.js",
+    "electron": "electron ."
   }
 }

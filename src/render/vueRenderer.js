@@ -1,4 +1,4 @@
-const Vue = require('vue')
+const Vue = require('vue').default
 
 new Vue({
   el: '#app',
@@ -6,5 +6,3 @@ new Vue({
     message: 'hi',
   },
 })
-
-console.log('gogo')

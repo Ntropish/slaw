@@ -1,29 +1,26 @@
 const { app, BrowserWindow, dialog } = require('electron')
 const path = require('path')
 const electron = require('electron') //eslint-disable-line
-const chokidar = require('chokidar')
+const webpack = require('webpack')
+const webpackDevSeerver = require('webpack-dev-server')
 
+let config = require('../../config/webpack.config.js')
 // Interface for the render process
 module.exports = {
   getColeFile,
 }
 
-// Chokidar is used to watch for file changes to trigger reloads
-const chokidarSettings = { ignored: /[\/\\]\./, persistent: true }
+const compiler = webpack(require('../../config/webpack.config.js'))
 
-// Watch the main process files (not implemented)
-// chokidar.watch(__dirname, chokidarSettings).on('change', () => {
+const devServer = new webpackDevSeerver(compiler, {
+  hot: true,
+  ...config.devServer,
+})
+devServer.listen(8080)
+
+// compiler.watch({}, (err, stats) => {
+//   BrowserWindow.loadFile
 // })
-
-// Watch the render process files
-const setupRefresh = browserWindow => {
-  const renderGlob = path.join(__dirname, '../render')
-
-  chokidar.watch(renderGlob, chokidarSettings).on('change', () => {
-    // browserWindow.loadFile(`${__dirname}/../render/index.html`)
-    if (isNotProd()) browserWindow.webContents.openDevTools()
-  })
-}
 
 // Build the render process
 let mainWindow
@@ -32,14 +29,12 @@ app.on('ready', () => {
     show: false,
     webPreferences: { nodeIntegration: true },
   })
-  mainWindow.loadFile(`${__dirname}/../render/index.html`)
+  mainWindow.loadURL(`http://localhost:8080/`)
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show()
     if (isNotProd()) mainWindow.webContents.openDevTools()
   })
-
-  setupRefresh(mainWindow)
 })
 
 const isNotProd = () => process.env.NODE_ENV !== 'production'

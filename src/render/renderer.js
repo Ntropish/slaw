@@ -4,16 +4,12 @@ const path = require('path')
 // const addon = require('../../build/Release/engine')
 // console.log(addon) //eslint-disable-line
 
-console.log('hi.')
-
 let filePath = ''
 let originalContent = '' //eslint-disable-line
 
 const { remote } = require('electron')
 const mainProcess = remote.require('../main/index.js')
 remote.getCurrentWindow().toggleDevTools()
-
-// const fileDump = document.querySelector('#file-dump')
 
 const buttons = makeButtons(['open'])
 
@@ -32,6 +28,7 @@ async function onClickOpen() {
     content = 'File not JSON :['
   }
 
+  // const fileDump = document.querySelector('#file-dump')
   // fileDump.innerHTML = `<pre><code>${JSON.stringify(content)}</pre></code>`
 
   updateUserInterface()
