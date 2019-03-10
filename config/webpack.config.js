@@ -1,5 +1,4 @@
-// import path from 'path'
-// import CleanWebpackPlugin from 'clean-webpack-plugin'
+const HotModuleReplacementPlugin = require('webpack').HotModuleReplacementPlugin
 const path = require('path')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
@@ -18,6 +17,9 @@ module.exports = {
       {
         test: /\.vue$/,
         loader: 'vue-loader',
+        options: {
+          hotReload: true,
+        },
       },
     ],
   },
@@ -30,5 +32,9 @@ module.exports = {
   devServer: {
     contentBase: path.resolve('./src/renderer/public'),
   },
-  plugins: [new CleanWebpackPlugin(), new VueLoaderPlugin()],
+  plugins: [
+    new CleanWebpackPlugin(),
+    new VueLoaderPlugin(),
+    new HotModuleReplacementPlugin(),
+  ],
 }

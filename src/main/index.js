@@ -1,32 +1,29 @@
 const { app, BrowserWindow, dialog } = require('electron')
-const path = require('path')
-const electron = require('electron') //eslint-disable-line
 const webpack = require('webpack')
 const webpackDevSeerver = require('webpack-dev-server')
 
-let config = require('../../config/webpack.config.js')
-// Interface for the render process
-module.exports = {
-  getColeFile,
-}
-
-const compiler = webpack(require('../../config/webpack.config.js'))
-
-const devServer = new webpackDevSeerver(compiler, {
+const config = require('../../config/webpack.config.js')
+const options = {
   hot: true,
   ...config.devServer,
-})
-devServer.listen(8080)
+  host: 'localhost',
+}
 
-// compiler.watch({}, (err, stats) => {
-//   BrowserWindow.loadFile
-// })
+webpackDevSeerver.addDevServerEntrypoints(config, options)
+const compiler = webpack(config)
+const devServer = new webpackDevSeerver(compiler, options)
+devServer.listen(8080, 'localhost', () => {
+  console.log('Dev server listening on 8080') // eslint-disable-line
+})
 
 // Build the render process
 let mainWindow
 app.on('ready', () => {
   mainWindow = new BrowserWindow({
     show: false,
+    width: 800,
+    height: 600,
+    // frame: false,
     webPreferences: { nodeIntegration: true },
   })
   mainWindow.loadURL(`http://localhost:8080/`)
@@ -36,6 +33,11 @@ app.on('ready', () => {
     if (isNotProd()) mainWindow.webContents.openDevTools()
   })
 })
+
+// Interface for the render process
+module.exports = {
+  getColeFile,
+}
 
 const isNotProd = () => process.env.NODE_ENV !== 'production'
 
