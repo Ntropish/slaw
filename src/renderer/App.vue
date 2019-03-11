@@ -1,9 +1,14 @@
 <template>
   <div class="app">
-    <transient-editor class="midi-editor app-item"/>
+    <menu-panel class="menu-panel app-item"/>
     <transport-bar class="transport-bar app-item"/>
     <track-list class="track-list app-item"/>
-    <menu-panel class="menu-panel app-item"/>
+    <transient-editor
+      :start="this.viewStart"
+      :end="this.viewEnd"
+      :tracks="this.tracks"
+      class="midi-editor app-item"
+    />
   </div>
 </template>
 
@@ -24,9 +29,12 @@ export default {
       {
         id: 0,
         name: "Track 1",
-        events: []
+        events: [],
+        hue: 120
       }
-    ]
+    ],
+    viewStart: 0,
+    viewEnd: 16
   })
 };
 </script>
@@ -61,8 +69,10 @@ export default {
 
 .app-item {
   background: hsla(180, 5%, 40%, 1);
-  border: 1px solid hsla(180, 5%, 30%, 1);
+  /* border: 1px solid hsla(180, 5%, 30%, 1); */
   color: white;
+  min-width: 0;
+  min-height: 0;
 }
 </style>
 

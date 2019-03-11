@@ -12,6 +12,7 @@
     "css-loader": "^2.1.1",
     "electron": "^4.0.7",
     "fs-extra": "^7.0.1",
+    "lodash": "^4.17.11",
     "node-addon-api": "^1.6.2",
     "node-gyp": "^3.8.0",
     "node-watch": "^0.6.0",
