@@ -6,5 +6,5 @@ new Vue({
   components: {
     App,
   },
-  render: h => h('div', [h('app')]),
+  render: h => h('app'),
 })

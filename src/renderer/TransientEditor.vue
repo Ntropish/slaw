@@ -1,5 +1,5 @@
 <template>
-  <div class="transport-bar">Transport Bar</div>
+  <div>Transient Editor</div>
 </template>
 
 <script>
