@@ -33,22 +33,26 @@ export default {
           {
             pitch: -1300,
             beat: 0,
-            velocity: 0.8
+            velocity: 0.8,
+            beats: 1
           },
           {
             pitch: -1400,
             beat: 1,
-            velocity: 0.6
+            velocity: 0.6,
+            beats: 1
           },
           {
             pitch: -1300,
             beat: 2,
-            velocity: 0.8
+            velocity: 0.8,
+            beats: 1
           },
           {
             pitch: -1400,
             beat: 3,
-            velocity: 0.6
+            velocity: 0.6,
+            beats: 1
           }
         ],
         hue: 120
@@ -89,9 +93,8 @@ export default {
 }
 
 .app-item {
-  background: hsla(180, 5%, 40%, 1);
+  /* background: hsla(180, 5%, 40%, 1); */
   /* border: 1px solid hsla(180, 5%, 30%, 1); */
-  color: white;
   min-width: 0;
   min-height: 0;
 }
