@@ -29,7 +29,28 @@ export default {
       {
         id: 0,
         name: "Track 1",
-        events: [],
+        events: [
+          {
+            pitch: -1300,
+            beat: 0,
+            velocity: 0.8
+          },
+          {
+            pitch: -1400,
+            beat: 1,
+            velocity: 0.6
+          },
+          {
+            pitch: -1300,
+            beat: 2,
+            velocity: 0.8
+          },
+          {
+            pitch: -1400,
+            beat: 3,
+            velocity: 0.6
+          }
+        ],
         hue: 120
       }
     ],

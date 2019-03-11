@@ -1,7 +1,7 @@
 <template>
   <div class="root">
-    <canvas class="canvas background" ref="background"/>
-    <canvas class="canvas notes" ref="notes"/>
+    <canvas ref="background" class="canvas background"/>
+    <canvas ref="notes" class="canvas notes"/>
   </div>
 </template>
 
@@ -41,6 +41,12 @@ export default {
     },
     pianoNoteHeight() {
       return this.canvasHeight / this.pianoNoteCount;
+    },
+    beatCount() {
+      return this.end - this.start;
+    },
+    pxPerBeat() {
+      return this.canvasWidth / this.beatCount;
     }
   },
   props: {
@@ -52,7 +58,17 @@ export default {
       type: Number,
       required: true
     },
-    tracks: Array
+    tracks: {
+      type: Array,
+      default: () => []
+    }
+  },
+  mounted() {
+    this.sizeCanvas();
+    window.addEventListener("resize", this.sizeCanvas);
+  },
+  beforeDestroy() {
+    window.removeEventListener("resize", this.sizeCanvas);
   },
   methods: {
     render() {
@@ -73,6 +89,7 @@ export default {
       for (let track of this.tracks) {
         ctx.fillStyle = `hsla(${track.hue}, 20%, 80%, 1)`;
         for (let note of track.events) {
+          ctx.fillRect(note.beat * this.pxPerBeat);
         }
       }
     },
@@ -94,13 +111,6 @@ export default {
 
       this.render();
     }
-  },
-  mounted() {
-    this.sizeCanvas();
-    window.addEventListener("resize", this.sizeCanvas);
-  },
-  beforeDestroy() {
-    window.removeEventListener("resize", this.sizeCanvas);
   }
 };
 </script>
