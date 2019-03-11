@@ -40,13 +40,13 @@ export default {
             pitch: -1400,
             beat: 1,
             velocity: 0.6,
-            beats: 1
+            beats: 0.95
           },
           {
             pitch: -1300,
             beat: 2,
             velocity: 0.8,
-            beats: 1
+            beats: 1.02
           },
           {
             pitch: -1400,
