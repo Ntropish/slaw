@@ -37,28 +37,28 @@ export default {
     ],
     events: {
       "0": {
-        id: 0,
+        id: "0",
         pitch: -1300,
         beat: 0,
         velocity: 0.8,
         beats: 1
       },
       "1": {
-        id: 1,
+        id: "1",
         pitch: -1400,
         beat: 1,
         velocity: 0.6,
         beats: 0.95
       },
       "2": {
-        id: 2,
+        id: "2",
         pitch: -1310,
         beat: 2,
         velocity: 0.8,
         beats: 1.02
       },
       "3": {
-        id: 3,
+        id: "3",
         pitch: -1400,
         beat: 3,
         velocity: 0.6,
@@ -69,7 +69,12 @@ export default {
     viewEnd: 16
   }),
   methods: {
-    onNoteMove({ notes }) {}
+    onNoteMove({ notes, beats, cents }) {
+      for (const note of notes) {
+        this.events[note].beat += beats;
+        this.events[note].pitch += cents;
+      }
+    }
   }
 };
 </script>

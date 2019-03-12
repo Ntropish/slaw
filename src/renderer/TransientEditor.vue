@@ -1,5 +1,11 @@
 <template>
-  <div class="root" @mousedown="onMouseDown" @mouseup="onMouseUp" @mousemove="onMouseMove">
+  <div
+    class="root"
+    ondragstart="return false"
+    @mousedown="onMouseDown"
+    @mousemove="onMouseMove"
+    @mouseleave="onMouseUp"
+  >
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="background" class="canvas background"/>
     {{ selectedNotes }}
@@ -87,12 +93,15 @@ export default {
   mounted() {
     this.sizeCanvas();
     window.addEventListener("resize", this.sizeCanvas);
+    window.addEventListener("mouseup", this.onMouseUp);
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.sizeCanvas);
+    window.removeEventListener("mouseup", this.onMouseUp);
   },
   methods: {
     render() {
+      // Prepare canvases
       const backgroundCanvas = this.$refs.background;
       const backgroundCtx = backgroundCanvas.getContext("2d");
 
@@ -102,6 +111,7 @@ export default {
       backgroundCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
       notesCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
 
+      // Draw piano keys
       for (let pianoNote = 0; pianoNote < this.pianoNoteCount; pianoNote++) {
         backgroundCtx.fillStyle = pianoNoteColors[pianoNote % 12];
         backgroundCtx.fillRect(
@@ -112,6 +122,7 @@ export default {
         );
       }
 
+      // Draw notes
       for (let track of this.tracks) {
         notesCtx.fillStyle = `hsla(${track.hue}, 20%, 80%, 1)`;
         track.events.forEach(eventId => {
@@ -167,7 +178,7 @@ export default {
         eventMoveBufferY -= centsMoved * this.pianoNoteHeight;
 
         if (beatsMoved || centsMoved) {
-          this.moveSelectedNotes(beatsMoved, centsMoved);
+          this.moveSelectedNotes(beatsMoved / 4, centsMoved * 100);
         }
       }
     },
@@ -177,6 +188,7 @@ export default {
         beats,
         cents
       });
+      this.render();
     },
     scanForNotes(x, y) {
       const notesFromTop = Math.floor(y / this.pianoNoteHeight);
