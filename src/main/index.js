@@ -19,6 +19,9 @@ devServer.listen(8080, 'localhost', () => {
 // Build the render process
 let mainWindow
 app.on('ready', () => {
+  BrowserWindow.addDevToolsExtension(
+    'C:/Users/Justin/AppData/Local/Google/Chrome/User Data/Default/Extensions/nhdogjmejiglipccpnnnanhbledajbpd/4.1.5_0',
+  )
   mainWindow = new BrowserWindow({
     show: false,
     width: 800,
@@ -26,6 +29,7 @@ app.on('ready', () => {
     // frame: false,
     webPreferences: { nodeIntegration: true },
   })
+
   mainWindow.loadURL(`http://localhost:8080/`)
 
   mainWindow.once('ready-to-show', () => {

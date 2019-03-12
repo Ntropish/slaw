@@ -1,8 +1,8 @@
 <template>
-  <div class="root" @mousedown="onMouseDown" @mouseup="onMouseUp">
+  <div class="root" @mousedown="onMouseDown" @mouseup="onMouseUp" @mousemove="onMouseMove">
     <canvas ref="notes" class="canvas notes"/>
-    
     <canvas ref="background" class="canvas background"/>
+    {{ selectedNotes }}
   </div>
 </template>
 
@@ -25,6 +25,10 @@ const pianoNoteColors = [
   dark,
   light
 ].reverse();
+
+let eventMoveBufferX = 0;
+let eventMoveBufferY = 0;
+
 export default {
   props: {
     start: {
@@ -38,6 +42,10 @@ export default {
     tracks: {
       type: Array,
       default: () => []
+    },
+    events: {
+      type: Object,
+      default: () => {}
     }
   },
   data: () => ({
@@ -45,9 +53,8 @@ export default {
     octaveEnd: 2,
     canvasWidth: 300,
     canvasHeight: 150,
-    renders: 0,
-    mouseIsDown: false,
-    noteSelection: []
+    selectedNotes: [],
+    mouseIsDown: false
   }),
   computed: {
     octaves() {
@@ -86,8 +93,6 @@ export default {
   },
   methods: {
     render() {
-      this.renders++;
-
       const backgroundCanvas = this.$refs.background;
       const backgroundCtx = backgroundCanvas.getContext("2d");
 
@@ -109,8 +114,9 @@ export default {
 
       for (let track of this.tracks) {
         notesCtx.fillStyle = `hsla(${track.hue}, 20%, 80%, 1)`;
-        track.events.forEach((note, i) => {
-          if (this.isNoteSelected(track.id, i)) {
+        track.events.forEach(eventId => {
+          const note = this.events[eventId];
+          if (this.isNoteSelected(eventId)) {
             notesCtx.fillStyle = `hsla(${track.hue}, 40%, 90%, 1)`;
           } else {
             notesCtx.fillStyle = `hsla(${track.hue}, 30%, 60%, 1)`;
@@ -125,37 +131,74 @@ export default {
       }
     },
     onMouseDown(e) {
-      const notesClicked = this.scanForNotes(e.offsetX, e.offsetY);
-      this.noteSelection.splice(0);
-      this.noteSelection.push(...notesClicked);
+      this.mouseIsDown = true;
+
+      const noteClicked = this.scanForNotes(e.offsetX, e.offsetY)[0];
+      const { selectedNotes } = this;
+
+      if (!noteClicked) {
+        selectedNotes.splice(0);
+      } else if (selectedNotes.length === 1) {
+        selectedNotes.splice(0);
+        selectedNotes.push(noteClicked);
+      } else if (!this.isNoteSelected(noteClicked)) {
+        selectedNotes.push(noteClicked);
+      }
+
       this.render();
     },
-    onMouseUp(e) {},
+    onMouseUp(e) {
+      this.mouseIsDown = false;
+      eventMoveBufferX = 0;
+      eventMoveBufferY = 0;
+    },
+    onMouseMove(e) {
+      if (this.mouseIsDown && this.selectedNotes.length) {
+        eventMoveBufferX += e.movementX;
+        eventMoveBufferY -= e.movementY;
+
+        const beatsDrug = eventMoveBufferX / this.pxPerBeat;
+        const centsDrug = (eventMoveBufferY / this.pianoNoteHeight) * 100;
+
+        const beatsMoved = Math.floor(beatsDrug / 0.25);
+        eventMoveBufferX -= beatsMoved * this.pxPerBeat * 0.25;
+
+        const centsMoved = Math.floor(centsDrug / 100);
+        eventMoveBufferY -= centsMoved * this.pianoNoteHeight;
+
+        if (beatsMoved || centsMoved) {
+          this.moveSelectedNotes(beatsMoved, centsMoved);
+        }
+      }
+    },
+    moveSelectedNotes(beats, cents) {
+      this.$emit("notemove", {
+        notes: this.selectedNotes,
+        beats,
+        cents
+      });
+    },
     scanForNotes(x, y) {
       const notesFromTop = Math.floor(y / this.pianoNoteHeight);
       const notesFromA = this.octaveEnd * 12 - notesFromTop + 2;
       const pitch = notesFromA * 100;
-
       const beat = this.start + (x / this.canvasWidth) * this.beatCount;
 
       const foundNotes = [];
-      this.tracks.forEach(track => {
-        track.events.forEach((note, i) => {
-          if (Math.abs(note.pitch - pitch) > 50) return;
-          if (note.beat < beat && beat < note.beat + note.beats) {
-            return foundNotes.push({ trackId: track.id, index: i });
-          }
-        });
-      });
+      for (const [id, note] of Object.entries(this.events)) {
+        if (
+          Math.abs(note.pitch - pitch) < 50 &&
+          note.beat < beat &&
+          beat < note.beat + note.beats
+        ) {
+          foundNotes.push(id);
+        }
+      }
 
       return foundNotes;
     },
-    isNoteSelected(trackId, index) {
-      return !!this.noteSelection.find(
-        ({ trackId: selectedTrackId, index: selectedIndex }) => {
-          return selectedTrackId === trackId && selectedIndex === index;
-        }
-      );
+    isNoteSelected(id) {
+      return this.selectedNotes.includes(id);
     },
     sizeCanvas() {
       const background = this.$refs.background;
