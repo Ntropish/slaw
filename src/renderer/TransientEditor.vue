@@ -153,10 +153,8 @@ export default {
           const [beat, pitch] = this.xyToBeatPitch(x, y);
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
         }
-      } else if (selectedNotes.length === 1) {
-        selectedNotes.splice(0);
-        selectedNotes.push(noteClicked);
       } else if (!this.isNoteSelected(noteClicked)) {
+        if (!e.ctrlKey) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
       }
 
