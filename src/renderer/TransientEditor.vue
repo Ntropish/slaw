@@ -1,11 +1,5 @@
 <template>
-  <div
-    class="root"
-    ondragstart="return false"
-    @mousedown="onMouseDown"
-    @mousemove="onMouseMove"
-    @mouseleave="onMouseUp"
-  >
+  <div class="root" ondragstart="return false" @mousedown="onMouseDown">
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="background" class="canvas background"/>
     {{ selectedNotes }}
@@ -15,10 +9,11 @@
 <script>
 import { range } from "lodash";
 
-const dark = "hsla(0, 0%, 0%, 0.1)";
-const light = "hsla(0, 0%, 100%, 0.1)";
+const dark = "hsla(0, 0%, 0%, 0.05)";
+const light = "hsla(0, 0%, 100%, 0.05)";
+const lighter = "hsla(0, 0%, 100%, 0.1)";
 const pianoNoteColors = [
-  light,
+  lighter,
   dark,
   light,
   dark,
@@ -32,6 +27,9 @@ const pianoNoteColors = [
   light
 ].reverse();
 
+// Event dragging ammounts are stored here until
+// they get big enough to turn into an action.
+// This allows drag to snap to grid
 let eventMoveBufferX = 0;
 let eventMoveBufferY = 0;
 
@@ -45,9 +43,9 @@ export default {
       type: Number,
       required: true
     },
-    tracks: {
-      type: Array,
-      default: () => []
+    track: {
+      type: Object,
+      default: () => {}
     },
     events: {
       type: Object,
@@ -94,10 +92,12 @@ export default {
     this.sizeCanvas();
     window.addEventListener("resize", this.sizeCanvas);
     window.addEventListener("mouseup", this.onMouseUp);
+    window.addEventListener("mousemove", this.onMouseMove);
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.sizeCanvas);
     window.removeEventListener("mouseup", this.onMouseUp);
+    window.removeEventListener("mousemove", this.onMouseMove);
   },
   methods: {
     render() {
@@ -123,37 +123,48 @@ export default {
       }
 
       // Draw notes
-      for (let track of this.tracks) {
-        notesCtx.fillStyle = `hsla(${track.hue}, 20%, 80%, 1)`;
-        track.events.forEach(eventId => {
-          const note = this.events[eventId];
-          if (this.isNoteSelected(eventId)) {
-            notesCtx.fillStyle = `hsla(${track.hue}, 40%, 90%, 1)`;
-          } else {
-            notesCtx.fillStyle = `hsla(${track.hue}, 30%, 60%, 1)`;
-          }
-          notesCtx.fillRect(
-            note.beat * this.pxPerBeat - this.start,
-            this.middleCY - (note.pitch / 100 - 2) * this.pianoNoteHeight,
-            this.pxPerBeat * note.beats,
-            this.pianoNoteHeight
-          );
-        });
-      }
+      this.track.events.forEach(eventId => {
+        const note = this.events[eventId];
+        if (this.isNoteSelected(eventId)) {
+          notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 90%, 1)`;
+        } else {
+          notesCtx.fillStyle = `hsla(${this.track.hue}, 30%, 60%, 1)`;
+        }
+        notesCtx.fillRect(
+          note.beat * this.pxPerBeat - this.start,
+          this.middleCY - (note.pitch / 100 - 2) * this.pianoNoteHeight,
+          this.pxPerBeat * note.beats,
+          this.pianoNoteHeight
+        );
+      });
     },
     onMouseDown(e) {
       this.mouseIsDown = true;
 
-      const noteClicked = this.scanForNotes(e.offsetX, e.offsetY)[0];
+      const x = e.offsetX;
+      const y = e.offsetY;
+
+      const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
       if (!noteClicked) {
         selectedNotes.splice(0);
+        if (e.ctrlKey) {
+          const [beat, pitch] = this.xyToBeatPitch(x, y);
+          this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
+        }
       } else if (selectedNotes.length === 1) {
         selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
       } else if (!this.isNoteSelected(noteClicked)) {
         selectedNotes.push(noteClicked);
+      }
+
+      if (e.altKey && selectedNotes.length) {
+        this.$emit("noteremove", {
+          notes: selectedNotes,
+          trackId: this.track.id
+        });
       }
 
       this.render();
@@ -191,10 +202,7 @@ export default {
       this.render();
     },
     scanForNotes(x, y) {
-      const notesFromTop = Math.floor(y / this.pianoNoteHeight);
-      const notesFromA = this.octaveEnd * 12 - notesFromTop + 2;
-      const pitch = notesFromA * 100;
-      const beat = this.start + (x / this.canvasWidth) * this.beatCount;
+      let [beat, pitch] = this.xyToBeatPitch(x, y);
 
       const foundNotes = [];
       for (const [id, note] of Object.entries(this.events)) {
@@ -211,6 +219,14 @@ export default {
     },
     isNoteSelected(id) {
       return this.selectedNotes.includes(id);
+    },
+    xyToBeatPitch(x, y) {
+      const notesFromTop = y / this.pianoNoteHeight;
+      const notesFromA = this.octaveEnd * 12 - notesFromTop + 2;
+      // Add 50 cents to make the center of the piano key the center of the note
+      const pitch = notesFromA * 100 + 50;
+      const beat = this.start + (x / this.canvasWidth) * this.beatCount;
+      return [beat, pitch];
     },
     sizeCanvas() {
       const background = this.$refs.background;

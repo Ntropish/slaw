@@ -7,9 +7,11 @@
       class="midi-editor app-item"
       :start="viewStart"
       :end="viewEnd"
-      :tracks="tracks"
+      :track="tracks[0]"
       :events="events"
       @notemove="onNoteMove"
+      @noteadd="onAddNote"
+      @noteremove="onRemoveNote"
     />
   </div>
 </template>
@@ -27,14 +29,16 @@ export default {
     MenuPanel
   },
   data: () => ({
-    tracks: [
-      {
-        id: 0,
+    trackCount: 1,
+    eventCount: 4,
+    tracks: {
+      "0": {
+        id: "0",
         name: "Track 1",
         events: ["0", "1", "2", "3"],
         hue: 120
       }
-    ],
+    },
     events: {
       "0": {
         id: "0",
@@ -71,8 +75,26 @@ export default {
   methods: {
     onNoteMove({ notes, beats, cents }) {
       for (const note of notes) {
-        this.events[note].beat += beats;
+        this.events[note].beat = Math.max(0, this.events[note].beat + beats);
         this.events[note].pitch += cents;
+      }
+    },
+    onAddNote({ beat, pitch, trackId }) {
+      const id = (this.eventCount++).toString();
+      this.events[id] = {
+        id,
+        pitch,
+        beat,
+        velocity: 0.8,
+        beats: 1
+      };
+      this.tracks[trackId].events.push(id);
+    },
+    onRemoveNote({ notes, trackId }) {
+      console.log("remove:", ...arguments);
+      for (const note of notes) {
+        delete this.tracks[trackId].events[note];
+        delete this.events[note];
       }
     }
   }
