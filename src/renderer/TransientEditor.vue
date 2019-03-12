@@ -207,7 +207,6 @@ export default {
       const foundNotes = [];
       for (const noteId of this.track.events) {
         const note = this.events[noteId];
-        if (!note) debugger;
         if (
           Math.abs(note.pitch - pitch) < 50 &&
           note.beat < beat &&
