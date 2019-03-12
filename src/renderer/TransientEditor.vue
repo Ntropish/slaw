@@ -205,13 +205,15 @@ export default {
       let [beat, pitch] = this.xyToBeatPitch(x, y);
 
       const foundNotes = [];
-      for (const [id, note] of Object.entries(this.events)) {
+      for (const noteId of this.track.events) {
+        const note = this.events[noteId];
+        if (!note) debugger;
         if (
           Math.abs(note.pitch - pitch) < 50 &&
           note.beat < beat &&
           beat < note.beat + note.beats
         ) {
-          foundNotes.push(id);
+          foundNotes.push(noteId);
         }
       }
 

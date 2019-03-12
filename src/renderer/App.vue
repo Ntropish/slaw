@@ -91,9 +91,10 @@ export default {
       this.tracks[trackId].events.push(id);
     },
     onRemoveNote({ notes, trackId }) {
-      console.log("remove:", ...arguments);
+      const trackEvents = this.tracks[trackId].events;
       for (const note of notes) {
-        delete this.tracks[trackId].events[note];
+        const noteIndex = trackEvents.indexOf(note);
+        trackEvents.splice(noteIndex, 1);
         delete this.events[note];
       }
     }
