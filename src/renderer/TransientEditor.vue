@@ -36,6 +36,8 @@ const pianoNoteColors = [
 let eventMoveBufferX = 0;
 let eventMoveBufferY = 0;
 
+let selectedNotesStash = null;
+
 export default {
   props: {
     start: {
@@ -61,6 +63,7 @@ export default {
     canvasWidth: 300,
     canvasHeight: 150,
     selectedNotes: [],
+    temporarySelectedNotes: [],
     mouseIsDown: false,
     boxSelectStart: null,
     boxSelectEnd: null
@@ -130,7 +133,9 @@ export default {
       // Draw notes
       this.track.events.forEach(eventId => {
         const note = this.events[eventId];
-        if (this.isNoteSelected(eventId)) {
+        if (this.temporarySelectedNotes.includes(eventId)) {
+          notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 80%, 1)`;
+        } else if (this.isNoteSelected(eventId)) {
           notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 90%, 1)`;
         } else {
           notesCtx.fillStyle = `hsla(${this.track.hue}, 30%, 60%, 1)`;
@@ -163,7 +168,10 @@ export default {
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
-      if (e.shiftKey) return this.boxSelect(e);
+      if (e.shiftKey) {
+        if (!e.ctrlKey) selectedNotes.splice(0);
+        return this.boxSelect(e);
+      }
 
       if (!noteClicked) {
         selectedNotes.splice(0);
@@ -171,7 +179,9 @@ export default {
           const [beat, pitch] = this.xyToBeatPitch(x, y);
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
         }
-      } else if (!this.isNoteSelected(noteClicked)) {
+      }
+
+      if (noteClicked && !this.isNoteSelected(noteClicked)) {
         if (!e.ctrlKey) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
       }
@@ -189,14 +199,16 @@ export default {
       this.mouseIsDown = false;
       eventMoveBufferX = 0;
       eventMoveBufferY = 0;
-      this.boxSelectStart = null;
-      this.boxSelectEnd = null;
+      if (this.boxSelectStart) {
+        this.boxSelectFinish(e);
+        this.boxSelectStart = null;
+        this.boxSelectEnd = null;
+      }
       this.render();
     },
     onMouseMove(e) {
       if (this.boxSelectStart) {
-        this.boxSelectEnd = { x: e.offsetX, y: e.offsetY };
-        this.render({});
+        this.boxSelectUpdate(e);
         return;
       }
       if (this.mouseIsDown && this.selectedNotes.length) {
@@ -218,7 +230,21 @@ export default {
       }
     },
     boxSelect(e) {
+      this.temporarySelectedNotes.push(...this.selectedNotes);
       this.boxSelectStart = { x: e.offsetX, y: e.offsetY };
+    },
+    boxSelectFinish(e) {
+      this.boxSelectUpdate(e);
+      this.temporarySelectedNotes.forEach(noteId => {
+        if (!this.selectedNotes.includes(noteId)) {
+          this.selectedNotes.push(noteId);
+        }
+      });
+      this.temporarySelectedNotes.splice(0);
+    },
+    boxSelectUpdate(e) {
+      this.boxSelectEnd = { x: e.offsetX, y: e.offsetY };
+      this.render({});
     },
     moveSelectedNotes(beats, cents) {
       this.$emit("notemove", {
