@@ -4,15 +4,12 @@
     ondragstart="return false"
     :style="{cursor: cursor}"
     @mousedown="onMouseDown"
-    @mouseleave="onMouseUp"
+    @mouseleave="onMouseLeave"
   >
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ selectedNotes }}
-    {{ boxSelectStart }}
-    {{ boxSelectEnd }}
-    {{ cursor }}
+    {{ keysPressed }}
   </div>
 </template>
 
@@ -109,14 +106,21 @@ export default {
   },
   mounted() {
     this.sizeCanvas();
+    window.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("keyup", this.onKeyUp);
     window.addEventListener("resize", this.sizeCanvas);
     window.addEventListener("mouseup", this.onMouseUp);
     window.addEventListener("mousemove", this.onMouseMove);
+    // Keys won't be cleared if user changes focus before releasing a key so we need this
+    window.addEventListener("blur", this.clearKeysPressed);
   },
   beforeDestroy() {
+    window.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener("keyup", this.onKeyUp);
     window.removeEventListener("resize", this.sizeCanvas);
     window.removeEventListener("mouseup", this.onMouseUp);
     window.removeEventListener("mousemove", this.onMouseMove);
+    window.removeEventListener("blur", this.onMouseMove);
   },
   methods: {
     render() {
@@ -166,6 +170,17 @@ export default {
           this.boxSelectEnd.y - this.boxSelectStart.y
         );
       }
+    },
+    onKeyDown(e) {
+      if (!this.keysPressed.includes(e.key)) this.keysPressed.push(e.key);
+    },
+    onKeyUp(e) {
+      const index = this.keysPressed.indexOf(e.key);
+      if (index === -1) return;
+      this.keysPressed.splice(index, 1);
+    },
+    clearKeysPressed(e) {
+      this.keysPressed.splice(0);
     },
     onMouseDown(e) {
       this.mouseIsDown = true;
@@ -244,6 +259,9 @@ export default {
       } else if (note) {
         this.cursor = "grab";
       }
+    },
+    onMouseLeave(e) {
+      this.onMouseUp(e);
     },
     boxSelect(e) {
       this.temporarySelectedNotes.push(...this.selectedNotes);
