@@ -12,6 +12,7 @@
       @notemove="onNoteMove"
       @noteadd="onAddNote"
       @noteremove="onRemoveNote"
+      @noteresize="onResizeNote"
     />
   </div>
 </template>
@@ -96,6 +97,14 @@ export default {
         const noteIndex = trackEvents.indexOf(note);
         trackEvents.splice(noteIndex, 1);
         delete this.events[note];
+      }
+    },
+    onResizeNote({ notes, beats }) {
+      for (const note of notes) {
+        this.events[note].beats = Math.max(
+          this.events[note].beats + beats,
+          1 / 32
+        );
       }
     }
   }

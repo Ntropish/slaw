@@ -256,6 +256,11 @@ export default {
     },
     onMouseMove(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
+
+      if (!this.mouseIsDown && this.dragTool === "move") {
+        this.cursor = "default";
+        return;
+      }
       if (this.boxSelectStart) {
         this.boxSelectUpdate(e);
         this.cursor = "default";
@@ -280,14 +285,28 @@ export default {
         if (beatsMoved || centsMoved) {
           this.moveSelectedNotes(beatsMoved / 4, centsMoved * 100);
         }
-      } else if (this.dragTool === "resize") {
+      } else if (
+        this.dragTool === "resize" &&
+        this.mouseIsDown &&
+        this.selectedNotes.length
+      ) {
+        eventResizeBuffer += e.movementX;
+        const beats = eventResizeBuffer / this.pxPerBeat;
+
+        const beatsMoved = Math.floor(beats / 0.25);
+        eventResizeBuffer -= beatsMoved * this.pxPerBeat * 0.25;
         this.cursor =
           tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
+        this.$emit("noteresize", {
+          notes: this.selectedNotes,
+          beats: beatsMoved / 4
+        });
+        this.render();
       } else if (note) {
         this.cursor =
           tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
-      } else {
-        this.cursor = "default";
+      } else if (this.dragTool !== "move") {
+        tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
       }
     },
     onMouseLeave(e) {
