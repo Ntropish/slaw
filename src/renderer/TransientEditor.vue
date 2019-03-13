@@ -1,5 +1,5 @@
 <template>
-  <div class="root" ondragstart="return false" @mousedown="onMouseDown">
+  <div class="root" ondragstart="return false" @mousedown="onMouseDown" @mouseleave="onMouseUp">
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
