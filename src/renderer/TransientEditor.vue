@@ -1,11 +1,18 @@
 <template>
-  <div class="root" ondragstart="return false" @mousedown="onMouseDown" @mouseleave="onMouseUp">
+  <div
+    class="root"
+    ondragstart="return false"
+    :style="{cursor: cursor}"
+    @mousedown="onMouseDown"
+    @mouseleave="onMouseUp"
+  >
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
     {{ selectedNotes }}
     {{ boxSelectStart }}
     {{ boxSelectEnd }}
+    {{ cursor }}
   </div>
 </template>
 
@@ -66,7 +73,9 @@ export default {
     temporarySelectedNotes: [],
     mouseIsDown: false,
     boxSelectStart: null,
-    boxSelectEnd: null
+    boxSelectEnd: null,
+    keysPressed: [],
+    cursor: "default"
   }),
   computed: {
     octaves() {
@@ -98,7 +107,6 @@ export default {
       return [this.$refs.background, this.$refs.notes, this.$refs.util];
     }
   },
-
   mounted() {
     this.sizeCanvas();
     window.addEventListener("resize", this.sizeCanvas);
@@ -184,6 +192,9 @@ export default {
       if (noteClicked && !this.isNoteSelected(noteClicked)) {
         if (!e.ctrlKey) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
+        this.cursor = "grabbing";
+      } else if (noteClicked) {
+        this.cursor = "grabbing";
       }
 
       if (e.altKey && selectedNotes.length) {
@@ -196,6 +207,8 @@ export default {
       this.render();
     },
     onMouseUp(e) {
+      const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
+      this.cursor = note ? "grab" : "default";
       this.mouseIsDown = false;
       eventMoveBufferX = 0;
       eventMoveBufferY = 0;
@@ -207,11 +220,12 @@ export default {
       this.render();
     },
     onMouseMove(e) {
+      const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
+      this.cursor = "default";
       if (this.boxSelectStart) {
         this.boxSelectUpdate(e);
-        return;
-      }
-      if (this.mouseIsDown && this.selectedNotes.length) {
+      } else if (this.mouseIsDown && this.selectedNotes.length) {
+        this.cursor = "grabbing";
         eventMoveBufferX += e.movementX;
         eventMoveBufferY -= e.movementY;
 
@@ -227,6 +241,8 @@ export default {
         if (beatsMoved || centsMoved) {
           this.moveSelectedNotes(beatsMoved / 4, centsMoved * 100);
         }
+      } else if (note) {
+        this.cursor = "grab";
       }
     },
     boxSelect(e) {
