@@ -44,12 +44,24 @@ let selectedNotesStash = null;
 
 const tools = {
   resize: {
-    cursor: "ew-resize",
-    cursorDown: "ew-resize"
+    noteHovered: {
+      cursor: "ew-resize",
+      cursorDown: "ew-resize"
+    },
+    noteNotHoverd: {
+      cursor: "ew-resize",
+      cursorDown: "ew-resize"
+    }
   },
   move: {
-    cursor: "grab",
-    cursorDown: "grabbing"
+    noteHovered: {
+      cursor: "grab",
+      cursorDown: "grabbing"
+    },
+    noteNotHoverd: {
+      cursor: "default",
+      cursorDown: "default"
+    }
   }
 };
 export default {
@@ -78,10 +90,11 @@ export default {
     canvasHeight: 150,
     selectedNotes: [],
     temporarySelectedNotes: [],
-    mouseIsDown: false,
     boxSelectStart: null,
     boxSelectEnd: null,
+    mouseIsDown: false,
     keysPressed: [],
+    hoveredNotes: [],
     cursor: "default"
   }),
   computed: {
@@ -186,17 +199,21 @@ export default {
         );
       }
     },
+    updateCursor() {
+      const noteIsHovered = this.hoveredNotes.length === 0;
+      const keyOne = noteIsHovered ? "noteHovered" : "noteNotHovered";
+      const keyTwo = this.mouseIsDown ? "cursorDown" : "cursor";
+      this.cursor = tools[this.dragTool][keyOne][keyTwo];
+    },
     onKeyDown(e) {
       if (!this.keysPressed.includes(e.key)) this.keysPressed.push(e.key);
-      this.cursor =
-        tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
+      this.updateCursor();
     },
     onKeyUp(e) {
       const index = this.keysPressed.indexOf(e.key);
       if (index === -1) return;
       this.keysPressed.splice(index, 1);
-      this.cursor =
-        tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
+      this.updateCursor();
     },
     clearKeysPressed(e) {
       this.keysPressed.splice(0);
@@ -256,57 +273,52 @@ export default {
     onMouseMove(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
 
-      if (!this.mouseIsDown && this.dragTool === "move") {
-        this.cursor = "default";
+      if (!note && !this.mouseIsDown && this.dragTool === "move") {
+        this.updateCursor();
         return;
       }
+
       if (this.boxSelectStart) {
         this.boxSelectUpdate(e);
-        this.cursor = "default";
-      } else if (
-        this.dragTool === "move" &&
-        this.mouseIsDown &&
-        this.selectedNotes.length
-      ) {
-        this.cursor = this.cursor = tools[this.dragTool].cursorDown;
-        eventMoveBufferX += e.movementX;
-        eventMoveBufferY -= e.movementY;
-
-        const beatsDrug = eventMoveBufferX / this.pxPerBeat;
-        const centsDrug = (eventMoveBufferY / this.pianoNoteHeight) * 100;
-
-        const beatsMoved = Math.floor(beatsDrug / 0.25);
-        eventMoveBufferX -= beatsMoved * this.pxPerBeat * 0.25;
-
-        const centsMoved = Math.floor(centsDrug / 100);
-        eventMoveBufferY -= centsMoved * this.pianoNoteHeight;
-
-        if (beatsMoved || centsMoved) {
-          this.moveSelectedNotes(beatsMoved / 4, centsMoved * 100);
+      } else if (this.mouseIsDown && this.selectedNotes.length) {
+        if (this.dragTool === "move") {
+          this.moveTool(e);
+        } else if (this.dragTool === "resize") {
+          this.resizeTool(e);
         }
-      } else if (
-        this.dragTool === "resize" &&
-        this.mouseIsDown &&
-        this.selectedNotes.length
-      ) {
-        eventResizeBuffer += e.movementX;
-        const beats = eventResizeBuffer / this.pxPerBeat;
-
-        const beatsMoved = Math.floor(beats / 0.25);
-        eventResizeBuffer -= beatsMoved * this.pxPerBeat * 0.25;
-        this.cursor =
-          tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
-        this.$emit("noteresize", {
-          notes: this.selectedNotes,
-          beats: beatsMoved / 4
-        });
-        this.render();
-      } else if (note) {
-        this.cursor =
-          tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
-      } else if (this.dragTool !== "move") {
-        tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
       }
+
+      this.render();
+      this.updateCursor();
+    },
+    moveTool(e) {
+      this.cursor = this.cursor = tools[this.dragTool].cursorDown;
+      eventMoveBufferX += e.movementX;
+      eventMoveBufferY -= e.movementY;
+
+      const beatsDrug = eventMoveBufferX / this.pxPerBeat;
+      const centsDrug = (eventMoveBufferY / this.pianoNoteHeight) * 100;
+
+      const beatsMoved = Math.floor(beatsDrug / 0.25);
+      eventMoveBufferX -= beatsMoved * this.pxPerBeat * 0.25;
+
+      const centsMoved = Math.floor(centsDrug / 100);
+      eventMoveBufferY -= centsMoved * this.pianoNoteHeight;
+
+      if (beatsMoved || centsMoved) {
+        this.moveSelectedNotes(beatsMoved / 4, centsMoved * 100);
+      }
+    },
+    resizeTool(e) {
+      eventResizeBuffer += e.movementX;
+      const beats = eventResizeBuffer / this.pxPerBeat;
+
+      const beatsMoved = Math.floor(beats / 0.25);
+      eventResizeBuffer -= beatsMoved * this.pxPerBeat * 0.25;
+      this.$emit("noteresize", {
+        notes: this.selectedNotes,
+        beats: beatsMoved / 4
+      });
     },
     onMouseLeave(e) {
       this.onMouseUp(e);
