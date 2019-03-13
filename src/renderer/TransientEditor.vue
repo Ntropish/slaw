@@ -244,6 +244,17 @@ export default {
     },
     boxSelectUpdate(e) {
       this.boxSelectEnd = { x: e.offsetX, y: e.offsetY };
+
+      const notes = this.scanBoxForNotes(
+        Math.min(this.boxSelectStart.x, this.boxSelectEnd.x),
+        Math.min(this.boxSelectStart.y, this.boxSelectEnd.y),
+        Math.max(this.boxSelectStart.x, this.boxSelectEnd.x),
+        Math.max(this.boxSelectStart.y, this.boxSelectEnd.y)
+      );
+
+      this.selectedNotes.splice(0);
+      this.selectedNotes.push(...notes);
+
       this.render({});
     },
     moveSelectedNotes(beats, cents) {
@@ -253,6 +264,24 @@ export default {
         cents
       });
       this.render();
+    },
+    scanBoxForNotes(x1, y1, x2, y2) {
+      let [beat1, pitch1] = this.xyToBeatPitch(x1, y1);
+      let [beat2, pitch2] = this.xyToBeatPitch(x2, y2);
+
+      const foundNotes = [];
+      for (const noteId of this.track.events) {
+        const note = this.events[noteId];
+        const a = note.pitch - 50 < pitch1;
+        const b = note.pitch + 50 > pitch2;
+        const c = note.beat + note.beats > beat1;
+        const d = note.beat < beat2;
+        if (a && b && c && d) {
+          foundNotes.push(noteId);
+        }
+      }
+
+      return foundNotes;
     },
     scanForNotes(x, y) {
       let [beat, pitch] = this.xyToBeatPitch(x, y);
