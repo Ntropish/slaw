@@ -9,7 +9,6 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ keysPressed }} {{ dragTool }}
   </div>
 </template>
 
@@ -45,8 +44,8 @@ let selectedNotesStash = null;
 
 const tools = {
   resize: {
-    cursor: "col-resize",
-    cursorDown: "col-resize"
+    cursor: "ew-resize",
+    cursorDown: "ew-resize"
   },
   move: {
     cursor: "grab",
