@@ -9,7 +9,7 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ keysPressed }}
+    {{ keysPressed }} {{ dragTool }}
   </div>
 </template>
 
@@ -39,9 +39,20 @@ const pianoNoteColors = [
 // This allows drag to snap to grid
 let eventMoveBufferX = 0;
 let eventMoveBufferY = 0;
+let eventResizeBuffer = 0;
 
 let selectedNotesStash = null;
 
+const tools = {
+  resize: {
+    cursor: "col-resize",
+    cursorDown: "col-resize"
+  },
+  move: {
+    cursor: "grab",
+    cursorDown: "grabbing"
+  }
+};
 export default {
   props: {
     start: {
@@ -102,6 +113,11 @@ export default {
     },
     canvases() {
       return [this.$refs.background, this.$refs.notes, this.$refs.util];
+    },
+    dragTool() {
+      if (this.keysPressed.length === 1 && this.keysPressed[0] === "r")
+        return "resize";
+      return "move";
     }
   },
   mounted() {
@@ -173,11 +189,15 @@ export default {
     },
     onKeyDown(e) {
       if (!this.keysPressed.includes(e.key)) this.keysPressed.push(e.key);
+      this.cursor =
+        tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
     },
     onKeyUp(e) {
       const index = this.keysPressed.indexOf(e.key);
       if (index === -1) return;
       this.keysPressed.splice(index, 1);
+      this.cursor =
+        tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
     },
     clearKeysPressed(e) {
       this.keysPressed.splice(0);
@@ -207,9 +227,9 @@ export default {
       if (noteClicked && !this.isNoteSelected(noteClicked)) {
         if (!e.ctrlKey) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
-        this.cursor = "grabbing";
+        this.cursor = tools[this.dragTool].cursorDown;
       } else if (noteClicked) {
-        this.cursor = "grabbing";
+        this.cursor = tools[this.dragTool].cursorDown;
       }
 
       if (e.altKey && selectedNotes.length) {
@@ -236,11 +256,15 @@ export default {
     },
     onMouseMove(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
-      this.cursor = "default";
       if (this.boxSelectStart) {
         this.boxSelectUpdate(e);
-      } else if (this.mouseIsDown && this.selectedNotes.length) {
-        this.cursor = "grabbing";
+        this.cursor = "default";
+      } else if (
+        this.dragTool === "move" &&
+        this.mouseIsDown &&
+        this.selectedNotes.length
+      ) {
+        this.cursor = this.cursor = tools[this.dragTool].cursorDown;
         eventMoveBufferX += e.movementX;
         eventMoveBufferY -= e.movementY;
 
@@ -256,8 +280,14 @@ export default {
         if (beatsMoved || centsMoved) {
           this.moveSelectedNotes(beatsMoved / 4, centsMoved * 100);
         }
+      } else if (this.dragTool === "resize") {
+        this.cursor =
+          tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
       } else if (note) {
-        this.cursor = "grab";
+        this.cursor =
+          tools[this.dragTool][this.mouseIsDown ? "cursorDown" : "cursor"];
+      } else {
+        this.cursor = "default";
       }
     },
     onMouseLeave(e) {
