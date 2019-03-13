@@ -1,8 +1,11 @@
 <template>
   <div class="root" ondragstart="return false" @mousedown="onMouseDown">
-    <canvas ref="notes" class="canvas notes"/>
     <canvas ref="background" class="canvas background"/>
+    <canvas ref="notes" class="canvas notes"/>
+    <canvas ref="util" class="canvas util"/>
     {{ selectedNotes }}
+    {{ boxSelectStart }}
+    {{ boxSelectEnd }}
   </div>
 </template>
 
@@ -58,7 +61,9 @@ export default {
     canvasWidth: 300,
     canvasHeight: 150,
     selectedNotes: [],
-    mouseIsDown: false
+    mouseIsDown: false,
+    boxSelectStart: null,
+    boxSelectEnd: null
   }),
   computed: {
     octaves() {
@@ -85,6 +90,9 @@ export default {
     middleCY() {
       // As in the y position of middle C
       return this.octaveEnd * this.octaveHeight;
+    },
+    canvases() {
+      return [this.$refs.background, this.$refs.notes, this.$refs.util];
     }
   },
 
@@ -102,14 +110,11 @@ export default {
   methods: {
     render() {
       // Prepare canvases
-      const backgroundCanvas = this.$refs.background;
-      const backgroundCtx = backgroundCanvas.getContext("2d");
-
-      const notesCanvas = this.$refs.notes;
-      const notesCtx = notesCanvas.getContext("2d");
-
-      backgroundCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-      notesCtx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      const contexts = this.canvases.map(c => c.getContext("2d"));
+      contexts.forEach(ctx =>
+        ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
+      );
+      const [backgroundCtx, notesCtx, utilCtx] = contexts;
 
       // Draw piano keys
       for (let pianoNote = 0; pianoNote < this.pianoNoteCount; pianoNote++) {
@@ -137,6 +142,17 @@ export default {
           this.pianoNoteHeight
         );
       });
+
+      if (this.boxSelectStart && this.boxSelectEnd) {
+        utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
+        // Draw box selector
+        utilCtx.strokeRect(
+          this.boxSelectStart.x,
+          this.boxSelectStart.y,
+          this.boxSelectEnd.x - this.boxSelectStart.x,
+          this.boxSelectEnd.y - this.boxSelectStart.y
+        );
+      }
     },
     onMouseDown(e) {
       this.mouseIsDown = true;
@@ -146,6 +162,8 @@ export default {
 
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
+
+      if (e.shiftKey) return this.boxSelect(e);
 
       if (!noteClicked) {
         selectedNotes.splice(0);
@@ -171,8 +189,16 @@ export default {
       this.mouseIsDown = false;
       eventMoveBufferX = 0;
       eventMoveBufferY = 0;
+      this.boxSelectStart = null;
+      this.boxSelectEnd = null;
+      this.render();
     },
     onMouseMove(e) {
+      if (this.boxSelectStart) {
+        this.boxSelectEnd = { x: e.offsetX, y: e.offsetY };
+        this.render({});
+        return;
+      }
       if (this.mouseIsDown && this.selectedNotes.length) {
         eventMoveBufferX += e.movementX;
         eventMoveBufferY -= e.movementY;
@@ -190,6 +216,9 @@ export default {
           this.moveSelectedNotes(beatsMoved / 4, centsMoved * 100);
         }
       }
+    },
+    boxSelect(e) {
+      this.boxSelectStart = { x: e.offsetX, y: e.offsetY };
     },
     moveSelectedNotes(beats, cents) {
       this.$emit("notemove", {
@@ -230,15 +259,15 @@ export default {
     sizeCanvas() {
       const background = this.$refs.background;
       const notes = this.$refs.notes;
-      const styles = getComputedStyle(background);
+
+      const styles = getComputedStyle(this.canvases[0]);
       const w = parseInt(styles.getPropertyValue("width"), 10);
       const h = parseInt(styles.getPropertyValue("height"), 10);
 
-      background.width = w;
-      background.height = h;
-
-      notes.width = w;
-      notes.height = h;
+      this.canvases.forEach(canvas => {
+        canvas.width = w;
+        canvas.height = h;
+      });
 
       this.canvasWidth = w;
       this.canvasHeight = h;
