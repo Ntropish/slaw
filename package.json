@@ -30,6 +30,6 @@
   },
   "scripts": {
     "webpack": "webpack-dev-server --open --config ./config/webpack.config.js",
-    "electron": "electron ."
+    "start": "electron ."
   }
 }
