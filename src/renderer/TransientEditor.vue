@@ -276,9 +276,11 @@ export default {
 
       if (e.shiftKey) {
         if (!noteClicked) {
+          // Trigger box select
           if (!e.ctrlKey) selectedNotes.splice(0);
           return this.boxSelect(e);
         } else {
+          // Trigger note copy
           this.$emit("notecopy", {
             notes: selectedNotes,
             trackId: this.track.id
@@ -296,8 +298,12 @@ export default {
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
         } else {
           // Else just move the cursor to the clicked location
+          // Snapping can't be disabled on click because ctrl click
+          // is already for adding notes
+          const beatClicked = this.xToBeat(x);
+          const beat = Math.round(beatClicked / this.beatSnap) * this.beatSnap;
           this.$emit("cursorset", {
-            beat: this.start + x / this.pxPerBeat
+            beat
           });
         }
       }
@@ -344,8 +350,12 @@ export default {
           this.resizeTool(e);
         }
       } else if (this.mouseIsDown) {
+        const beatClicked = this.xToBeat(e.offsetX);
+        const beat = e.ctrlKey
+          ? beatClicked
+          : Math.round(beatClicked / this.beatSnap) * this.beatSnap;
         this.$emit("cursorset", {
-          beat: this.start + e.offsetX / this.pxPerBeat
+          beat
         });
       }
 
@@ -487,6 +497,9 @@ export default {
       const pitch = notesFromA * 100 + 50;
       const beat = this.start + (x / this.canvasWidth) * this.beatCount;
       return [beat, pitch];
+    },
+    xToBeat(x) {
+      return this.start + (x / this.canvasWidth) * this.beatCount;
     },
     sizeCanvas() {
       const background = this.$refs.background;
