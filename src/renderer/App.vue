@@ -9,10 +9,13 @@
       :end="viewEnd"
       :track="tracks[0]"
       :events="events"
+      :beatSnap="beatSnap"
+      :pitchSnap="pitchSnap"
       @notemove="onNoteMove"
       @noteadd="onAddNote"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
+      @notequantize="onQuantizeNote"
     />
   </div>
 </template>
@@ -37,7 +40,7 @@ export default {
         id: "0",
         name: "Track 1",
         events: ["0", "1", "2", "3"],
-        hue: 120
+        hue: 30
       }
     },
     events: {
@@ -71,7 +74,9 @@ export default {
       }
     },
     viewStart: 0,
-    viewEnd: 16
+    viewEnd: 16,
+    beatSnap: 1 / 4,
+    pitchSnap: 1
   }),
   methods: {
     onNoteMove({ notes, beats, cents }) {
@@ -105,6 +110,13 @@ export default {
           this.events[note].beats + beats,
           1 / 32
         );
+      }
+    },
+    onQuantizeNote({ notes }) {
+      for (const id of notes) {
+        const note = this.events[id];
+        note.beat = Math.round(note.beat / this.beatSnap) * this.beatSnap;
+        note.beats = Math.round(note.beats / this.beatSnap) * this.beatSnap;
       }
     }
   }

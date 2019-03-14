@@ -9,7 +9,6 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ hoveredNotes}}
   </div>
 </template>
 
@@ -82,6 +81,14 @@ export default {
     events: {
       type: Object,
       default: () => {}
+    },
+    beatSnap: {
+      type: Number,
+      default: () => 1 / 4
+    },
+    pitchSnap: {
+      type: Number,
+      default: () => 1
     }
   },
   data: () => ({
@@ -229,6 +236,7 @@ export default {
     },
     onKeyDown(e) {
       if (!this.keysPressed.includes(e.key)) this.keysPressed.push(e.key);
+      if (this.keysPressed.includes("q")) this.quantize();
       this.updateCursor();
     },
     onKeyUp(e) {
@@ -343,6 +351,13 @@ export default {
         notes: this.selectedNotes,
         beats: beatsMoved / 4
       });
+    },
+    quantize() {
+      this.$emit("notequantize", {
+        notes: this.selectedNotes
+      });
+      this.updateCursor();
+      this.render();
     },
     onMouseLeave(e) {
       this.onMouseUp(e);
