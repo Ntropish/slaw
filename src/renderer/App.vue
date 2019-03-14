@@ -11,12 +11,14 @@
       :events="events"
       :beat-snap="beatSnap"
       :pitch-snap="pitchSnap"
+      :beat-cursor="playbackLocation"
       @notemove="onNoteMove"
       @noteadd="onAddNote"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
       @notequantize="onQuantizeNote"
       @notecopy="onCopyNote"
+      @cursorset="onCursorSet"
     />
   </div>
 </template>
@@ -77,7 +79,9 @@ export default {
     viewStart: 0,
     viewEnd: 16,
     beatSnap: 1 / 4,
-    pitchSnap: 100
+    pitchSnap: 100,
+    playbackLocation: 1.3,
+    playbackStart: 1.3
   }),
   methods: {
     onNoteMove({ notes, beats, cents }) {
@@ -130,6 +134,10 @@ export default {
         };
         this.tracks[trackId].events.push(newNoteId);
       }
+    },
+    onCursorSet({ beat }) {
+      this.playbackLocation = beat;
+      this.playbackStart = beat;
     }
   }
 };

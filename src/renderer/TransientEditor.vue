@@ -9,7 +9,6 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ keysPressed }}
   </div>
 </template>
 
@@ -90,6 +89,10 @@ export default {
     pitchSnap: {
       type: Number,
       default: () => 1
+    },
+    beatCursor: {
+      type: Number,
+      default: () => 0
     }
   },
   data: () => ({
@@ -210,7 +213,7 @@ export default {
           notesCtx.fillStyle = `hsla(${this.track.hue}, 30%, 60%, 1)`;
         }
         notesCtx.fillRect(
-          note.beat * this.pxPerBeat - this.start,
+          (note.beat - this.start) * this.pxPerBeat,
           this.middleCY - (note.pitch / 100 - 2) * this.pianoNoteHeight,
           this.pxPerBeat * note.beats,
           this.pianoNoteHeight
@@ -227,6 +230,15 @@ export default {
           this.boxSelectEnd.y - this.boxSelectStart.y
         );
       }
+
+      utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
+      utilCtx.beginPath();
+      utilCtx.moveTo(this.xOfBeat(this.beatCursor), 0);
+      utilCtx.lineTo(this.xOfBeat(this.beatCursor), this.canvasHeight);
+      utilCtx.stroke();
+    },
+    xOfBeat(beat) {
+      return (beat - this.start) * this.pxPerBeat;
     },
     updateCursor() {
       const noteIsHovered = this.hoveredNotes.length !== 0;
@@ -276,9 +288,17 @@ export default {
 
       if (!noteClicked) {
         selectedNotes.splice(0);
+        // Ctrl click to add note
         if (e.ctrlKey) {
-          const [beat, pitch] = this.xyToBeatPitch(x, y);
+          const [beat, unsnappedPitch] = this.xyToBeatPitch(x, y);
+          const pitch =
+            Math.round(unsnappedPitch / this.pitchSnap) * this.pitchSnap;
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
+        } else {
+          // Else just move the cursor to the clicked location
+          this.$emit("cursorset", {
+            beat: this.start + x / this.pxPerBeat
+          });
         }
       }
 
@@ -323,6 +343,10 @@ export default {
         } else if (this.dragTool === "resize") {
           this.resizeTool(e);
         }
+      } else if (this.mouseIsDown) {
+        this.$emit("cursorset", {
+          beat: this.start + e.offsetX / this.pxPerBeat
+        });
       }
 
       this.render();
