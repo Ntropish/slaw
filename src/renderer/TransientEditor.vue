@@ -9,6 +9,7 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
+    {{ keysPressed }}
   </div>
 </template>
 
@@ -335,14 +336,17 @@ export default {
       const beatsDrug = eventMoveBufferX / this.pxPerBeat;
       const centsDrug = (eventMoveBufferY / this.pianoNoteHeight) * 100;
 
-      const beatsMoved = Math.floor(beatsDrug / 0.25);
-      eventMoveBufferX -= beatsMoved * this.pxPerBeat * 0.25;
+      // Hold shift to move without snap
+      const snap = !this.keysPressed.includes("Shift");
 
-      const centsMoved = Math.floor(centsDrug / 100);
-      eventMoveBufferY -= centsMoved * this.pianoNoteHeight;
+      const beatsMoved = snap ? Math.floor(beatsDrug / 0.25) * 0.25 : beatsDrug;
+      const centsMoved = snap ? Math.floor(centsDrug / 100) * 100 : centsDrug;
+
+      eventMoveBufferX -= beatsMoved * this.pxPerBeat;
+      eventMoveBufferY -= (centsMoved * this.pianoNoteHeight) / 100;
 
       if (beatsMoved || centsMoved) {
-        this.moveSelectedNotes(beatsMoved / 4, centsMoved * 100);
+        this.moveSelectedNotes(beatsMoved, centsMoved);
       }
     },
     resizeTool(e) {
