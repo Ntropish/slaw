@@ -485,6 +485,7 @@ export default {
   overflow: hidden;
   position: relative;
   background: hsla(0, 0%, 20%, 1);
+  padding: 0.4em;
 }
 
 .canvas {

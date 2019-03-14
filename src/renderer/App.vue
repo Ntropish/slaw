@@ -136,11 +136,17 @@ export default {
 </script>
 
 <style scoped>
+@font-face {
+  font-family: "VarelaRound";
+  src: url("/VarelaRound/VarelaRound-Regular.ttf") format("woff2");
+}
+
 .app {
   height: 100%;
   display: grid;
   grid-template-columns: 15em auto;
   grid-template-rows: 6em auto;
+  font-family: VarelaRound;
 }
 
 .midi-editor {
@@ -165,7 +171,7 @@ export default {
 
 .app-item {
   background: hsla(0, 0%, 20%, 1);
-  color: white;
+  color: hsla(0, 0%, 80%, 0.8);
   /* background: hsla(180, 5%, 40%, 1); */
   /* border: 1px solid hsla(180, 5%, 30%, 1); */
   min-width: 0;
