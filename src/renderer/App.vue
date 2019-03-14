@@ -77,7 +77,7 @@ export default {
     viewStart: 0,
     viewEnd: 16,
     beatSnap: 1 / 4,
-    pitchSnap: 1
+    pitchSnap: 100
   }),
   methods: {
     onNoteMove({ notes, beats, cents }) {

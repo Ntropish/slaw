@@ -136,8 +136,7 @@ export default {
       return [this.$refs.background, this.$refs.notes, this.$refs.util];
     },
     dragTool() {
-      if (this.keysPressed.length === 1 && this.keysPressed[0] === "r")
-        return "resize";
+      if (this.keysPressed.includes("r")) return "resize";
       return "move";
     }
   },
@@ -339,7 +338,9 @@ export default {
       // Hold shift to move without snap
       const snap = !this.keysPressed.includes("Shift");
 
-      const beatsMoved = snap ? Math.floor(beatsDrug / 0.25) * 0.25 : beatsDrug;
+      const beatsMoved = snap
+        ? Math.floor(beatsDrug / this.beatSnap) * this.beatSnap
+        : beatsDrug;
       const centsMoved = snap ? Math.floor(centsDrug / 100) * 100 : centsDrug;
 
       eventMoveBufferX -= beatsMoved * this.pxPerBeat;
@@ -353,11 +354,16 @@ export default {
       eventResizeBuffer += e.movementX;
       const beats = eventResizeBuffer / this.pxPerBeat;
 
-      const beatsMoved = Math.floor(beats / 0.25);
-      eventResizeBuffer -= beatsMoved * this.pxPerBeat * 0.25;
+      // Hold shift to move without snap
+      const snap = !this.keysPressed.includes("Shift");
+
+      const beatsMoved = snap
+        ? Math.floor(beats / this.beatSnap) * this.beatSnap
+        : beats;
+      eventResizeBuffer -= beatsMoved * this.pxPerBeat;
       this.$emit("noteresize", {
         notes: this.selectedNotes,
-        beats: beatsMoved / 4
+        beats: beatsMoved
       });
     },
     quantize() {
