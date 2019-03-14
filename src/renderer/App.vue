@@ -1,5 +1,6 @@
 <template>
-  <div class="app">
+  <div class="app" @keydown="onKeyDown">
+    {{ playbackLocation }}
     <menu-panel class="menu-panel app-item"/>
     <transport-bar class="transport-bar app-item"/>
     <track-list class="track-list app-item"/>
@@ -81,9 +82,48 @@ export default {
     beatSnap: 1 / 4,
     pitchSnap: 100,
     playbackLocation: 1.3,
-    playbackStart: 1.3
+    playbackStart: 1.3,
+    bpm: 80,
+    lastPlaybackUpdate: Date.now(),
+    iisPlaying: false
   }),
+  mounted() {
+    window.addEventListener("keydown", this.onKeyDown);
+  },
+  beforeDestroy() {
+    window.removeEventListener("keydown", this.onKeyDown);
+  },
+  computed: {
+    isPlaying: {
+      get() {
+        return this.iisPlaying;
+      },
+      set(isPlaying) {
+        if (isPlaying !== this.iisPlaying) {
+          console.log(isPlaying);
+          this.iisPlaying = isPlaying;
+          this.lastPlaybackUpdate = Date.now();
+          if (isPlaying) this.updatePlayback();
+        }
+      }
+    }
+  },
   methods: {
+    onKeyDown(e) {
+      if (e.key === " ") this.isPlaying = !this.isPlaying;
+    },
+    updatePlayback() {
+      const now = Date.now();
+      const timeProgressed = now - this.lastPlaybackUpdate;
+      const beatsProgressed = (timeProgressed / 60000) * this.bpm;
+      this.playbackLocation += beatsProgressed;
+      this.lastPlaybackUpdate = now;
+      requestAnimationFrame(() => {
+        if (this.iisPlaying) {
+          this.updatePlayback();
+        }
+      });
+    },
     onNoteMove({ notes, beats, cents }) {
       for (const note of notes) {
         this.events[note].beat = Math.max(0, this.events[note].beat + beats);

@@ -506,6 +506,11 @@ export default {
 
       this.render();
     }
+  },
+  watch: {
+    beatCursor(val) {
+      this.render();
+    }
   }
 };
 </script>
