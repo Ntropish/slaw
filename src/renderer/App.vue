@@ -100,7 +100,6 @@ export default {
       },
       set(isPlaying) {
         if (isPlaying !== this.iisPlaying) {
-          console.log(isPlaying);
           this.iisPlaying = isPlaying;
           this.lastPlaybackUpdate = Date.now();
           if (isPlaying) this.updatePlayback();

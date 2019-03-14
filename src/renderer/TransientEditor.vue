@@ -292,9 +292,12 @@ export default {
         selectedNotes.splice(0);
         // Ctrl click to add note
         if (e.ctrlKey) {
-          const [beat, unsnappedPitch] = this.xyToBeatPitch(x, y);
+          const [unsnappedBeat, unsnappedPitch] = this.xyToBeatPitch(x, y);
           const pitch =
             Math.round(unsnappedPitch / this.pitchSnap) * this.pitchSnap;
+          const beat =
+            Math.round(unsnappedBeat / this.beatSnap) * this.beatSnap;
+
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
         } else {
           // Else just move the cursor to the clicked location
