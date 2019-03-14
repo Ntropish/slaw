@@ -9,6 +9,7 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
+    {{ hoveredNotes}}
   </div>
 </template>
 
@@ -48,7 +49,7 @@ const tools = {
       cursor: "ew-resize",
       cursorDown: "ew-resize"
     },
-    noteNotHoverd: {
+    noteNotHovered: {
       cursor: "ew-resize",
       cursorDown: "ew-resize"
     }
@@ -58,9 +59,9 @@ const tools = {
       cursor: "grab",
       cursorDown: "grabbing"
     },
-    noteNotHoverd: {
+    noteNotHovered: {
       cursor: "default",
-      cursorDown: "default"
+      cursorDown: "grabbing"
     }
   }
 };
@@ -200,7 +201,7 @@ export default {
       }
     },
     updateCursor() {
-      const noteIsHovered = this.hoveredNotes.length === 0;
+      const noteIsHovered = this.hoveredNotes.length !== 0;
       const keyOne = noteIsHovered ? "noteHovered" : "noteNotHovered";
       const keyTwo = this.mouseIsDown ? "cursorDown" : "cursor";
       this.cursor = tools[this.dragTool][keyOne][keyTwo];
@@ -243,9 +244,9 @@ export default {
       if (noteClicked && !this.isNoteSelected(noteClicked)) {
         if (!e.ctrlKey) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
-        this.cursor = tools[this.dragTool].cursorDown;
+        // this.cursor = tools[this.dragTool].cursorDown;
       } else if (noteClicked) {
-        this.cursor = tools[this.dragTool].cursorDown;
+        // this.cursor = tools[this.dragTool].cursorDown;
       }
 
       if (e.altKey && selectedNotes.length) {
@@ -255,11 +256,11 @@ export default {
         });
       }
 
+      this.updateCursor();
       this.render();
     },
     onMouseUp(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
-      this.cursor = note ? "grab" : "default";
       this.mouseIsDown = false;
       eventMoveBufferX = 0;
       eventMoveBufferY = 0;
@@ -268,10 +269,13 @@ export default {
         this.boxSelectStart = null;
         this.boxSelectEnd = null;
       }
+      this.updateCursor();
       this.render();
     },
     onMouseMove(e) {
-      const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
+      const notes = this.scanForNotes(e.offsetX, e.offsetY);
+      this.hoveredNotes = notes;
+      const note = notes && notes[0];
 
       if (!note && !this.mouseIsDown && this.dragTool === "move") {
         this.updateCursor();
@@ -292,7 +296,6 @@ export default {
       this.updateCursor();
     },
     moveTool(e) {
-      this.cursor = this.cursor = tools[this.dragTool].cursorDown;
       eventMoveBufferX += e.movementX;
       eventMoveBufferY -= e.movementY;
 
