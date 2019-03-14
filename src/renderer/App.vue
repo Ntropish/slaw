@@ -1,6 +1,5 @@
 <template>
-  <div class="app" @keydown="onKeyDown">
-    {{ playbackLocation }}
+  <div class="app" :class="mode" :style="appGridStyle" @keydown="onKeyDown">
     <menu-panel class="menu-panel app-item"/>
     <transport-bar class="transport-bar app-item"/>
     <track-list class="track-list app-item"/>
@@ -21,6 +20,7 @@
       @notecopy="onCopyNote"
       @cursorset="onCursorSet"
     />
+    <node-editor class="node-editor"/>
   </div>
 </template>
 
@@ -29,12 +29,14 @@ import TransportBar from "renderer/TransportBar.vue";
 import TransientEditor from "renderer/TransientEditor.vue";
 import TrackList from "renderer/TrackList.vue";
 import MenuPanel from "renderer/MenuPanel.vue";
+import NodeEditor from "renderer/NodeEditor.vue";
 export default {
   components: {
     TransportBar,
     TransientEditor,
     TrackList,
-    MenuPanel
+    MenuPanel,
+    NodeEditor
   },
   data: () => ({
     trackCount: 1,
@@ -85,7 +87,9 @@ export default {
     playbackStart: 1.3,
     bpm: 80,
     lastPlaybackUpdate: Date.now(),
-    iisPlaying: false
+    iisPlaying: false,
+    mode: "midi",
+    split: 0.5
   }),
   mounted() {
     window.addEventListener("keydown", this.onKeyDown);
@@ -94,8 +98,18 @@ export default {
     window.removeEventListener("keydown", this.onKeyDown);
   },
   computed: {
+    appGridStyle() {
+      // For split mode
+      return this.mode === "split"
+        ? {
+            gridTemplateColumns: `15em auto`,
+            gridTemplateRows: `6em ${this.split}fr ${1 - this.split}fr`
+          }
+        : {};
+    },
     isPlaying: {
       get() {
+        console.log(this.appGridStyle);
         return this.iisPlaying;
       },
       set(isPlaying) {
@@ -110,6 +124,11 @@ export default {
   methods: {
     onKeyDown(e) {
       if (e.key === " ") this.isPlaying = !this.isPlaying;
+      else if (e.key === "Tab") {
+        if (this.mode === "split") this.mode = "midi";
+        else if (this.mode === "midi") this.mode = "node";
+        else if (this.mode === "node") this.mode = "split";
+      }
     },
     updatePlayback() {
       const now = Date.now();
@@ -191,29 +210,90 @@ export default {
 .app {
   height: 100%;
   display: grid;
-  grid-template-columns: 15em auto;
-  grid-template-rows: 6em auto;
+
   font-family: VarelaRound;
 }
 
+.app.node {
+  grid-template-columns: 15em auto;
+  grid-template-rows: 6em auto;
+}
+.app.split {
+}
+.app.midi {
+  grid-template-columns: 15em auto;
+  grid-template-rows: 6em auto;
+}
+
+.app.split {
+}
+
+.app.node {
+}
+
+.app.node > .midi-editor {
+  display: none;
+}
+.app.split > .midi-editor {
+  grid-column-end: 3;
+  grid-row-end: 3;
+}
+.app.midi > .midi-editor {
+}
 .midi-editor {
   grid-column-start: 2;
   grid-row-start: 2;
 }
 
+.app.node > .transport-bar {
+}
+.app.split > .transport-bar {
+}
+.app.midi > .transport-bar {
+}
 .transport-bar {
   grid-column-start: 2;
   grid-row-start: 1;
 }
 
+.app.node > .menu-panel {
+}
+.app.split > .menu-panel {
+}
+.app.midi > .menu-panel {
+}
 .menu-panel {
   grid-column-start: 1;
   grid-row-start: 1;
 }
 
+.app.node > .track-list {
+  display: none;
+}
+.app.split > .track-list {
+  grid-column-end: 2;
+  grid-row-end: 3;
+}
+.app.midi > .track-list {
+}
 .track-list {
   grid-column-start: 1;
   grid-row-start: 2;
+}
+
+.app.node > .node-editor {
+  grid-column-start: 1;
+  grid-row-start: 2;
+}
+.app.split > .node-editor {
+  grid-column-start: 1;
+  grid-row-start: 3;
+  grid-column-end: 3;
+}
+.app.midi > .node-editor {
+  display: none;
+}
+.node-editor {
 }
 
 .app-item {
