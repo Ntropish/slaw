@@ -171,6 +171,27 @@ export default {
         );
       }
 
+      // Draw beat marks
+      const start = Math.ceil(this.start);
+      const end = Math.floor(this.end);
+
+      const lines = range(start, end);
+
+      for (const line of lines) {
+        const x = Math.round(line * this.pxPerBeat - this.start);
+
+        if (line % 4 === 0) {
+          backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.4)`;
+        } else {
+          backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.2)`;
+        }
+
+        backgroundCtx.beginPath();
+        backgroundCtx.moveTo(x, 0);
+        backgroundCtx.lineTo(x, this.canvasHeight);
+        backgroundCtx.stroke();
+      }
+
       // Draw notes
       this.track.events.forEach(eventId => {
         const note = this.events[eventId];
