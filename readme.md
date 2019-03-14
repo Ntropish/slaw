@@ -16,6 +16,10 @@ Select multiple notes by holding `ctrl`
 
 Move notes by dragging them
 
+Duplicate notes by holding `shift` before dragging
+
+Snapping is disabled while holding shift
+
 Add notes with `ctrl + LMB`
 
 Remove notes with `alt + LMB`
