@@ -329,19 +329,25 @@ export default {
       this.updateCursor();
     },
     moveTool(e) {
-      eventMoveBufferX += e.movementX;
+      // Hold control to move without snap
+      const snap = !this.keysPressed.includes("Control");
+
+      // Snapping shouldn't be disabled for pitch
       eventMoveBufferY -= e.movementY;
+
+      if (snap) {
+        eventMoveBufferX += e.movementX;
+      } else {
+        eventMoveBufferX = e.movementX;
+      }
 
       const beatsDrug = eventMoveBufferX / this.pxPerBeat;
       const centsDrug = (eventMoveBufferY / this.pianoNoteHeight) * 100;
 
-      // Hold shift to move without snap
-      const snap = !this.keysPressed.includes("Shift");
-
       const beatsMoved = snap
-        ? Math.floor(beatsDrug / this.beatSnap) * this.beatSnap
+        ? Math.round(beatsDrug / this.beatSnap) * this.beatSnap
         : beatsDrug;
-      const centsMoved = snap ? Math.floor(centsDrug / 100) * 100 : centsDrug;
+      const centsMoved = Math.round(centsDrug / 100) * 100;
 
       eventMoveBufferX -= beatsMoved * this.pxPerBeat;
       eventMoveBufferY -= (centsMoved * this.pianoNoteHeight) / 100;
@@ -354,8 +360,8 @@ export default {
       eventResizeBuffer += e.movementX;
       const beats = eventResizeBuffer / this.pxPerBeat;
 
-      // Hold shift to move without snap
-      const snap = !this.keysPressed.includes("Shift");
+      // Hold control to move without snap
+      const snap = !this.keysPressed.includes("Control");
 
       const beatsMoved = snap
         ? Math.floor(beats / this.beatSnap) * this.beatSnap

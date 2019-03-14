@@ -18,7 +18,7 @@ Move notes by dragging them
 
 Duplicate notes by holding `shift` before dragging
 
-Snapping is disabled while holding shift
+Snapping is disabled while holding `control`
 
 Add notes with `ctrl + LMB`
 
