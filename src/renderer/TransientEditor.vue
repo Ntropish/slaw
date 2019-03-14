@@ -257,9 +257,21 @@ export default {
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
-      if (e.shiftKey) {
+      if (noteClicked && !this.isNoteSelected(noteClicked)) {
         if (!e.ctrlKey) selectedNotes.splice(0);
-        return this.boxSelect(e);
+        selectedNotes.push(noteClicked);
+      }
+
+      if (e.shiftKey) {
+        if (!noteClicked) {
+          if (!e.ctrlKey) selectedNotes.splice(0);
+          return this.boxSelect(e);
+        } else {
+          this.$emit("notecopy", {
+            notes: selectedNotes,
+            trackId: this.track.id
+          });
+        }
       }
 
       if (!noteClicked) {
@@ -268,14 +280,6 @@ export default {
           const [beat, pitch] = this.xyToBeatPitch(x, y);
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
         }
-      }
-
-      if (noteClicked && !this.isNoteSelected(noteClicked)) {
-        if (!e.ctrlKey) selectedNotes.splice(0);
-        selectedNotes.push(noteClicked);
-        // this.cursor = tools[this.dragTool].cursorDown;
-      } else if (noteClicked) {
-        // this.cursor = tools[this.dragTool].cursorDown;
       }
 
       if (e.altKey && selectedNotes.length) {

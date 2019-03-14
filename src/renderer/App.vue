@@ -9,13 +9,14 @@
       :end="viewEnd"
       :track="tracks[0]"
       :events="events"
-      :beatSnap="beatSnap"
-      :pitchSnap="pitchSnap"
+      :beat-snap="beatSnap"
+      :pitch-snap="pitchSnap"
       @notemove="onNoteMove"
       @noteadd="onAddNote"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
       @notequantize="onQuantizeNote"
+      @notecopy="onCopyNote"
     />
   </div>
 </template>
@@ -117,6 +118,17 @@ export default {
         const note = this.events[id];
         note.beat = Math.round(note.beat / this.beatSnap) * this.beatSnap;
         note.beats = Math.round(note.beats / this.beatSnap) * this.beatSnap;
+      }
+    },
+    onCopyNote({ notes, trackId }) {
+      for (const id of notes) {
+        const newNoteId = (this.eventCount++).toString();
+        const copyFrom = this.events[id];
+        this.events[newNoteId] = {
+          ...copyFrom,
+          id
+        };
+        this.tracks[trackId].events.push(newNoteId);
       }
     }
   }
