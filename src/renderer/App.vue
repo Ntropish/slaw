@@ -4,6 +4,7 @@
     <transport-bar class="transport-bar app-item"/>
     <track-list class="track-list app-item"/>
     <transient-editor
+      ref="transientEditor"
       class="midi-editor app-item"
       :start="viewStart"
       :end="viewEnd"
@@ -20,7 +21,7 @@
       @notecopy="onCopyNote"
       @cursorset="onCursorSet"
     />
-    <node-editor class="node-editor"/>
+    <node-editor class="node-editor app-item"/>
   </div>
 </template>
 
@@ -41,6 +42,7 @@ export default {
   data: () => ({
     trackCount: 1,
     eventCount: 4,
+    nodeCount: 2,
     tracks: {
       "0": {
         id: "0",
@@ -79,6 +81,38 @@ export default {
         beats: 1
       }
     },
+    nodes: {
+      "0": {
+        id: "0",
+        type: "track",
+        data: {
+          track: "0"
+        },
+        inputs: ["MIDI"],
+        outputs: []
+      },
+      "1": {
+        id: "0",
+        type: "instrument",
+        data: {
+          track: "0"
+        },
+        inputs: [],
+        outputs: ["MIDI"]
+      }
+    },
+    edges: {
+      "0": {
+        from: {
+          node: "0",
+          output: "0"
+        },
+        to: {
+          node: "1",
+          output: "0"
+        }
+      }
+    },
     viewStart: 0,
     viewEnd: 16,
     beatSnap: 1 / 4,
@@ -88,15 +122,10 @@ export default {
     bpm: 80,
     lastPlaybackUpdate: Date.now(),
     iisPlaying: false,
-    mode: "midi",
+    mode: "node",
     split: 0.5
   }),
-  mounted() {
-    window.addEventListener("keydown", this.onKeyDown);
-  },
-  beforeDestroy() {
-    window.removeEventListener("keydown", this.onKeyDown);
-  },
+
   computed: {
     appGridStyle() {
       // For split mode
@@ -109,7 +138,6 @@ export default {
     },
     isPlaying: {
       get() {
-        console.log(this.appGridStyle);
         return this.iisPlaying;
       },
       set(isPlaying) {
@@ -120,6 +148,19 @@ export default {
         }
       }
     }
+  },
+  watch: {
+    mode(val) {
+      requestAnimationFrame(() => {
+        this.$refs.transientEditor.sizeCanvas();
+      });
+    }
+  },
+  mounted() {
+    window.addEventListener("keydown", this.onKeyDown);
+  },
+  beforeDestroy() {
+    window.removeEventListener("keydown", this.onKeyDown);
   },
   methods: {
     onKeyDown(e) {
@@ -284,6 +325,7 @@ export default {
 .app.node > .node-editor {
   grid-column-start: 1;
   grid-row-start: 2;
+  grid-column-end: 3;
 }
 .app.split > .node-editor {
   grid-column-start: 1;

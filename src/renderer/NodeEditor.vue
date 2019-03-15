@@ -1,5 +1,5 @@
 <template>
-  <div class="outerDiv">Note Editor</div>
+  <div class="outerDiv">Node Editor</div>
 </template>
 
 <script>
