@@ -1,15 +1,18 @@
 <template>
-  <div class="root">
+  <div class="root" @mousedown="onMouseDown">
     <canvas ref="background" class="canvas background"/>
     <canvas ref="nodes" class="canvas nodes"/>
     <canvas ref="edges" class="canvas edges"/>
+    {{ keysState }} {{ mouseState}}
   </div>
 </template>
 
 <script>
 import { range } from "lodash";
-
+import GridLand from "./GridLand";
+const tools = {};
 export default {
+  mixins: [GridLand],
   props: {
     nodes: {
       type: Object,
@@ -33,13 +36,7 @@ export default {
     processors: [],
     modules: {},
     gridSize: 25,
-    canvasWidth: 300,
-    canvasHeight: 150,
-    view: {
-      top: 0,
-      left: 0,
-      width: 600 // aspect ratio is determined by the layout
-    }
+    selectedNodes: []
   }),
   computed: {
     canvases() {
@@ -48,9 +45,6 @@ export default {
     },
     viewHeight() {
       return this.pxPerUnit * this.canvasHeight;
-    },
-    pxPerUnit() {
-      return this.canvasWidth / this.view.width;
     }
   },
   watch: {
@@ -58,29 +52,21 @@ export default {
       this.render();
     }
   },
-  mounted() {
-    window.addEventListener("resize", this.sizeCanvas);
-    this.sizeCanvas();
-    this.render();
-  },
-  beforeDestroy() {
-    window.removeEventListener("resize", this.sizeCanvas);
-  },
+
   methods: {
     render() {
       // Prepare canvases
-      const contexts = this.canvases.map(c => c.getContext("2d"));
-      contexts.forEach(ctx =>
+      this.contexts.forEach(ctx =>
         ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
       );
-      const [backgroundCtx, nodesCtx, edgesCtx] = contexts;
+      const [backgroundCtx, nodesCtx, edgesCtx] = this.contexts;
 
       // Draw beat marks
-      const horizontalStart = Math.ceil(this.view.left);
-      const horizontalEnd = Math.floor(this.view.left + this.view.width);
+      const horizontalStart = Math.ceil(this.xStart);
+      const horizontalEnd = Math.floor(this.xEnd);
 
-      const verticalStart = Math.ceil(this.view.top);
-      const verticalEnd = Math.floor(this.view.top + this.viewHeight);
+      const verticalStart = Math.ceil(this.yStart);
+      const verticalEnd = Math.floor(this.yEnd);
 
       const horizontalLines = range(
         horizontalStart,
@@ -90,7 +76,7 @@ export default {
       const verticallLines = range(verticalStart, verticalEnd, this.gridSize);
 
       for (const line of horizontalLines) {
-        const x = Math.round(line * this.pxPerUnit - this.view.left);
+        const x = Math.round(line * this.pxPerX - this.xStart);
 
         if (line % 2 === 0) {
           backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.4)`;
@@ -105,7 +91,7 @@ export default {
       }
 
       for (const line of verticallLines) {
-        const y = Math.round(line * this.pxPerUnit - this.view.left);
+        const y = Math.round(line * this.pxPerY - this.yStart);
 
         if (line % 2 === 0) {
           backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.4)`;
@@ -121,10 +107,26 @@ export default {
 
       nodesCtx.fillStyle = `hsla(0, 0%, 60%, 0.9)`;
       for (const node of Object.values(this.nodes)) {
-        nodesCtx.fillRect(node.position.x, node.position.y, 150, 200);
+        nodesCtx.fillRect(
+          node.position.x * this.pxPerX,
+          node.position.y * this.pxPerY,
+          150 * this.pxPerX,
+          200 * this.pxPerY
+        );
       }
     },
-
+    keyDown(e) {
+      // console.log("keydown");
+    },
+    mouseDown(e) {
+      // console.log("mousedown");
+    },
+    mouseUp(e) {
+      // console.log("mouseup");
+    },
+    mouseMove(e) {
+      // console.log("move");
+    },
     loadModule: async function(moduleSpecifier) {
       const moduleToLoad = import("renderer/" + moduleSpecifier);
       for (const processor of moduleToLoad.processors) {
@@ -132,21 +134,6 @@ export default {
         await this.context.audioWorklet.addModule(processor);
         this.processors.push(processor);
       }
-    },
-    sizeCanvas() {
-      const styles = getComputedStyle(this.canvases[0]);
-      const w = parseInt(styles.getPropertyValue("width"), 10);
-      const h = parseInt(styles.getPropertyValue("height"), 10);
-
-      this.canvases.forEach(canvas => {
-        canvas.width = w;
-        canvas.height = h;
-      });
-
-      this.canvasWidth = w;
-      this.canvasHeight = h;
-
-      this.render();
     }
   }
 };

@@ -24,6 +24,10 @@
     <node-editor
       ref="nodeEditor"
       class="node-editor app-item"
+      :x-start="0"
+      :x-end="800"
+      :y-start="0"
+      :y-end="800"
       :nodes="nodes"
       :edges="edges"
       :tracks="tracks"
