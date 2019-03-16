@@ -9,7 +9,7 @@
       :node="node.node"
       :style="node.style"
     />
-    {{ keysState }} {{ mouseState}}
+    {{ keysState }} {{ mouseState }}
   </div>
 </template>
 
@@ -140,9 +140,9 @@ export default {
       }
     },
     pan({ x, y }) {
-      this.xStart = Math.round(this.xStart + x);
-      this.xEnd = Math.round(this.xEnd + x);
-      this.yStart = Math.round(this.yStart + y);
+      this.xStart = this.xStart + x;
+      this.xEnd = this.xEnd + x;
+      this.yStart = this.yStart + y;
       this.render();
     },
     zoom({ x, y, xOrigin, yOrigin }) {
@@ -150,7 +150,7 @@ export default {
       const zoom = (y * this.yCount) / 5;
       this.xStart -= zoom * xOrigin;
       this.xEnd += zoom * (1 - xOrigin);
-      this.yStart -= zoom * yOrigin;
+      this.yStart -= (zoom * yOrigin) / 2;
       this.render();
     },
     keyDown(e) {

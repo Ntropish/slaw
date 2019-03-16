@@ -1,9 +1,9 @@
 # Slaw
 
 Slaw is currently the beginnings of an open source, cross platform DAW. The intent is to make a tool
-that's far better suited to the job of making music than traditional DAWS. It will do this, first, by
+that's far better suited to the job of making music than traditional DAWs. It will do this, first, by
 providing a high speed midi editor and, second, by leveraging the power of a node editor to allow
-for more dynamic and creative ways of generating sound.
+for more dynamic and creative ways of generating sound.7
 
 Initially Slaw was being developed on Electron but after further research it seems that won't be necessary. Eventually
 it will be moved to a standard web app.

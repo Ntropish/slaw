@@ -15,9 +15,9 @@
 <script>
 import { range } from "lodash";
 
-const dark = "hsla(0, 0%, 0%, 0.05)";
-const light = "hsla(0, 0%, 100%, 0.05)";
-const lighter = "hsla(0, 0%, 100%, 0.1)";
+const dark = "hsla(0, 0%, 0%, 0.1)";
+const light = "hsla(0, 0%, 100%, 0.00)";
+const lighter = "hsla(0, 0%, 100%, 0.01)";
 const pianoNoteColors = [
   lighter,
   dark,
