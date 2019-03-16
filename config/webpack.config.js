@@ -2,6 +2,7 @@ const HotModuleReplacementPlugin = require('webpack').HotModuleReplacementPlugin
 const path = require('path')
 const CleanWebpackPlugin = require('clean-webpack-plugin')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
+const fs = require('fs-extra')
 
 module.exports = {
   target: 'electron-renderer',
@@ -30,11 +31,12 @@ module.exports = {
   resolve: {
     alias: {
       renderer: path.resolve(__dirname, '../src/renderer'),
+      nodes: path.resolve(__dirname, '../src/nodes'),
     },
   },
   devtool: 'inline-source-maps',
   devServer: {
-    contentBase: path.resolve('./src/renderer/public'),
+    contentBase: path.resolve('./static/'),
   },
   plugins: [
     new CleanWebpackPlugin(),

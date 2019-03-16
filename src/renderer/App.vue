@@ -21,11 +21,19 @@
       @notecopy="onCopyNote"
       @cursorset="onCursorSet"
     />
-    <node-editor class="node-editor app-item"/>
+    <node-editor
+      ref="nodeEditor"
+      class="node-editor app-item"
+      :nodes="nodes"
+      :edges="edges"
+      :tracks="tracks"
+      :events="events"
+    />
   </div>
 </template>
 
 <script>
+import Vue from "vue";
 import TransportBar from "renderer/TransportBar.vue";
 import TransientEditor from "renderer/TransientEditor.vue";
 import TrackList from "renderer/TrackList.vue";
@@ -39,17 +47,25 @@ const graph = {
       data: {
         track: "0"
       },
-      inputs: ["MIDI"],
-      outputs: []
-    },
-    "1": {
-      id: "0",
-      type: "instrument",
-      data: {
-        track: "0"
+      position: {
+        x: 100,
+        y: 100
       },
       inputs: [],
       outputs: ["MIDI"]
+    },
+    "1": {
+      id: "1",
+      type: "worklet",
+      data: {
+        track: "0"
+      },
+      position: {
+        x: 300,
+        y: 130
+      },
+      inputs: ["MIDI"],
+      outputs: []
     }
   },
   edges: {
@@ -157,6 +173,7 @@ export default {
     mode(val) {
       requestAnimationFrame(() => {
         this.$refs.transientEditor.sizeCanvas();
+        this.$refs.nodeEditor.sizeCanvas();
       });
     }
   },
@@ -169,7 +186,9 @@ export default {
   },
   methods: {
     loadGraph(graph) {
-      
+      for (const node of Object.values(graph.nodes)) {
+        Vue.set(this.nodes, node.id, node);
+      }
     },
     onKeyDown(e) {
       if (e.key === " ") this.isPlaying = !this.isPlaying;
@@ -267,17 +286,9 @@ export default {
   grid-template-columns: 15em auto;
   grid-template-rows: 6em auto;
 }
-.app.split {
-}
 .app.midi {
   grid-template-columns: 15em auto;
   grid-template-rows: 6em auto;
-}
-
-.app.split {
-}
-
-.app.node {
 }
 
 .app.node > .midi-editor {
@@ -288,29 +299,15 @@ export default {
   grid-row-end: 3;
 }
 .app.midi > .midi-editor {
-}
-.midi-editor {
   grid-column-start: 2;
   grid-row-start: 2;
 }
 
-.app.node > .transport-bar {
-}
-.app.split > .transport-bar {
-}
-.app.midi > .transport-bar {
-}
 .transport-bar {
   grid-column-start: 2;
   grid-row-start: 1;
 }
 
-.app.node > .menu-panel {
-}
-.app.split > .menu-panel {
-}
-.app.midi > .menu-panel {
-}
 .menu-panel {
   grid-column-start: 1;
   grid-row-start: 1;
@@ -322,8 +319,6 @@ export default {
 .app.split > .track-list {
   grid-column-end: 2;
   grid-row-end: 3;
-}
-.app.midi > .track-list {
 }
 .track-list {
   grid-column-start: 1;
@@ -342,8 +337,6 @@ export default {
 }
 .app.midi > .node-editor {
   display: none;
-}
-.node-editor {
 }
 
 .app-item {

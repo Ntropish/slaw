@@ -12,7 +12,9 @@ module.exports = {
   },
   plugins: ['vue'],
   parserOptions: {
-    ecmaVersion: 2018,
+    parser: 'babel-eslint',
+
+    ecmaVersion: 2019,
     sourceType: 'module',
   },
   rules: {
