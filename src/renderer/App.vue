@@ -31,6 +31,40 @@ import TransientEditor from "renderer/TransientEditor.vue";
 import TrackList from "renderer/TrackList.vue";
 import MenuPanel from "renderer/MenuPanel.vue";
 import NodeEditor from "renderer/NodeEditor.vue";
+const graph = {
+  nodes: {
+    "0": {
+      id: "0",
+      type: "track",
+      data: {
+        track: "0"
+      },
+      inputs: ["MIDI"],
+      outputs: []
+    },
+    "1": {
+      id: "0",
+      type: "instrument",
+      data: {
+        track: "0"
+      },
+      inputs: [],
+      outputs: ["MIDI"]
+    }
+  },
+  edges: {
+    "0": {
+      from: {
+        node: "0",
+        output: "0"
+      },
+      to: {
+        node: "1",
+        output: "0"
+      }
+    }
+  }
+};
 export default {
   components: {
     TransportBar,
@@ -81,38 +115,8 @@ export default {
         beats: 1
       }
     },
-    nodes: {
-      "0": {
-        id: "0",
-        type: "track",
-        data: {
-          track: "0"
-        },
-        inputs: ["MIDI"],
-        outputs: []
-      },
-      "1": {
-        id: "0",
-        type: "instrument",
-        data: {
-          track: "0"
-        },
-        inputs: [],
-        outputs: ["MIDI"]
-      }
-    },
-    edges: {
-      "0": {
-        from: {
-          node: "0",
-          output: "0"
-        },
-        to: {
-          node: "1",
-          output: "0"
-        }
-      }
-    },
+    nodes: {},
+    edges: {},
     viewStart: 0,
     viewEnd: 16,
     beatSnap: 1 / 4,
@@ -158,11 +162,15 @@ export default {
   },
   mounted() {
     window.addEventListener("keydown", this.onKeyDown);
+    this.loadGraph(graph);
   },
   beforeDestroy() {
     window.removeEventListener("keydown", this.onKeyDown);
   },
   methods: {
+    loadGraph(graph) {
+      
+    },
     onKeyDown(e) {
       if (e.key === " ") this.isPlaying = !this.isPlaying;
       else if (e.key === "Tab") {
