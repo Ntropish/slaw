@@ -114,6 +114,9 @@ export default {
 
       this.render()
     },
+    onWheel(e) {
+      console.log(e)
+    },
     pxToXY(pxX, pxY) {
       return [this.pxToX(pxX), this.pxToY(pxY)]
     },

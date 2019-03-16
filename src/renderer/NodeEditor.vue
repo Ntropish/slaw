@@ -1,5 +1,5 @@
 <template>
-  <div class="root" @mousedown="onMouseDown">
+  <div class="root" @mousedown="onMouseDown" @wheel="onWheel">
     <canvas ref="background" class="canvas background"/>
     <canvas ref="nodes" class="canvas nodes"/>
     <canvas ref="edges" class="canvas edges"/>
@@ -74,13 +74,13 @@ export default {
 
       // Draw beat marks
       const horizontalStart =
-        Math.round(this.xStart / this.gridSize) * this.gridSize;
+        Math.floor(this.xStart / this.gridSize) * this.gridSize;
       const horizontalEnd =
-        Math.round(this.xEnd / this.gridSize) * this.gridSize;
+        Math.ceil(this.xEnd / this.gridSize) * this.gridSize;
 
       const verticalStart =
-        Math.round(this.yStart / this.gridSize) * this.gridSize;
-      const verticalEnd = Math.round(this.yEnd / this.gridSize) * this.gridSize;
+        Math.floor(this.yStart / this.gridSize) * this.gridSize;
+      const verticalEnd = Math.ceil(this.yEnd / this.gridSize) * this.gridSize;
 
       const horizontalLines = range(
         horizontalStart,
@@ -110,12 +110,12 @@ export default {
 
       nodesCtx.fillStyle = `hsla(0, 0%, 60%, 0.9)`;
       for (const node of Object.values(this.nodes)) {
-        nodesCtx.fillRect(
-          node.position.x * this.pxPerX - this.xStart,
-          node.position.y * this.pxPerY - this.yStart,
-          150 * this.pxPerX,
-          200 * this.pxPerY
-        );
+        const x = this.pxOfX(node.position.x);
+        const y = this.pxOfY(node.position.y);
+        const width = 150 * this.pxPerX;
+        const height = 200 * this.pxPerY;
+
+        nodesCtx.fillRect(x, y, width, height);
       }
     },
     pan({ x, y }) {
