@@ -14,6 +14,7 @@
 
 <script>
 import { range } from "lodash";
+import GridLand from "./GridLand";
 
 const dark = "hsla(0, 0%, 0%, 0.1)";
 const light = "hsla(0, 0%, 100%, 0.00)";
@@ -65,12 +66,13 @@ const tools = {
   }
 };
 export default {
+  mixins: [GridLand],
   props: {
-    start: {
+    xStart: {
       type: Number,
       required: true
     },
-    end: {
+    xEnd: {
       type: Number,
       required: true
     },
@@ -82,11 +84,11 @@ export default {
       type: Object,
       default: () => {}
     },
-    beatSnap: {
+    xSnap: {
       type: Number,
       default: () => 1 / 4
     },
-    pitchSnap: {
+    ySnap: {
       type: Number,
       default: () => 1
     },
@@ -96,16 +98,12 @@ export default {
     }
   },
   data: () => ({
-    octaveStart: -2,
-    octaveEnd: 2,
+    yStart: -5000,
+    yEnd: 5000,
     canvasWidth: 300,
     canvasHeight: 150,
     selectedNotes: [],
     temporarySelectedNotes: [],
-    boxSelectStart: null,
-    boxSelectEnd: null,
-    mouseIsDown: false,
-    keysPressed: [],
     hoveredNotes: [],
     cursor: "default"
   }),
@@ -125,12 +123,6 @@ export default {
     pianoNoteHeight() {
       return this.canvasHeight / this.pianoNoteCount;
     },
-    beatCount() {
-      return this.end - this.start;
-    },
-    pxPerBeat() {
-      return this.canvasWidth / this.beatCount;
-    },
     middleCY() {
       // As in the y position of middle C
       return this.octaveEnd * this.octaveHeight;
@@ -139,84 +131,66 @@ export default {
       return [this.$refs.background, this.$refs.notes, this.$refs.util];
     },
     dragTool() {
-      if (this.keysPressed.includes("r")) return "resize";
+      if (this.keysState.includes("r")) return "resize";
       return "move";
     }
-  },
-  mounted() {
-    this.sizeCanvas();
-    window.addEventListener("keydown", this.onKeyDown);
-    window.addEventListener("keyup", this.onKeyUp);
-    window.addEventListener("resize", this.sizeCanvas);
-    window.addEventListener("mouseup", this.onMouseUp);
-    window.addEventListener("mousemove", this.onMouseMove);
-    // Keys won't be cleared if user changes focus before releasing a key so we need this
-    window.addEventListener("blur", this.clearKeysPressed);
-  },
-  beforeDestroy() {
-    window.removeEventListener("keydown", this.onKeyDown);
-    window.removeEventListener("keyup", this.onKeyUp);
-    window.removeEventListener("resize", this.sizeCanvas);
-    window.removeEventListener("mouseup", this.onMouseUp);
-    window.removeEventListener("mousemove", this.onMouseMove);
-    window.removeEventListener("blur", this.onMouseMove);
   },
   methods: {
     render() {
       // Prepare canvases
-      const contexts = this.canvases.map(c => c.getContext("2d"));
-      contexts.forEach(ctx =>
+      this.contexts.forEach(ctx =>
         ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
       );
-      const [backgroundCtx, notesCtx, utilCtx] = contexts;
+      const [backgroundCtx, notesCtx, utilCtx] = this.contexts;
 
-      // Draw piano keys
-      for (let pianoNote = 0; pianoNote < this.pianoNoteCount; pianoNote++) {
-        backgroundCtx.fillStyle = pianoNoteColors[pianoNote % 12];
-        backgroundCtx.fillRect(
-          0,
-          pianoNote * this.pianoNoteHeight,
-          this.canvasWidth,
-          this.pianoNoteHeight
-        );
-      }
+      // // Draw piano keys
+      // for (let pianoNote = 0; pianoNote < this.pianoNoteCount; pianoNote++) {
+      //   backgroundCtx.fillStyle = pianoNoteColors[pianoNote % 12];
+      //   backgroundCtx.fillRect(
+      //     0,
+      //     pianoNote * this.pianoNoteHeight,
+      //     this.canvasWidth,
+      //     this.pianoNoteHeight
+      //   );
+      // }
 
-      // Draw beat marks
-      const start = Math.ceil(this.start);
-      const end = Math.floor(this.end);
+      // // Draw beat marks
+      // const start = Math.ceil(this.start);
+      // const end = Math.floor(this.end);
 
-      const lines = range(start, end);
+      // const lines = range(start, end);
 
-      for (const line of lines) {
-        const x = Math.round(line * this.pxPerBeat - this.start);
+      // for (const line of lines) {
+      //   const x = Math.round(line * this.pxPerBeat - this.start);
 
-        if (line % 4 === 0) {
-          backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.4)`;
-        } else {
-          backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.2)`;
-        }
+      //   if (line % 4 === 0) {
+      //     backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.4)`;
+      //   } else {
+      //     backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.2)`;
+      //   }
 
-        backgroundCtx.beginPath();
-        backgroundCtx.moveTo(x, 0);
-        backgroundCtx.lineTo(x, this.canvasHeight);
-        backgroundCtx.stroke();
-      }
+      //   backgroundCtx.beginPath();
+      //   backgroundCtx.moveTo(x, 0);
+      //   backgroundCtx.lineTo(x, this.canvasHeight);
+      //   backgroundCtx.stroke();
+      // }
 
       // Draw notes
       this.track.events.forEach(eventId => {
         const note = this.events[eventId];
         if (this.temporarySelectedNotes.includes(eventId)) {
           notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 80%, 1)`;
-        } else if (this.isNoteSelected(eventId)) {
+        } else if (this.selectedNotes.includes(eventId)) {
           notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 90%, 1)`;
         } else {
           notesCtx.fillStyle = `hsla(${this.track.hue}, 30%, 60%, 1)`;
         }
+        // notesCtx.fillRect
         notesCtx.fillRect(
-          (note.beat - this.start) * this.pxPerBeat,
-          this.middleCY - (note.pitch / 100 - 2) * this.pianoNoteHeight,
-          this.pxPerBeat * note.beats,
-          this.pianoNoteHeight
+          this.pxOfX(note.beat),
+          this.pxOfY(note.pitch),
+          this.pxPerX * note.beats,
+          this.pxPerY * 100
         );
       });
 
@@ -231,14 +205,12 @@ export default {
         );
       }
 
+      const cursorX = this.pxOfX(this.beatCursor);
       utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
       utilCtx.beginPath();
-      utilCtx.moveTo(this.xOfBeat(this.beatCursor), 0);
-      utilCtx.lineTo(this.xOfBeat(this.beatCursor), this.canvasHeight);
+      utilCtx.moveTo(cursorX, 0);
+      utilCtx.lineTo(cursorX, this.canvasHeight);
       utilCtx.stroke();
-    },
-    xOfBeat(beat) {
-      return (beat - this.start) * this.pxPerBeat;
     },
     updateCursor() {
       const noteIsHovered = this.hoveredNotes.length !== 0;
@@ -246,38 +218,33 @@ export default {
       const keyTwo = this.mouseIsDown ? "cursorDown" : "cursor";
       this.cursor = tools[this.dragTool][keyOne][keyTwo];
     },
-    onKeyDown(e) {
-      if (!this.keysPressed.includes(e.key)) this.keysPressed.push(e.key);
-      if (this.keysPressed.includes("q")) this.quantize();
-      this.updateCursor();
+    keyDown(e) {
+      if (this.keysState.includes("q")) this.quantize();
     },
-    onKeyUp(e) {
-      const index = this.keysPressed.indexOf(e.key);
+    keyUp(e) {
+      const index = this.keysState.indexOf(e.key);
       if (index === -1) return;
-      this.keysPressed.splice(index, 1);
-      this.updateCursor();
+      this.keysState.splice(index, 1);
     },
-    clearKeysPressed(e) {
-      this.keysPressed.splice(0);
+    clearkeysState(e) {
+      this.keysState.splice(0);
     },
-    onMouseDown(e) {
-      this.mouseIsDown = true;
-
+    mouseDown(e) {
       const x = e.offsetX;
       const y = e.offsetY;
 
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
-      if (noteClicked && !this.isNoteSelected(noteClicked)) {
+      if (noteClicked && !this.selectedNotes.includes(noteClicked)) {
         if (!e.ctrlKey) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
       }
 
-      if (e.shiftKey) {
+      if (this.keysState.includes("Shift")) {
         if (!noteClicked) {
           // Trigger box select
-          if (!e.ctrlKey) selectedNotes.splice(0);
+          if (!this.keysState.includes("Control")) selectedNotes.splice(0);
           return this.boxSelect(e);
         } else {
           // Trigger note copy
@@ -291,7 +258,7 @@ export default {
       if (!noteClicked) {
         selectedNotes.splice(0);
         // Ctrl click to add note
-        if (e.ctrlKey) {
+        if (this.keysState.includes("Control")) {
           const [unsnappedBeat, unsnappedPitch] = this.xyToBeatPitch(x, y);
           const pitch =
             Math.round(unsnappedPitch / this.pitchSnap) * this.pitchSnap;
@@ -321,7 +288,7 @@ export default {
       this.updateCursor();
       this.render();
     },
-    onMouseUp(e) {
+    mouseUp(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
       this.mouseIsDown = false;
       eventMoveBufferX = 0;
@@ -334,7 +301,7 @@ export default {
       this.updateCursor();
       this.render();
     },
-    onMouseMove(e) {
+    mouseMove(e) {
       const notes = this.scanForNotes(e.offsetX, e.offsetY);
       this.hoveredNotes = notes;
       const note = notes && notes[0];
@@ -367,7 +334,7 @@ export default {
     },
     moveTool(e) {
       // Hold control to move without snap
-      const snap = !this.keysPressed.includes("Control");
+      const snap = !this.keysState.includes("Control");
 
       // Snapping shouldn't be disabled for pitch
       eventMoveBufferY -= e.movementY;
@@ -398,7 +365,7 @@ export default {
       const beats = eventResizeBuffer / this.pxPerBeat;
 
       // Hold control to move without snap
-      const snap = !this.keysPressed.includes("Control");
+      const snap = !this.keysState.includes("Control");
 
       const beatsMoved = snap
         ? Math.floor(beats / this.beatSnap) * this.beatSnap
@@ -490,9 +457,6 @@ export default {
 
       return foundNotes;
     },
-    isNoteSelected(id) {
-      return this.selectedNotes.includes(id);
-    },
     xyToBeatPitch(x, y) {
       const notesFromTop = y / this.pianoNoteHeight;
       const notesFromA = this.octaveEnd * 12 - notesFromTop + 2;
@@ -521,6 +485,9 @@ export default {
       this.canvasHeight = h;
 
       this.render();
+    },
+    pan() {
+      console.log("pan");
     }
   },
   watch: {

@@ -17,21 +17,13 @@ export default {
       return this.canvasWidth / this.xCount
     },
     yCount() {
-      if (this.yEndProp) {
-        return this.yEndProp - this.yStart
-      } else {
-        const aspectRatio = this.canvasWidth / this.canvasHeight
-        return this.xCount / aspectRatio
-      }
+      return this.yEnd - this.yStart
     },
     pxPerY() {
       return this.canvasHeight / this.yCount
     },
     contexts() {
       return this.canvases.map(c => c.getContext('2d'))
-    },
-    yEnd() {
-      return this.yStart + this.yCount
     },
   },
   mounted() {

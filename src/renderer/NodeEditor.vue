@@ -77,6 +77,9 @@ export default {
           node
         };
       });
+    },
+    yEnd() {
+      return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
     }
   },
   watch: {
