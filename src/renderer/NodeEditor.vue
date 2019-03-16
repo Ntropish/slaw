@@ -124,6 +124,14 @@ export default {
       this.yStart = Math.round(this.yStart + y);
       this.render();
     },
+    zoom({ x, y, xOrigin, yOrigin }) {
+      // Orthographic viewport, so zoom both axis the same
+      const zoom = (y * this.yCount) / 5;
+      this.xStart -= zoom * xOrigin;
+      this.xEnd += zoom * (1 - xOrigin);
+      this.yStart -= (zoom * yOrigin) / 2;
+      this.render();
+    },
     keyDown(e) {
       // console.log("keydown");
     },

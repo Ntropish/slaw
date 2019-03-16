@@ -115,7 +115,12 @@ export default {
       this.render()
     },
     onWheel(e) {
-      console.log(e)
+      this.zoom({
+        x: e.deltaX / 100,
+        y: e.deltaY / 100,
+        xOrigin: e.offsetX / this.canvasWidth,
+        yOrigin: e.offsetY / this.canvasHeight,
+      })
     },
     pxToXY(pxX, pxY) {
       return [this.pxToX(pxX), this.pxToY(pxY)]
