@@ -100,7 +100,7 @@ export default {
 
       if (this.dragStart) this.dragEnd = { x, y }
 
-      if (this.mouseState.includes(1) && this.mouseState.length === 1) {
+      if (this.mouseState.includes(2) && this.mouseState.length === 1) {
         this.pan({
           x: -e.movementX / this.pxPerX,
           y: -e.movementY / this.pxPerY,

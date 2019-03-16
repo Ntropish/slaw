@@ -1,8 +1,14 @@
 <template>
-  <div class="root" @mousedown="onMouseDown" @wheel="onWheel">
+  <div class="node-editor" @mousedown="onMouseDown" @wheel="onWheel">
     <canvas ref="background" class="canvas background"/>
     <canvas ref="nodes" class="canvas nodes"/>
     <canvas ref="edges" class="canvas edges"/>
+    <Audio-node
+      v-for="node in displayNodes"
+      :key="node.node.id"
+      :node="node.node"
+      :style="node.style"
+    />
     {{ keysState }} {{ mouseState}}
   </div>
 </template>
@@ -10,8 +16,10 @@
 <script>
 import { range } from "lodash";
 import GridLand from "./GridLand";
+import AudioNode from "./AudioNode.vue";
 const tools = {};
 export default {
+  components: { AudioNode },
   mixins: [GridLand],
   props: {
     nodes: {
@@ -56,6 +64,19 @@ export default {
     },
     viewHeight() {
       return this.pxPerUnit * this.canvasHeight;
+    },
+    displayNodes() {
+      return Object.values(this.nodes).map(node => {
+        return {
+          style: {
+            left: this.pxOfX(node.position.x) + "px",
+            top: this.pxOfY(node.position.y) + "px",
+            width: 150 * this.pxPerX + "px",
+            height: 200 * this.pxPerY + "px"
+          },
+          node
+        };
+      });
     }
   },
   watch: {
@@ -108,14 +129,14 @@ export default {
         backgroundCtx.stroke();
       }
 
-      nodesCtx.fillStyle = `hsla(0, 0%, 60%, 0.9)`;
+      nodesCtx.strokeStyle = `hsla(0, 0%, 60%, 0.9)`;
       for (const node of Object.values(this.nodes)) {
         const x = this.pxOfX(node.position.x);
         const y = this.pxOfY(node.position.y);
         const width = 150 * this.pxPerX;
         const height = 200 * this.pxPerY;
 
-        nodesCtx.fillRect(x, y, width, height);
+        nodesCtx.strokeRect(x, y, width, height);
       }
     },
     pan({ x, y }) {
@@ -129,7 +150,7 @@ export default {
       const zoom = (y * this.yCount) / 5;
       this.xStart -= zoom * xOrigin;
       this.xEnd += zoom * (1 - xOrigin);
-      this.yStart -= (zoom * yOrigin) / 2;
+      this.yStart -= zoom * yOrigin;
       this.render();
     },
     keyDown(e) {
@@ -157,8 +178,9 @@ export default {
 </script>
 
 <style scoped>
-.root {
+.node-editor {
   position: relative;
+  overflow: hidden;
 }
 .canvas {
   width: 100%;
