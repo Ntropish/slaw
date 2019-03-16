@@ -1,32 +1,6 @@
 import { range } from 'lodash'
 
 export default {
-  props: {
-    xStart: {
-      type: Number,
-      required: false,
-    },
-    xEnd: {
-      type: Number,
-      required: false,
-    },
-    yStart: {
-      type: Number,
-      required: false,
-    },
-    yEndProp: {
-      type: Number,
-      required: false,
-    },
-    xSnap: {
-      type: Number,
-      default: () => 1 / 4,
-    },
-    ySnap: {
-      type: Number,
-      default: () => 1,
-    },
-  },
   data: () => ({
     canvasWidth: 300,
     canvasHeight: 150,
@@ -43,17 +17,21 @@ export default {
       return this.canvasWidth / this.xCount
     },
     yCount() {
-      return this.yEnd - this.yStart
+      if (this.yEndProp) {
+        return this.yEndProp - this.yStart
+      } else {
+        const aspectRatio = this.canvasWidth / this.canvasHeight
+        return this.xCount / aspectRatio
+      }
     },
     pxPerY() {
-      return this.canvasWidth / this.yCount
+      return this.canvasHeight / this.yCount
     },
     contexts() {
       return this.canvases.map(c => c.getContext('2d'))
     },
     yEnd() {
-      const aspectRation = this.canvasWidth / this.canvasHeight
-      return this.yEndProp || this.xCount / aspectRation
+      return this.yStart + this.yCount
     },
   },
   mounted() {
@@ -77,6 +55,9 @@ export default {
   methods: {
     pxOfX(x) {
       return (x - this.xStart) * this.pxPerX
+    },
+    pxOfY(y) {
+      return (y - this.yStart) * this.pxPerY
     },
     onKeyDown(e) {
       if (!this.keysState.includes(e.key)) this.keysState.push(e.key)
@@ -118,6 +99,13 @@ export default {
       const y = e.offsetY
 
       if (this.dragStart) this.dragEnd = { x, y }
+
+      if (this.mouseState.includes(1) && this.mouseState.length === 1) {
+        this.pan({
+          x: -e.movementX / this.pxPerX,
+          y: -e.movementY / this.pxPerY,
+        })
+      }
 
       const snappedX = this.xSnap ? Math.round(x / this.xSnap) * this.xSnap : x
       const snappedY = this.ySnap ? Math.round(y / this.ySnap) * this.ySnap : y

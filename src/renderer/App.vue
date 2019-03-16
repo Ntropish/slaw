@@ -24,10 +24,6 @@
     <node-editor
       ref="nodeEditor"
       class="node-editor app-item"
-      :x-start="0"
-      :x-end="800"
-      :y-start="0"
-      :y-end="800"
       :nodes="nodes"
       :edges="edges"
       :tracks="tracks"
@@ -177,7 +173,7 @@ export default {
     mode(val) {
       requestAnimationFrame(() => {
         this.$refs.transientEditor.sizeCanvas();
-        this.$refs.nodeEditor.sizeCanvas();
+        this.$refs.nodeEditor.sizeCanvases();
       });
     }
   },

@@ -36,7 +36,18 @@ export default {
     processors: [],
     modules: {},
     gridSize: 25,
-    selectedNodes: []
+    selectedNodes: [],
+    xStart: 0,
+    xEnd: 800,
+    yStart: 0,
+    xSnap: {
+      type: Number,
+      default: () => 1 / 4
+    },
+    ySnap: {
+      type: Number,
+      default: () => 1
+    }
   }),
   computed: {
     canvases() {
@@ -62,11 +73,14 @@ export default {
       const [backgroundCtx, nodesCtx, edgesCtx] = this.contexts;
 
       // Draw beat marks
-      const horizontalStart = Math.ceil(this.xStart);
-      const horizontalEnd = Math.floor(this.xEnd);
+      const horizontalStart =
+        Math.round(this.xStart / this.gridSize) * this.gridSize;
+      const horizontalEnd =
+        Math.round(this.xEnd / this.gridSize) * this.gridSize;
 
-      const verticalStart = Math.ceil(this.yStart);
-      const verticalEnd = Math.floor(this.yEnd);
+      const verticalStart =
+        Math.round(this.yStart / this.gridSize) * this.gridSize;
+      const verticalEnd = Math.round(this.yEnd / this.gridSize) * this.gridSize;
 
       const horizontalLines = range(
         horizontalStart,
@@ -74,15 +88,10 @@ export default {
         this.gridSize
       );
       const verticallLines = range(verticalStart, verticalEnd, this.gridSize);
+      backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.2)`;
 
       for (const line of horizontalLines) {
-        const x = Math.round(line * this.pxPerX - this.xStart);
-
-        if (line % 2 === 0) {
-          backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.4)`;
-        } else {
-          backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.2)`;
-        }
+        const x = this.pxOfX(line);
 
         backgroundCtx.beginPath();
         backgroundCtx.moveTo(x, 0);
@@ -91,13 +100,7 @@ export default {
       }
 
       for (const line of verticallLines) {
-        const y = Math.round(line * this.pxPerY - this.yStart);
-
-        if (line % 2 === 0) {
-          backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.4)`;
-        } else {
-          backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.2)`;
-        }
+        const y = this.pxOfY(line);
 
         backgroundCtx.beginPath();
         backgroundCtx.moveTo(0, y);
@@ -108,12 +111,18 @@ export default {
       nodesCtx.fillStyle = `hsla(0, 0%, 60%, 0.9)`;
       for (const node of Object.values(this.nodes)) {
         nodesCtx.fillRect(
-          node.position.x * this.pxPerX,
-          node.position.y * this.pxPerY,
+          node.position.x * this.pxPerX - this.xStart,
+          node.position.y * this.pxPerY - this.yStart,
           150 * this.pxPerX,
           200 * this.pxPerY
         );
       }
+    },
+    pan({ x, y }) {
+      this.xStart = Math.round(this.xStart + x);
+      this.xEnd = Math.round(this.xEnd + x);
+      this.yStart = Math.round(this.yStart + y);
+      this.render();
     },
     keyDown(e) {
       // console.log("keydown");
