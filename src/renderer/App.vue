@@ -119,7 +119,7 @@ export default {
       },
       "2": {
         id: "2",
-        pitch: -1310,
+        pitch: -1320,
         beat: 2,
         velocity: 0.8,
         beats: 1.02

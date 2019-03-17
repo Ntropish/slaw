@@ -105,24 +105,8 @@ export default {
     boxSelecting: false
   }),
   computed: {
-    octaves() {
-      return range(this.octaveStart, this.octaveEnd);
-    },
-    octavesCount() {
-      return this.octaveEnd - this.octaveStart;
-    },
-    octaveHeight() {
-      return this.canvasHeight / this.octavesCount;
-    },
-    pianoNoteCount() {
-      return this.octaves.length * 12;
-    },
     pianoNoteHeight() {
-      return this.canvasHeight / this.pianoNoteCount;
-    },
-    middleCY() {
-      // As in the y position of middle C
-      return this.octaveEnd * this.octaveHeight;
+      return (this.canvasHeight / this.yCount) * 100;
     },
     canvases() {
       return [this.$refs.background, this.$refs.notes, this.$refs.util];
@@ -187,12 +171,19 @@ export default {
       // Draw notes
       this.track.events.forEach(eventId => {
         const note = this.events[eventId];
+        // Detuned notes need some indication
+        let hueMod =
+          (note.pitch - Math.round(note.pitch / this.ySnap) * this.ySnap) / 2;
+        if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
         if (this.temporarySelectedNotes.includes(eventId)) {
-          notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 80%, 0.8)`;
+          notesCtx.fillStyle = `hsla(${this.track.hue -
+            hueMod}, 40%, 80%, 0.8)`;
         } else if (this.selectedNotes.includes(eventId)) {
-          notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 90%, 0.8)`;
+          notesCtx.fillStyle = `hsla(${this.track.hue -
+            hueMod}, 40%, 90%, 0.8)`;
         } else {
-          notesCtx.fillStyle = `hsla(${this.track.hue}, 30%, 60%, 0.6)`;
+          notesCtx.fillStyle = `hsla(${this.track.hue -
+            hueMod}, 30%, 60%, 0.7)`;
         }
         // notesCtx.fillRect
         notesCtx.fillRect(
@@ -312,11 +303,11 @@ export default {
 
       if (this.boxSelecting) {
         this.boxSelectUpdate(e);
-      } else if (this.mouseIsDown && this.selectedNotes.length) {
+      } else if (this.mouseState.includes(0) && this.selectedNotes.length) {
         if (this.dragTool === "move") {
-          this.moveTool();
+          this.moveTool(e);
         } else if (this.dragTool === "resize") {
-          this.resizeTool();
+          this.resizeTool(e);
         }
       } else if (this.mouseIsDown) {
         this.$emit("cursorset", {
@@ -329,7 +320,7 @@ export default {
       const snap = !this.keysState.includes("Control");
 
       // Snapping shouldn't be disabled for pitch
-      eventMoveBufferY -= e.movementY;
+      eventMoveBufferY += e.movementY;
 
       if (snap) {
         eventMoveBufferX += e.movementX;
@@ -337,15 +328,15 @@ export default {
         eventMoveBufferX = e.movementX;
       }
 
-      const beatsDrug = eventMoveBufferX / this.pxPerBeat;
+      const beatsDrug = this.pxToX(eventMoveBufferX);
       const centsDrug = (eventMoveBufferY / this.pianoNoteHeight) * 100;
 
       const beatsMoved = snap
-        ? Math.round(beatsDrug / this.beatSnap) * this.beatSnap
+        ? Math.round(beatsDrug / this.xSnap) * this.xSnap
         : beatsDrug;
       const centsMoved = Math.round(centsDrug / 100) * 100;
 
-      eventMoveBufferX -= beatsMoved * this.pxPerBeat;
+      eventMoveBufferX -= beatsMoved * this.pxPerX;
       eventMoveBufferY -= (centsMoved * this.pianoNoteHeight) / 100;
 
       if (beatsMoved || centsMoved) {
@@ -413,7 +404,6 @@ export default {
         beats,
         cents
       });
-      this.render();
     },
     scanBoxForNotes(x1, y1, x2, y2) {
       let [beat1, pitch1] = this.pxToXY(x1, y1);
