@@ -3,7 +3,7 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ keysState }}{{ boxSelecting }}
+    {{ keysState }}
   </div>
 </template>
 
@@ -15,19 +15,20 @@ const dark = "hsla(0, 0%, 0%, 0.1)";
 const light = "hsla(0, 0%, 100%, 0.00)";
 const lighter = "hsla(0, 0%, 100%, 0.01)";
 const pianoNoteColors = [
-  lighter,
-  dark,
   light,
   dark,
   light,
   light,
   dark,
+  light,
+  dark,
+  light,
   light,
   dark,
   light,
   dark,
   light
-].reverse();
+];
 
 // Event dragging ammounts are stored here until
 // they get big enough to turn into an action.
@@ -93,8 +94,8 @@ export default {
     }
   },
   data: () => ({
-    yStart: -5000,
-    yEnd: 5000,
+    yStart: -2000,
+    yEnd: 1000,
     canvasWidth: 300,
     canvasHeight: 150,
     selectedNotes: [],
@@ -154,6 +155,24 @@ export default {
       //     this.pianoNoteHeight
       //   );
       // }
+
+      // Draw piano keys, assume snap is 100, traditional keyboard layout
+      const verticalStart = Math.floor(this.yStart / 100) * 100;
+      const verticalEnd = Math.ceil(this.yEnd / 100) * 100;
+
+      const verticalLines = range(verticalStart, verticalEnd, 100);
+      backgroundCtx.fillStyle = `hsla(0, 0%, 0%, 0.2)`;
+
+      for (const line of verticalLines) {
+        let modCents = Math.floor(line % 1200);
+        if (modCents < 0) modCents += 1200;
+        const noteNumber = modCents / 100;
+        backgroundCtx.fillStyle = pianoNoteColors[noteNumber];
+        const y = this.pxOfY(line - 50);
+
+        backgroundCtx.fillRect(0, y, this.canvasWidth, 100 * this.pxPerY);
+        backgroundCtx.stroke();
+      }
 
       // // Draw beat marks
       // const start = Math.ceil(this.start);
