@@ -11,9 +11,9 @@
 import { range } from "lodash";
 import GridLand from "./GridLand";
 
-const dark = "hsla(0, 0%, 0%, 0.1)";
+const dark = "hsla(0, 0%, 0%, 0.09)";
 const light = "hsla(0, 0%, 100%, 0.00)";
-const lighter = "hsla(0, 0%, 100%, 0.01)";
+const lighter = "hsla(0, 0%, 100%, 0.04)";
 const pianoNoteColors = [
   light,
   dark,
@@ -22,7 +22,7 @@ const pianoNoteColors = [
   dark,
   light,
   dark,
-  light,
+  lighter,
   light,
   dark,
   light,
@@ -145,17 +145,6 @@ export default {
       );
       const [backgroundCtx, notesCtx, utilCtx] = this.contexts;
 
-      // // Draw piano keys
-      // for (let pianoNote = 0; pianoNote < this.pianoNoteCount; pianoNote++) {
-      //   backgroundCtx.fillStyle = pianoNoteColors[pianoNote % 12];
-      //   backgroundCtx.fillRect(
-      //     0,
-      //     pianoNote * this.pianoNoteHeight,
-      //     this.canvasWidth,
-      //     this.pianoNoteHeight
-      //   );
-      // }
-
       // Draw piano keys, assume snap is 100, traditional keyboard layout
       const verticalStart = Math.floor(this.yStart / 100) * 100;
       const verticalEnd = Math.ceil(this.yEnd / 100) * 100;
@@ -199,11 +188,11 @@ export default {
       this.track.events.forEach(eventId => {
         const note = this.events[eventId];
         if (this.temporarySelectedNotes.includes(eventId)) {
-          notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 80%, 1)`;
+          notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 80%, 0.8)`;
         } else if (this.selectedNotes.includes(eventId)) {
-          notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 90%, 1)`;
+          notesCtx.fillStyle = `hsla(${this.track.hue}, 40%, 90%, 0.8)`;
         } else {
-          notesCtx.fillStyle = `hsla(${this.track.hue}, 30%, 60%, 1)`;
+          notesCtx.fillStyle = `hsla(${this.track.hue}, 30%, 60%, 0.6)`;
         }
         // notesCtx.fillRect
         notesCtx.fillRect(
@@ -254,7 +243,7 @@ export default {
       const { selectedNotes } = this;
 
       if (noteClicked && !this.selectedNotes.includes(noteClicked)) {
-        if (!this.keysState.includes("Shift")) selectedNotes.splice(0);
+        if (!this.keysState.includes("Control")) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
       }
 
