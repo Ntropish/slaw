@@ -1,14 +1,9 @@
 <template>
-  <div
-    class="root"
-    ondragstart="return false"
-    :style="{cursor: cursor}"
-    @mousedown="onMouseDown"
-    @mouseleave="onMouseLeave"
-  >
+  <div class="root" ondragstart="return false" :style="{cursor: cursor}" @mousedown="onMouseDown">
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
+    {{ keysState }}{{ boxSelecting }}
   </div>
 </template>
 
@@ -105,7 +100,8 @@ export default {
     selectedNotes: [],
     temporarySelectedNotes: [],
     hoveredNotes: [],
-    cursor: "default"
+    cursor: "default",
+    boxSelecting: false
   }),
   computed: {
     octaves() {
@@ -133,6 +129,11 @@ export default {
     dragTool() {
       if (this.keysState.includes("r")) return "resize";
       return "move";
+    }
+  },
+  watch: {
+    beatCursor(val) {
+      this.render();
     }
   },
   methods: {
@@ -188,20 +189,20 @@ export default {
         // notesCtx.fillRect
         notesCtx.fillRect(
           this.pxOfX(note.beat),
-          this.pxOfY(note.pitch),
+          this.pxOfY(note.pitch - 50),
           this.pxPerX * note.beats,
           this.pxPerY * 100
         );
       });
 
-      if (this.boxSelectStart && this.boxSelectEnd) {
+      if (this.boxSelecting) {
         utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
         // Draw box selector
         utilCtx.strokeRect(
-          this.boxSelectStart.x,
-          this.boxSelectStart.y,
-          this.boxSelectEnd.x - this.boxSelectStart.x,
-          this.boxSelectEnd.y - this.boxSelectStart.y
+          this.dragStart.x,
+          this.dragStart.y,
+          this.dragEnd.x - this.dragStart.x,
+          this.dragEnd.y - this.dragStart.y
         );
       }
 
@@ -229,15 +230,12 @@ export default {
     clearkeysState(e) {
       this.keysState.splice(0);
     },
-    mouseDown(e) {
-      const x = e.offsetX;
-      const y = e.offsetY;
-
+    mouseDown({ offsetX: x, offsetY: y }) {
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
       if (noteClicked && !this.selectedNotes.includes(noteClicked)) {
-        if (!e.ctrlKey) selectedNotes.splice(0);
+        if (!this.keysState.includes("Shift")) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
       }
 
@@ -245,7 +243,7 @@ export default {
         if (!noteClicked) {
           // Trigger box select
           if (!this.keysState.includes("Control")) selectedNotes.splice(0);
-          return this.boxSelect(e);
+          this.boxSelectStart();
         } else {
           // Trigger note copy
           this.$emit("notecopy", {
@@ -259,7 +257,7 @@ export default {
         selectedNotes.splice(0);
         // Ctrl click to add note
         if (this.keysState.includes("Control")) {
-          const [unsnappedBeat, unsnappedPitch] = this.xyToBeatPitch(x, y);
+          const [unsnappedBeat, unsnappedPitch] = this.pxToXY(x, y);
           const pitch =
             Math.round(unsnappedPitch / this.pitchSnap) * this.pitchSnap;
           const beat =
@@ -270,7 +268,7 @@ export default {
           // Else just move the cursor to the clicked location
           // Snapping can't be disabled on click because ctrl click
           // is already for adding notes
-          const beatClicked = this.xToBeat(x);
+          const beatClicked = this.pxOfX(x);
           const beat = Math.round(beatClicked / this.beatSnap) * this.beatSnap;
           this.$emit("cursorset", {
             beat
@@ -278,59 +276,45 @@ export default {
         }
       }
 
-      if (e.altKey && selectedNotes.length) {
+      if (this.keysState.includes("Alt") && selectedNotes.length) {
         this.$emit("noteremove", {
           notes: selectedNotes,
           trackId: this.track.id
         });
       }
-
-      this.updateCursor();
-      this.render();
     },
     mouseUp(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
       this.mouseIsDown = false;
       eventMoveBufferX = 0;
       eventMoveBufferY = 0;
-      if (this.boxSelectStart) {
+      if (this.boxSelecting) {
         this.boxSelectFinish(e);
-        this.boxSelectStart = null;
-        this.boxSelectEnd = null;
       }
-      this.updateCursor();
-      this.render();
     },
-    mouseMove(e) {
-      const notes = this.scanForNotes(e.offsetX, e.offsetY);
+    mouseMove({ x, y, e }) {
+      const notes = this.scanForNotes(x, y);
       this.hoveredNotes = notes;
       const note = notes && notes[0];
 
-      if (!note && !this.mouseIsDown && this.dragTool === "move") {
+      if (!note && !this.mouseState.length && this.dragTool === "move") {
         this.updateCursor();
         return;
       }
 
-      if (this.boxSelectStart) {
+      if (this.boxSelecting) {
         this.boxSelectUpdate(e);
       } else if (this.mouseIsDown && this.selectedNotes.length) {
         if (this.dragTool === "move") {
-          this.moveTool(e);
+          this.moveTool();
         } else if (this.dragTool === "resize") {
-          this.resizeTool(e);
+          this.resizeTool();
         }
       } else if (this.mouseIsDown) {
-        const beatClicked = this.xToBeat(e.offsetX);
-        const beat = e.ctrlKey
-          ? beatClicked
-          : Math.round(beatClicked / this.beatSnap) * this.beatSnap;
         this.$emit("cursorset", {
-          beat
+          beat: x
         });
       }
-
-      this.render();
-      this.updateCursor();
     },
     moveTool(e) {
       // Hold control to move without snap
@@ -386,9 +370,9 @@ export default {
     onMouseLeave(e) {
       this.onMouseUp(e);
     },
-    boxSelect(e) {
+    boxSelectStart() {
       this.temporarySelectedNotes.push(...this.selectedNotes);
-      this.boxSelectStart = { x: e.offsetX, y: e.offsetY };
+      this.boxSelecting = true;
     },
     boxSelectFinish(e) {
       this.boxSelectUpdate(e);
@@ -398,21 +382,22 @@ export default {
         }
       });
       this.temporarySelectedNotes.splice(0);
+      this.boxSelecting = false;
     },
     boxSelectUpdate(e) {
       this.boxSelectEnd = { x: e.offsetX, y: e.offsetY };
 
       const notes = this.scanBoxForNotes(
-        Math.min(this.boxSelectStart.x, this.boxSelectEnd.x),
-        Math.min(this.boxSelectStart.y, this.boxSelectEnd.y),
-        Math.max(this.boxSelectStart.x, this.boxSelectEnd.x),
-        Math.max(this.boxSelectStart.y, this.boxSelectEnd.y)
+        Math.min(this.dragStart.x, this.dragEnd.x),
+        Math.min(this.dragStart.y, this.dragEnd.y),
+        Math.max(this.dragStart.x, this.dragEnd.x),
+        Math.max(this.dragStart.y, this.dragEnd.y)
       );
 
       this.selectedNotes.splice(0);
       this.selectedNotes.push(...notes);
 
-      this.render({});
+      this.render();
     },
     moveSelectedNotes(beats, cents) {
       this.$emit("notemove", {
@@ -423,14 +408,14 @@ export default {
       this.render();
     },
     scanBoxForNotes(x1, y1, x2, y2) {
-      let [beat1, pitch1] = this.xyToBeatPitch(x1, y1);
-      let [beat2, pitch2] = this.xyToBeatPitch(x2, y2);
+      let [beat1, pitch1] = this.pxToXY(x1, y1);
+      let [beat2, pitch2] = this.pxToXY(x2, y2);
 
       const foundNotes = [];
       for (const noteId of this.track.events) {
         const note = this.events[noteId];
-        const a = note.pitch - 50 < pitch1;
-        const b = note.pitch + 50 > pitch2;
+        const a = note.pitch + 50 > pitch1;
+        const b = note.pitch - 50 < pitch2;
         const c = note.beat + note.beats > beat1;
         const d = note.beat < beat2;
         if (a && b && c && d) {
@@ -441,7 +426,7 @@ export default {
       return foundNotes;
     },
     scanForNotes(x, y) {
-      let [beat, pitch] = this.xyToBeatPitch(x, y);
+      let [beat, pitch] = this.pxToXY(x, y);
 
       const foundNotes = [];
       for (const noteId of this.track.events) {
@@ -457,41 +442,8 @@ export default {
 
       return foundNotes;
     },
-    xyToBeatPitch(x, y) {
-      const notesFromTop = y / this.pianoNoteHeight;
-      const notesFromA = this.octaveEnd * 12 - notesFromTop + 2;
-      // Add 50 cents to make the center of the piano key the center of the note
-      const pitch = notesFromA * 100 + 50;
-      const beat = this.start + (x / this.canvasWidth) * this.beatCount;
-      return [beat, pitch];
-    },
-    xToBeat(x) {
-      return this.start + (x / this.canvasWidth) * this.beatCount;
-    },
-    sizeCanvas() {
-      const background = this.$refs.background;
-      const notes = this.$refs.notes;
-
-      const styles = getComputedStyle(this.canvases[0]);
-      const w = parseInt(styles.getPropertyValue("width"), 10);
-      const h = parseInt(styles.getPropertyValue("height"), 10);
-
-      this.canvases.forEach(canvas => {
-        canvas.width = w;
-        canvas.height = h;
-      });
-
-      this.canvasWidth = w;
-      this.canvasHeight = h;
-
-      this.render();
-    },
-    pan() {
-      console.log("pan");
-    }
-  },
-  watch: {
-    beatCursor(val) {
+    pan(data) {
+      this.$emit("pan", data);
       this.render();
     }
   }

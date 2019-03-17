@@ -69,26 +69,25 @@ export default {
       const y = e.offsetY
 
       this.dragStart = { x, y }
+      this.dragEnd = { x, y }
 
-      const snappedX = this.xSnap ? Math.round(x / this.xSnap) * this.xSnap : x
-      const snappedY = this.ySnap ? Math.round(y / this.ySnap) * this.ySnap : y
+      // const snappedX = this.xSnap ? Math.round(x / this.xSnap) * this.xSnap : x
+      // const snappedY = this.ySnap ? Math.round(y / this.ySnap) * this.ySnap : y
 
-      this.mouseDown(snappedX, snappedY)
+      this.mouseDown(e)
 
       this.render()
     },
     onMouseUp(e) {
       const index = this.mouseState.indexOf(e.button)
       if (index !== -1) this.mouseState.splice(index, 1)
-
+      this.mouseUp(e)
       this.dragStart = null
       this.dragEnd = null
-      this.mouseUp(e)
       this.render()
     },
     onMouseMove(e) {
-      const x = e.offsetX
-      const y = e.offsetY
+      const { x, y } = this.getMousePosition(e)
 
       if (this.dragStart) this.dragEnd = { x, y }
 
@@ -102,9 +101,16 @@ export default {
       const snappedX = this.xSnap ? Math.round(x / this.xSnap) * this.xSnap : x
       const snappedY = this.ySnap ? Math.round(y / this.ySnap) * this.ySnap : y
 
-      this.mouseMove(snappedX, snappedY)
+      this.mouseMove({ x: snappedX, y: snappedY, e })
 
       this.render()
+    },
+    getMousePosition(e) {
+      var rect = this.canvases[0].getBoundingClientRect()
+      return {
+        x: e.clientX - rect.left,
+        y: e.clientY - rect.top,
+      }
     },
     onWheel(e) {
       this.zoom({

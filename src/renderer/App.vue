@@ -20,6 +20,7 @@
       @notequantize="onQuantizeNote"
       @notecopy="onCopyNote"
       @cursorset="onCursorSet"
+      @pan="onMidiEditorPan"
     />
     <node-editor
       ref="nodeEditor"
@@ -172,7 +173,7 @@ export default {
   watch: {
     mode(val) {
       requestAnimationFrame(() => {
-        this.$refs.transientEditor.sizeCanvas();
+        this.$refs.transientEditor.sizeCanvases();
         this.$refs.nodeEditor.sizeCanvases();
       });
     }
@@ -264,6 +265,12 @@ export default {
     onCursorSet({ beat }) {
       this.playbackLocation = beat;
       this.playbackStart = beat;
+    },
+    onMidiEditorPan({ x }) {
+      const desiredValue = Math.max(0, this.viewStart + x);
+      const change = desiredValue - this.viewStart;
+      this.viewStart += change;
+      this.viewEnd += change;
     }
   }
 };
