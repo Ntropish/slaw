@@ -124,9 +124,9 @@ export default {
   methods: {
     render() {
       // Prepare canvases
-      this.contexts.forEach(ctx =>
-        ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
-      );
+      this.contexts.forEach(ctx => {
+        return ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+      });
       const [backgroundCtx, notesCtx, utilCtx] = this.contexts;
 
       // Draw piano keys, assume snap is 100, traditional keyboard layout
@@ -144,29 +144,25 @@ export default {
         const y = this.pxOfY(line - 50);
 
         backgroundCtx.fillRect(0, y, this.canvasWidth, 100 * this.pxPerY);
-        backgroundCtx.stroke();
+        // backgroundCtx.stroke();
       }
 
-      // // Draw beat marks
-      // const start = Math.ceil(this.start);
-      // const end = Math.floor(this.end);
+      // Draw beat marks
+      const lines = range(Math.floor(this.xStart), Math.ceil(this.xEnd));
 
-      // const lines = range(start, end);
+      for (const line of lines) {
+        const pxX = Math.round(this.pxOfX(line));
 
-      // for (const line of lines) {
-      //   const x = Math.round(line * this.pxPerBeat - this.start);
+        if (pxX < 0 || line > this.xEnd) continue;
 
-      //   if (line % 4 === 0) {
-      //     backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.4)`;
-      //   } else {
-      //     backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.2)`;
-      //   }
+        backgroundCtx.strokeStyle =
+          line % 4 === 0 ? `hsla(0, 0%, 0%, 0.4)` : `hsla(0, 0%, 0%, 0.2)`;
 
-      //   backgroundCtx.beginPath();
-      //   backgroundCtx.moveTo(x, 0);
-      //   backgroundCtx.lineTo(x, this.canvasHeight);
-      //   backgroundCtx.stroke();
-      // }
+        backgroundCtx.beginPath();
+        backgroundCtx.moveTo(pxX, 0);
+        backgroundCtx.lineTo(pxX, this.canvasHeight);
+        backgroundCtx.stroke();
+      }
 
       // Draw notes
       this.track.events.forEach(eventId => {
@@ -205,12 +201,12 @@ export default {
         );
       }
 
-      const cursorX = this.pxOfX(this.beatCursor);
-      utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
-      utilCtx.beginPath();
-      utilCtx.moveTo(cursorX, 0);
-      utilCtx.lineTo(cursorX, this.canvasHeight);
-      utilCtx.stroke();
+      // const cursorX = this.pxOfX(this.beatCursor);
+      // utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
+      // utilCtx.beginPath();
+      // utilCtx.moveTo(cursorX, 0);
+      // utilCtx.lineTo(cursorX, this.canvasHeight);
+      // utilCtx.stroke();
     },
     updateCursor() {
       const noteIsHovered = this.hoveredNotes.length !== 0;
@@ -296,10 +292,10 @@ export default {
       this.hoveredNotes = notes;
       const note = notes && notes[0];
 
-      if (!note && !this.mouseState.length && this.dragTool === "move") {
-        this.updateCursor();
-        return;
-      }
+      // if (!note && !this.mouseState.length && this.dragTool === "move") {
+      //   this.updateCursor();
+      //   return;
+      // }
 
       if (this.boxSelecting) {
         this.boxSelectUpdate(e);
