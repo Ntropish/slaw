@@ -1,5 +1,5 @@
 <template>
-  <div class="transport-bar">Transport Bar</div>
+  <div class="transport-bar"></div>
 </template>
 
 <script>

@@ -12,9 +12,9 @@ import Vue from "vue";
 import { range } from "lodash";
 import GridLand from "./GridLand";
 
-const dark = "hsla(0, 0%, 0%, 0.00)";
-const light = "hsla(0, 0%, 100%, 0.025)";
-const lighter = "hsla(0, 0%, 100%, 0.04)";
+const dark = 0;
+const light = 1;
+const lighter = 2;
 const pianoNoteColors = [
   light,
   dark,
@@ -112,12 +112,14 @@ export default {
       const key3 = this.mouseState.length ? "cursorDown" : "cursor";
       return tools[this.dragTool][key2][key3];
     },
-    beatMarks() {
+    gradients() {
       const [backgroundCtx] = this.contexts;
       return [
-        this.buildBeatMark(backgroundCtx, 0.05),
-        this.buildBeatMark(backgroundCtx, 0.07),
-        this.buildBeatMark(backgroundCtx, 0.11)
+        this.buildBeatMark(backgroundCtx, 0.02, 0, 0.4),
+        this.buildBeatMark(backgroundCtx, 0.03, 100),
+        this.buildBeatMark(backgroundCtx, 0.07, 100),
+        this.buildBeatMark(backgroundCtx, 0.11, 100),
+        this.buildBeatMark(backgroundCtx, 0.3, 100, 0.1)
       ];
     }
   },
@@ -149,7 +151,7 @@ export default {
         let modCents = Math.floor(line % 1200);
         if (modCents < 0) modCents += 1200;
         const noteNumber = modCents / 100;
-        backgroundCtx.fillStyle = pianoNoteColors[noteNumber];
+        backgroundCtx.fillStyle = this.gradients[pianoNoteColors[noteNumber]];
         const y = this.pxOfY(line - 50);
 
         backgroundCtx.fillRect(0, y, this.canvasWidth, 100 * this.pxPerY);
@@ -164,14 +166,12 @@ export default {
 
         if (pxX < 0 || line > this.xEnd) continue;
 
-        console.log(this.beatMarks);
-
         backgroundCtx.strokeStyle =
           line % 4 === 0
-            ? this.beatMarks[2]
+            ? this.gradients[3]
             : line % 2 === 0
-            ? this.beatMarks[1]
-            : this.beatMarks[0];
+            ? this.gradients[2]
+            : this.gradients[1];
 
         backgroundCtx.beginPath();
         backgroundCtx.moveTo(pxX, 0);
@@ -240,17 +240,20 @@ export default {
       }
 
       const cursorX = this.pxOfX(this.beatCursor);
-      utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
+      utilCtx.strokeStyle = this.gradients[4];
       utilCtx.beginPath();
       utilCtx.moveTo(cursorX, 0);
       utilCtx.lineTo(cursorX, this.canvasHeight);
       utilCtx.stroke();
     },
-    buildBeatMark(ctx, opacity) {
+    buildBeatMark(ctx, opacity, lightness, spread = 0.2) {
       var gradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
       gradient.addColorStop("0", "hsla(0, 0%, 0%, 0)");
-      gradient.addColorStop("0.2", `hsla(0, 0%, 100%, ${opacity})`);
-      gradient.addColorStop("0.8", `hsla(0, 0%, 100%, ${opacity})`);
+      gradient.addColorStop(spread, `hsla(0, 0%, ${lightness}%, ${opacity})`);
+      gradient.addColorStop(
+        1 - spread,
+        `hsla(0, 0%, ${lightness}%, ${opacity})`
+      );
       gradient.addColorStop("1.0", "hsla(0, 0%, 0%, 0)");
       return gradient;
     },
@@ -390,10 +393,10 @@ export default {
       });
     },
     quantize() {
+      this.unbufferNotes();
       this.$emit("notequantize", {
         notes: this.selectedNotes
       });
-      this.updateCursor();
       this.render();
     },
     onMouseLeave(e) {

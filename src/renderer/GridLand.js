@@ -54,6 +54,7 @@ export default {
     onKeyDown(e) {
       if (!this.keysState.includes(e.key)) this.keysState.push(e.key)
       this.keyDown(e)
+      this.render()
     },
     onKeyUp(e) {
       const index = this.keysState.indexOf(e.key)
