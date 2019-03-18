@@ -224,12 +224,12 @@ export default {
         );
       }
 
-      // const cursorX = this.pxOfX(this.beatCursor);
-      // utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
-      // utilCtx.beginPath();
-      // utilCtx.moveTo(cursorX, 0);
-      // utilCtx.lineTo(cursorX, this.canvasHeight);
-      // utilCtx.stroke();
+      const cursorX = this.pxOfX(this.beatCursor);
+      utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
+      utilCtx.beginPath();
+      utilCtx.moveTo(cursorX, 0);
+      utilCtx.lineTo(cursorX, this.canvasHeight);
+      utilCtx.stroke();
     },
     keyDown(e) {
       if (this.keysState.includes("q")) this.quantize();
@@ -281,10 +281,8 @@ export default {
           // Else just move the cursor to the clicked location
           // Snapping can't be disabled on click because ctrl click
           // is already for adding notes
-          const beatClicked = this.pxOfX(x);
-          const beat = Math.round(beatClicked / this.beatSnap) * this.beatSnap;
           this.$emit("cursorset", {
-            beat
+            beat: this.pxToX(Math.round(x / this.xSnap) * this.xSnap)
           });
         }
       }
@@ -307,14 +305,8 @@ export default {
     },
     mouseMove({ e }) {
       const notes = this.scanForNotes(e.offsetX, e.offsetY);
-      console.log(notes);
       this.hoveredNotes = notes;
       const note = notes && notes[0];
-
-      // if (!note && !this.mouseState.length && this.dragTool === "move") {
-      //   this.updateCursor();
-      //   return;
-      // }
 
       if (this.boxSelecting) {
         this.boxSelectUpdate(e);
@@ -336,9 +328,9 @@ export default {
         } else if (this.dragTool === "resize") {
           this.resizeTool(xMove, yMove);
         }
-      } else if (this.mouseIsDown) {
+      } else if (this.mouseState.length) {
         this.$emit("cursorset", {
-          beat: x
+          beat: this.pxToX(e.offsetX)
         });
       }
     },
