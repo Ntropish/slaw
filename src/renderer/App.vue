@@ -13,7 +13,7 @@
       :x-snap="beatSnap"
       :y-snap="pitchSnap"
       :beat-cursor="playbackLocation"
-      @notemove="onNoteMove"
+      @noteset="onNoteSet"
       @noteadd="onAddNote"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
@@ -211,10 +211,11 @@ export default {
         }
       });
     },
-    onNoteMove({ notes, beats, cents }) {
-      for (const note of notes) {
-        this.events[note].beat = Math.max(0, this.events[note].beat + beats);
-        this.events[note].pitch += cents;
+    onNoteSet(noteBuffer) {
+      for (const note of Object.values(noteBuffer)) {
+        this.events[note.id].beat = note.beat;
+        this.events[note.id].pitch = note.pitch;
+        this.events[note.id].beats = note.beats;
       }
     },
     onAddNote({ beat, pitch, trackId }) {
@@ -257,7 +258,7 @@ export default {
         const copyFrom = this.events[id];
         this.events[newNoteId] = {
           ...copyFrom,
-          id
+          id: newNoteId
         };
         this.tracks[trackId].events.push(newNoteId);
       }

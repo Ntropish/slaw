@@ -3,11 +3,12 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ keysState }}
+    {{ keysState }} {{ noteBuffer }} {{ ids }} {{ selectedNotes }}
   </div>
 </template>
 
 <script>
+import Vue from "vue";
 import { range } from "lodash";
 import GridLand from "./GridLand";
 
@@ -99,7 +100,7 @@ export default {
     canvasWidth: 300,
     canvasHeight: 150,
     selectedNotes: [],
-    temporarySelectedNotes: [],
+    noteBuffer: {},
     hoveredNotes: [],
     cursor: "default",
     boxSelecting: false
@@ -114,6 +115,9 @@ export default {
     dragTool() {
       if (this.keysState.includes("r")) return "resize";
       return "move";
+    },
+    ids() {
+      return Object.keys(this.events);
     }
   },
   watch: {
@@ -164,6 +168,8 @@ export default {
         backgroundCtx.stroke();
       }
 
+      const bufferedIds = Object.keys(this.noteBuffer);
+
       // Draw notes
       this.track.events.forEach(eventId => {
         const note = this.events[eventId];
@@ -171,10 +177,31 @@ export default {
         let hueMod =
           (note.pitch - Math.round(note.pitch / this.ySnap) * this.ySnap) / 2;
         if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
-        if (this.temporarySelectedNotes.includes(eventId)) {
+        if (bufferedIds.includes(eventId)) {
           notesCtx.fillStyle = `hsla(${this.track.hue -
-            hueMod}, 40%, 80%, 0.8)`;
+            hueMod}, 40%, 60%, 0.2)`;
         } else if (this.selectedNotes.includes(eventId)) {
+          notesCtx.fillStyle = `hsla(${this.track.hue -
+            hueMod}, 40%, 90%, 0.8)`;
+        } else {
+          notesCtx.fillStyle = `hsla(${this.track.hue -
+            hueMod}, 30%, 60%, 0.7)`;
+        }
+        // notesCtx.fillRect
+        notesCtx.fillRect(
+          this.pxOfX(note.beat),
+          this.pxOfY(note.pitch - 50),
+          this.pxPerX * note.beats,
+          this.pxPerY * 100
+        );
+      });
+
+      (Object.values(this.noteBuffer) || []).forEach(note => {
+        // Detuned notes need some indication
+        let hueMod =
+          (note.pitch - Math.round(note.pitch / this.ySnap) * this.ySnap) / 2;
+        if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
+        if (this.selectedNotes.includes(note.id)) {
           notesCtx.fillStyle = `hsla(${this.track.hue -
             hueMod}, 40%, 90%, 0.8)`;
         } else {
@@ -229,6 +256,7 @@ export default {
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
+      // Handle selection first
       if (noteClicked && !this.selectedNotes.includes(noteClicked)) {
         if (!this.keysState.includes("Control")) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
@@ -277,6 +305,8 @@ export default {
           trackId: this.track.id
         });
       }
+
+      this.bufferNotes();
     },
     mouseUp(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
@@ -285,6 +315,7 @@ export default {
       if (this.boxSelecting) {
         this.boxSelectFinish(e);
       }
+      this.unbufferNotes();
     },
     mouseMove({ x, y, e }) {
       const notes = this.scanForNotes(x, y);
@@ -299,10 +330,22 @@ export default {
       if (this.boxSelecting) {
         this.boxSelectUpdate(e);
       } else if (this.mouseState.includes(0) && this.selectedNotes.length) {
+        // Hold control to move without snap
+        const snap = !this.keysState.includes("Control");
+
+        const xDelta = (this.dragEnd.x - this.dragStart.x) / this.pxPerX;
+        const yDelta = (this.dragEnd.y - this.dragStart.y) / this.pxPerY;
+
+        const xMove = snap
+          ? Math.round(xDelta / this.xSnap) * this.xSnap
+          : xDelta;
+        const yMove = snap
+          ? Math.round(yDelta / this.ySnap) * this.ySnap
+          : yDelta;
         if (this.dragTool === "move") {
-          this.moveTool(e);
+          this.moveToolUpdate(xMove, yMove);
         } else if (this.dragTool === "resize") {
-          this.resizeTool(e);
+          this.resizeTool(xMove, yMove);
         }
       } else if (this.mouseIsDown) {
         this.$emit("cursorset", {
@@ -310,48 +353,25 @@ export default {
         });
       }
     },
-    moveTool(e) {
-      // Hold control to move without snap
-      const snap = !this.keysState.includes("Control");
-
-      // Snapping shouldn't be disabled for pitch
-      eventMoveBufferY += e.movementY;
-
-      if (snap) {
-        eventMoveBufferX += e.movementX;
-      } else {
-        eventMoveBufferX = e.movementX;
-      }
-
-      const beatsDrug = this.pxToX(eventMoveBufferX);
-      const centsDrug = (eventMoveBufferY / this.pianoNoteHeight) * 100;
-
-      const beatsMoved = snap
-        ? Math.round(beatsDrug / this.xSnap) * this.xSnap
-        : beatsDrug;
-      const centsMoved = Math.round(centsDrug / 100) * 100;
-
-      eventMoveBufferX -= beatsMoved * this.pxPerX;
-      eventMoveBufferY -= (centsMoved * this.pianoNoteHeight) / 100;
-
-      if (beatsMoved || centsMoved) {
-        this.moveSelectedNotes(beatsMoved, centsMoved);
-      }
+    bufferNotes(e) {
+      Vue.set(this, "noteBuffer", {});
+      this.selectedNotes.forEach(noteId => {
+        this.noteBuffer[noteId] = { ...this.events[noteId] };
+      });
     },
-    resizeTool(e) {
-      eventResizeBuffer += e.movementX;
-      const beats = eventResizeBuffer / this.pxPerBeat;
-
-      // Hold control to move without snap
-      const snap = !this.keysState.includes("Control");
-
-      const beatsMoved = snap
-        ? Math.floor(beats / this.beatSnap) * this.beatSnap
-        : beats;
-      eventResizeBuffer -= beatsMoved * this.pxPerBeat;
-      this.$emit("noteresize", {
-        notes: this.selectedNotes,
-        beats: beatsMoved
+    unbufferNotes(e) {
+      this.$emit("noteset", this.noteBuffer);
+      Vue.set(this, "noteBuffer", {});
+    },
+    moveToolUpdate(xMove, yMove) {
+      Object.values(this.noteBuffer).forEach(note => {
+        note.beat = this.events[note.id].beat + xMove;
+        note.pitch = this.events[note.id].pitch + yMove;
+      });
+    },
+    resizeTool(xMove, yMove) {
+      Object.values(this.noteBuffer).forEach(note => {
+        note.beats = this.events[note.id].beats + xMove;
       });
     },
     quantize() {
@@ -365,17 +385,20 @@ export default {
       this.onMouseUp(e);
     },
     boxSelectStart() {
-      this.temporarySelectedNotes.push(...this.selectedNotes);
+      console.log("start");
+
+      this.bufferNotes();
       this.boxSelecting = true;
     },
     boxSelectFinish(e) {
+      console.log("done");
       this.boxSelectUpdate(e);
-      this.temporarySelectedNotes.forEach(noteId => {
-        if (!this.selectedNotes.includes(noteId)) {
-          this.selectedNotes.push(noteId);
+      Object.values(this.noteBuffer).forEach(note => {
+        if (!this.selectedNotes.includes(note.id)) {
+          this.selectedNotes.push(note.id);
         }
       });
-      this.temporarySelectedNotes.splice(0);
+      this.unbufferNotes();
       this.boxSelecting = false;
     },
     boxSelectUpdate(e) {
@@ -392,13 +415,6 @@ export default {
       this.selectedNotes.push(...notes);
 
       this.render();
-    },
-    moveSelectedNotes(beats, cents) {
-      this.$emit("notemove", {
-        notes: this.selectedNotes,
-        beats,
-        cents
-      });
     },
     scanBoxForNotes(x1, y1, x2, y2) {
       let [beat1, pitch1] = this.pxToXY(x1, y1);
