@@ -1,5 +1,5 @@
 <template>
-  <div class="outerDiv">Track List</div>
+  <div class="outerDiv"></div>
 </template>
 
 <script>

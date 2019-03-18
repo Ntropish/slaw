@@ -99,7 +99,7 @@ export default {
         id: "0",
         name: "Track 1",
         events: ["0", "1", "2", "3"],
-        hue: 30
+        hue: 90
       }
     },
     events: {
@@ -269,10 +269,8 @@ export default {
       this.playbackStart = beat;
     },
     onMidiEditorPan({ x }) {
-      const desiredValue = Math.max(0, this.viewStart + x);
-      const change = desiredValue - this.viewStart;
-      this.viewStart += change;
-      this.viewEnd += change;
+      this.viewStart += x;
+      this.viewEnd += x;
     }
   }
 };
@@ -307,8 +305,8 @@ export default {
   grid-column-end: 3;
   grid-row-end: 3;
 }
-.app.midi > .midi-editor {
-  grid-column-start: 2;
+.midi-editor {
+  grid-column-start: 1;
   grid-row-start: 2;
 }
 
@@ -322,16 +320,17 @@ export default {
   grid-row-start: 1;
 }
 
-.app.node > .track-list {
+/* .app.node > .track-list {
   display: none;
 }
 .app.split > .track-list {
   grid-column-end: 2;
   grid-row-end: 3;
-}
+} */
 .track-list {
-  grid-column-start: 1;
-  grid-row-start: 2;
+  /* grid-column-start: 1;
+  grid-row-start: 2; */
+  display: none;
 }
 
 .app.node > .node-editor {
@@ -349,7 +348,7 @@ export default {
 }
 
 .app-item {
-  background: hsla(0, 0%, 10%, 1);
+  background: hsla(0, 0%, 7%, 1);
   color: hsla(0, 0%, 80%, 0.8);
   /* background: hsla(180, 5%, 40%, 1); */
   /* border: 1px solid hsla(180, 5%, 30%, 1); */
