@@ -3,7 +3,7 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ keysState }} {{ noteBuffer }} {{ ids }} {{ selectedNotes }}
+    Keys: {{ keysState }} Mouse: {{ mouseState}} SelectedNotes: {{ selectedNotes }} Notes Hovered: {{ hoveredNotes }}
   </div>
 </template>
 
@@ -30,15 +30,6 @@ const pianoNoteColors = [
   dark,
   light
 ];
-
-// Event dragging ammounts are stored here until
-// they get big enough to turn into an action.
-// This allows drag to snap to grid
-let eventMoveBufferX = 0;
-let eventMoveBufferY = 0;
-let eventResizeBuffer = 0;
-
-let selectedNotesStash = null;
 
 const tools = {
   resize: {
@@ -102,7 +93,6 @@ export default {
     selectedNotes: [],
     noteBuffer: {},
     hoveredNotes: [],
-    cursor: "default",
     boxSelecting: false
   }),
   computed: {
@@ -113,16 +103,22 @@ export default {
       return [this.$refs.background, this.$refs.notes, this.$refs.util];
     },
     dragTool() {
-      if (this.keysState.includes("r")) return "resize";
+      if (this.keysState.includes("a")) return "resize";
       return "move";
     },
-    ids() {
-      return Object.keys(this.events);
+    cursor() {
+      const key2 = this.hoveredNotes.length ? "noteHovered" : "noteNotHovered";
+      const key3 = this.mouseState.length ? "cursorDown" : "cursor";
+      return tools[this.dragTool][key2][key3];
     }
   },
   watch: {
     beatCursor(val) {
       this.render();
+    },
+    dragTool(val) {
+      // start a new transform start/end when changing tools
+      this.redrag();
     }
   },
   methods: {
@@ -235,12 +231,6 @@ export default {
       // utilCtx.lineTo(cursorX, this.canvasHeight);
       // utilCtx.stroke();
     },
-    updateCursor() {
-      const noteIsHovered = this.hoveredNotes.length !== 0;
-      const keyOne = noteIsHovered ? "noteHovered" : "noteNotHovered";
-      const keyTwo = this.mouseIsDown ? "cursorDown" : "cursor";
-      this.cursor = tools[this.dragTool][keyOne][keyTwo];
-    },
     keyDown(e) {
       if (this.keysState.includes("q")) this.quantize();
     },
@@ -310,15 +300,14 @@ export default {
     },
     mouseUp(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
-      eventMoveBufferX = 0;
-      eventMoveBufferY = 0;
       if (this.boxSelecting) {
         this.boxSelectFinish(e);
       }
       this.unbufferNotes();
     },
-    mouseMove({ x, y, e }) {
-      const notes = this.scanForNotes(x, y);
+    mouseMove({ e }) {
+      const notes = this.scanForNotes(e.offsetX, e.offsetY);
+      console.log(notes);
       this.hoveredNotes = notes;
       const note = notes && notes[0];
 
@@ -363,6 +352,16 @@ export default {
       this.$emit("noteset", this.noteBuffer);
       Vue.set(this, "noteBuffer", {});
     },
+    // When switching between tools the last transform needs to
+    // be applied and a new one created based on a new drag
+    redrag() {
+      this.unbufferNotes();
+      this.bufferNotes();
+      if (this.dragStart) {
+        this.dragStart = this.dragEnd;
+        this.dragStart = this.dragEnd;
+      }
+    },
     moveToolUpdate(xMove, yMove) {
       Object.values(this.noteBuffer).forEach(note => {
         note.beat = this.events[note.id].beat + xMove;
@@ -385,13 +384,10 @@ export default {
       this.onMouseUp(e);
     },
     boxSelectStart() {
-      console.log("start");
-
       this.bufferNotes();
       this.boxSelecting = true;
     },
     boxSelectFinish(e) {
-      console.log("done");
       this.boxSelectUpdate(e);
       Object.values(this.noteBuffer).forEach(note => {
         if (!this.selectedNotes.includes(note.id)) {

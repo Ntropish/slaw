@@ -71,9 +71,6 @@ export default {
       this.dragStart = { x, y }
       this.dragEnd = { x, y }
 
-      // const snappedX = this.xSnap ? Math.round(x / this.xSnap) * this.xSnap : x
-      // const snappedY = this.ySnap ? Math.round(y / this.ySnap) * this.ySnap : y
-
       this.mouseDown(e)
 
       this.render()
