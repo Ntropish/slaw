@@ -274,15 +274,15 @@ export default {
           const pitch = Math.round(unsnappedPitch / this.ySnap) * this.ySnap;
           const beat = Math.round(unsnappedBeat / this.xSnap) * this.xSnap;
 
-          console.log("adding:", { beat, pitch, trackId: this.track.id });
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
-        } else {
+        } else if (
+          this.mouseState.includes(0) &&
+          !this.keysState.includes("Shift")
+        ) {
           // Else just move the cursor to the clicked location
           // Snapping can't be disabled on click because ctrl click
           // is already for adding notes
-          this.$emit("cursorset", {
-            beat: this.pxToX(Math.round(x / this.xSnap) * this.xSnap)
-          });
+          this.$emit("cursorset", { beat: this.pxToX(x) });
         }
       }
 
@@ -327,10 +327,12 @@ export default {
         } else if (this.dragTool === "resize") {
           this.resizeTool(xMove, yMove);
         }
-      } else if (this.mouseState.length) {
-        this.$emit("cursorset", {
-          beat: this.pxToX(e.offsetX)
-        });
+      } else if (this.mouseState.includes(0)) {
+        const x = this.pxToX(e.offsetX);
+        const beat = !this.keysState.includes("Control")
+          ? Math.round(x / this.xSnap) * this.xSnap
+          : x;
+        this.$emit("cursorset", { beat });
       }
     },
     bufferNotes(e) {
