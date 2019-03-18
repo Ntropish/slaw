@@ -117,7 +117,7 @@ export default {
       return [
         this.buildBeatMark(backgroundCtx, 0.02, 0, 0.4),
         this.buildBeatMark(backgroundCtx, 0.03, 100),
-        this.buildBeatMark(backgroundCtx, 0.07, 100),
+        this.buildBeatMark(backgroundCtx, 0.06, 100),
         this.buildBeatMark(backgroundCtx, 0.11, 100),
         this.buildBeatMark(backgroundCtx, 0.3, 100, 0.1)
       ];

@@ -302,12 +302,12 @@ export default {
   display: none;
 }
 .app.split > .midi-editor {
-  grid-column-end: 3;
   grid-row-end: 3;
 }
 .midi-editor {
   grid-column-start: 1;
   grid-row-start: 2;
+  grid-column-end: 3;
 }
 
 .transport-bar {
