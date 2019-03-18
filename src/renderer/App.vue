@@ -349,7 +349,7 @@ export default {
 }
 
 .app-item {
-  background: hsla(0, 0%, 20%, 1);
+  background: hsla(0, 0%, 10%, 1);
   color: hsla(0, 0%, 80%, 0.8);
   /* background: hsla(180, 5%, 40%, 1); */
   /* border: 1px solid hsla(180, 5%, 30%, 1); */

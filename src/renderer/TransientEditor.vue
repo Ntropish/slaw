@@ -3,7 +3,7 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    Keys: {{ keysState }} Mouse: {{ mouseState}} SelectedNotes: {{ selectedNotes }} Notes Hovered: {{ hoveredNotes }}
+    <!-- Keys: {{ keysState }} Mouse: {{ mouseState}} SelectedNotes: {{ selectedNotes }} Notes Hovered: {{ hoveredNotes }} -->
   </div>
 </template>
 
@@ -12,8 +12,8 @@ import Vue from "vue";
 import { range } from "lodash";
 import GridLand from "./GridLand";
 
-const dark = "hsla(0, 0%, 0%, 0.09)";
-const light = "hsla(0, 0%, 100%, 0.00)";
+const dark = "hsla(0, 0%, 0%, 0.00)";
+const light = "hsla(0, 0%, 100%, 0.025)";
 const lighter = "hsla(0, 0%, 100%, 0.04)";
 const pianoNoteColors = [
   light,
@@ -53,6 +53,7 @@ const tools = {
     }
   }
 };
+
 export default {
   mixins: [GridLand],
   props: {
@@ -110,6 +111,14 @@ export default {
       const key2 = this.hoveredNotes.length ? "noteHovered" : "noteNotHovered";
       const key3 = this.mouseState.length ? "cursorDown" : "cursor";
       return tools[this.dragTool][key2][key3];
+    },
+    beatMarks() {
+      const [backgroundCtx] = this.contexts;
+      return [
+        this.buildBeatMark(backgroundCtx, 0.05),
+        this.buildBeatMark(backgroundCtx, 0.07),
+        this.buildBeatMark(backgroundCtx, 0.11)
+      ];
     }
   },
   watch: {
@@ -155,8 +164,14 @@ export default {
 
         if (pxX < 0 || line > this.xEnd) continue;
 
+        console.log(this.beatMarks);
+
         backgroundCtx.strokeStyle =
-          line % 4 === 0 ? `hsla(0, 0%, 0%, 0.4)` : `hsla(0, 0%, 0%, 0.2)`;
+          line % 4 === 0
+            ? this.beatMarks[2]
+            : line % 2 === 0
+            ? this.beatMarks[1]
+            : this.beatMarks[0];
 
         backgroundCtx.beginPath();
         backgroundCtx.moveTo(pxX, 0);
@@ -230,6 +245,14 @@ export default {
       utilCtx.moveTo(cursorX, 0);
       utilCtx.lineTo(cursorX, this.canvasHeight);
       utilCtx.stroke();
+    },
+    buildBeatMark(ctx, opacity) {
+      var gradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
+      gradient.addColorStop("0", "hsla(0, 0%, 0%, 0)");
+      gradient.addColorStop("0.2", `hsla(0, 0%, 100%, ${opacity})`);
+      gradient.addColorStop("0.8", `hsla(0, 0%, 100%, ${opacity})`);
+      gradient.addColorStop("1.0", "hsla(0, 0%, 0%, 0)");
+      return gradient;
     },
     keyDown(e) {
       if (this.keysState.includes("q")) this.quantize();
