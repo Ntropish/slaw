@@ -213,6 +213,7 @@ export default {
     },
     onNoteSet(noteBuffer) {
       for (const note of Object.values(noteBuffer)) {
+        if (!this.events[note.id]) return;
         this.events[note.id].beat = note.beat;
         this.events[note.id].pitch = note.pitch;
         this.events[note.id].beats = note.beats;

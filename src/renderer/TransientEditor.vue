@@ -175,7 +175,7 @@ export default {
         if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
         if (bufferedIds.includes(eventId)) {
           notesCtx.fillStyle = `hsla(${this.track.hue -
-            hueMod}, 40%, 60%, 0.2)`;
+            hueMod}, 40%, 60%, 0.15)`;
         } else if (this.selectedNotes.includes(eventId)) {
           notesCtx.fillStyle = `hsla(${this.track.hue -
             hueMod}, 40%, 90%, 0.8)`;
@@ -271,11 +271,10 @@ export default {
         // Ctrl click to add note
         if (this.keysState.includes("Control")) {
           const [unsnappedBeat, unsnappedPitch] = this.pxToXY(x, y);
-          const pitch =
-            Math.round(unsnappedPitch / this.pitchSnap) * this.pitchSnap;
-          const beat =
-            Math.round(unsnappedBeat / this.beatSnap) * this.beatSnap;
+          const pitch = Math.round(unsnappedPitch / this.ySnap) * this.ySnap;
+          const beat = Math.round(unsnappedBeat / this.xSnap) * this.xSnap;
 
+          console.log("adding:", { beat, pitch, trackId: this.track.id });
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
         } else {
           // Else just move the cursor to the clicked location
