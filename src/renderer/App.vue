@@ -143,7 +143,7 @@ export default {
     bpm: 80,
     lastPlaybackUpdate: Date.now(),
     iisPlaying: false,
-    mode: "node",
+    mode: "split",
     split: 0.5
   }),
 

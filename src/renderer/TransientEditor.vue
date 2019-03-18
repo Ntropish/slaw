@@ -280,7 +280,6 @@ export default {
     },
     mouseUp(e) {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
-      this.mouseIsDown = false;
       eventMoveBufferX = 0;
       eventMoveBufferY = 0;
       if (this.boxSelecting) {
