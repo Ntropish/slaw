@@ -82,12 +82,13 @@ export default {
       return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
     }
   },
+
   watch: {
     nodes(nodes) {
       this.render();
     }
   },
-
+  mounted() {},
   methods: {
     render() {
       // Prepare canvases
