@@ -35,7 +35,7 @@ Remove notes with `alt + LMB`
 
 Box select by holding `shift` and dragging
 
-Resize notes by holding `R` and dragging
+Resize notes by holding `A` and dragging
 
 Quantize selected notes by pressing `Q`
 
