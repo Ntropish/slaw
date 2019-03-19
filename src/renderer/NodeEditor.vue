@@ -37,6 +37,10 @@ export default {
     events: {
       type: Object,
       default: () => {}
+    },
+    tempo: {
+      type: Number,
+      default: () => 60
     }
   },
   data: () => ({
@@ -88,7 +92,9 @@ export default {
       this.render();
     }
   },
-  mounted() {},
+  mounted() {
+    const osc = this.context.createOscillator();
+  },
   methods: {
     render() {
       // Prepare canvases

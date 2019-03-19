@@ -40,6 +40,7 @@ import TransientEditor from "renderer/TransientEditor.vue";
 import TrackList from "renderer/TrackList.vue";
 import MenuPanel from "renderer/MenuPanel.vue";
 import NodeEditor from "renderer/NodeEditor.vue";
+import Transporter from "renderer/Transporter.js";
 const graph = {
   nodes: {
     "0": {
@@ -90,62 +91,67 @@ export default {
     MenuPanel,
     NodeEditor
   },
-  data: () => ({
-    trackCount: 1,
-    eventCount: 4,
-    nodeCount: 2,
-    tracks: {
-      "0": {
-        id: "0",
-        name: "Track 1",
-        events: ["0", "1", "2", "3"],
-        hue: 90
-      }
-    },
-    events: {
-      "0": {
-        id: "0",
-        pitch: -1300,
-        beat: 0,
-        velocity: 0.8,
-        beats: 1
+  data: () => {
+    const context = new AudioContext();
+    return {
+      trackCount: 1,
+      eventCount: 4,
+      nodeCount: 2,
+      tracks: {
+        "0": {
+          id: "0",
+          name: "Track 1",
+          events: ["0", "1", "2", "3"],
+          hue: 90
+        }
       },
-      "1": {
-        id: "1",
-        pitch: -1400,
-        beat: 1,
-        velocity: 0.6,
-        beats: 0.95
+      events: {
+        "0": {
+          id: "0",
+          pitch: -1300,
+          beat: 0,
+          velocity: 0.8,
+          beats: 1
+        },
+        "1": {
+          id: "1",
+          pitch: -1400,
+          beat: 1,
+          velocity: 0.6,
+          beats: 0.95
+        },
+        "2": {
+          id: "2",
+          pitch: -1320,
+          beat: 2,
+          velocity: 0.8,
+          beats: 1.02
+        },
+        "3": {
+          id: "3",
+          pitch: -1400,
+          beat: 3,
+          velocity: 0.6,
+          beats: 1
+        }
       },
-      "2": {
-        id: "2",
-        pitch: -1320,
-        beat: 2,
-        velocity: 0.8,
-        beats: 1.02
-      },
-      "3": {
-        id: "3",
-        pitch: -1400,
-        beat: 3,
-        velocity: 0.6,
-        beats: 1
-      }
-    },
-    nodes: {},
-    edges: {},
-    viewStart: 0,
-    viewEnd: 16,
-    beatSnap: 1 / 4,
-    pitchSnap: 100,
-    playbackLocation: 1.3,
-    playbackStart: 1.3,
-    bpm: 80,
-    lastPlaybackUpdate: Date.now(),
-    iisPlaying: false,
-    mode: "split",
-    split: 0.5
-  }),
+      nodes: {},
+      edges: {},
+      viewStart: 0,
+      viewEnd: 16,
+      beatSnap: 1 / 4,
+      pitchSnap: 100,
+      playbackLocation: 1.3,
+      playbackStart: 1.3,
+      bpm: 80,
+      lastPlaybackUpdate: Date.now(),
+      iisPlaying: false,
+      mode: "split",
+      split: 0.5,
+      context,
+      transporter: new Transporter(context)
+    };
+  },
 
   computed: {
     appGridStyle() {
@@ -179,8 +185,10 @@ export default {
     }
   },
   mounted() {
+    dispatchEvent(new CustomEvent("test"));
     window.addEventListener("keydown", this.onKeyDown);
     this.loadGraph(graph);
+    this.transporter.on("schedule", this.scheduleCursor);
   },
   beforeDestroy() {
     window.removeEventListener("keydown", this.onKeyDown);
@@ -192,7 +200,8 @@ export default {
       }
     },
     onKeyDown(e) {
-      if (e.key === " ") this.isPlaying = !this.isPlaying;
+      if (e.key === " ") this.transporter.play();
+      if (e.key === "s") this.transporter.pause();
       else if (e.key === "Tab") {
         if (this.mode === "split") this.mode = "midi";
         else if (this.mode === "midi") this.mode = "node";
@@ -210,6 +219,9 @@ export default {
           this.updatePlayback();
         }
       });
+    },
+    scheduleCursor(data) {
+      console.log("schedule", data);
     },
     onNoteSet(noteBuffer) {
       for (const note of Object.values(noteBuffer)) {
