@@ -223,8 +223,6 @@ export default {
     },
     clearCursorSchedule() {
       requestAnimationFrame(() => {
-        console.log("clearded:", this.timeouts);
-
         for (let timeout of this.timeouts) {
           window.clearTimeout(timeout);
         }
