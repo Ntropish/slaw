@@ -41,6 +41,7 @@ import TrackList from "renderer/TrackList.vue";
 import MenuPanel from "renderer/MenuPanel.vue";
 import NodeEditor from "renderer/NodeEditor.vue";
 import Transporter from "renderer/Transporter.js";
+import { clearTimeout } from "timers";
 const graph = {
   nodes: {
     "0": {
@@ -147,9 +148,11 @@ export default {
       lastPlaybackUpdate: Date.now(),
       iisPlaying: false,
       mode: "split",
-      split: 0.5,
+      split: 0.3,
       context,
-      transporter: new Transporter(context)
+      transporter: new Transporter(context),
+      timeouts: new Array(15),
+      lastStoredTimeout: 0
     };
   },
 
@@ -162,18 +165,6 @@ export default {
             gridTemplateRows: `6em ${this.split}fr ${1 - this.split}fr`
           }
         : {};
-    },
-    isPlaying: {
-      get() {
-        return this.iisPlaying;
-      },
-      set(isPlaying) {
-        if (isPlaying !== this.iisPlaying) {
-          this.iisPlaying = isPlaying;
-          this.lastPlaybackUpdate = Date.now();
-          if (isPlaying) this.updatePlayback();
-        }
-      }
     }
   },
   watch: {
@@ -189,6 +180,7 @@ export default {
     window.addEventListener("keydown", this.onKeyDown);
     this.loadGraph(graph);
     this.transporter.on("schedule", this.scheduleCursor);
+    this.transporter.on("clear", this.clearCursorSchedule);
   },
   beforeDestroy() {
     window.removeEventListener("keydown", this.onKeyDown);
@@ -200,7 +192,7 @@ export default {
       }
     },
     onKeyDown(e) {
-      if (e.key === " ") this.transporter.play();
+      if (e.key === " ") this.transporter.play(this.playbackStart);
       if (e.key === "s") this.transporter.pause();
       else if (e.key === "Tab") {
         if (this.mode === "split") this.mode = "midi";
@@ -208,20 +200,24 @@ export default {
         else if (this.mode === "node") this.mode = "split";
       }
     },
-    updatePlayback() {
-      const now = Date.now();
-      const timeProgressed = now - this.lastPlaybackUpdate;
-      const beatsProgressed = (timeProgressed / 60000) * this.bpm;
-      this.playbackLocation += beatsProgressed;
-      this.lastPlaybackUpdate = now;
-      requestAnimationFrame(() => {
-        if (this.iisPlaying) {
-          this.updatePlayback();
-        }
-      });
-    },
     scheduleCursor(data) {
-      console.log("schedule", data);
+      // Small hack to store the last 20 timeouts from here so they can be
+      // cleared on pause
+      let id = setTimeout(() => {
+        console.log("executed:", id);
+        this.playbackLocation = data.beat;
+      }, data.after);
+      console.log("scheduled:", id);
+      this.timeouts[this.lastStoredTimeout] = id;
+      // console.log(data.beat, data.after, this.timeouts[this.lastStoredTimeout]);
+
+      this.lastStoredTimeout = (this.lastStoredTimeout + 1) % 15;
+    },
+    clearCursorSchedule() {
+      for (let timeout of this.timeouts) {
+        clearTimeout(timeout);
+        console.log("cleared:", timeout);
+      }
     },
     onNoteSet(noteBuffer) {
       for (const note of Object.values(noteBuffer)) {
