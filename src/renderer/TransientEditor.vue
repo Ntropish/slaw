@@ -84,7 +84,8 @@ export default {
     beatCursor: {
       type: Number,
       default: () => 0
-    }
+    },
+    transporter: { type: Object, required: true }
   },
   data: () => ({
     yStart: -2000,
@@ -239,7 +240,7 @@ export default {
         );
       }
 
-      const cursorX = this.pxOfX(this.beatCursor);
+      const cursorX = Math.round(this.pxOfX(this.beatCursor));
       utilCtx.strokeStyle = this.gradients[4];
       utilCtx.beginPath();
       utilCtx.moveTo(cursorX, 0);
@@ -308,7 +309,8 @@ export default {
           // Else just move the cursor to the clicked location
           // Snapping can't be disabled on click because ctrl click
           // is already for adding notes
-          this.$emit("cursorset", { beat: this.pxToX(x) });
+          // this.$emit("cursorset", { beat: this.pxToX(x) });
+          this.transporter.pause(this.pxToX(x));
         }
       }
 
@@ -325,6 +327,8 @@ export default {
       const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
       if (this.boxSelecting) {
         this.boxSelectFinish(e);
+      } else if (!note) {
+        this.transporter.play(this.pxToX(e.offsetX));
       }
       this.unbufferNotes();
     },
@@ -358,7 +362,7 @@ export default {
         const beat = !this.keysState.includes("Control")
           ? Math.round(x / this.xSnap) * this.xSnap
           : x;
-        this.$emit("cursorset", { beat });
+        this.transporter.jump(beat);
       }
     },
     bufferNotes(e) {

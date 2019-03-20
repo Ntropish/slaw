@@ -13,13 +13,13 @@
       :x-snap="beatSnap"
       :y-snap="pitchSnap"
       :beat-cursor="playbackLocation"
+      :transporter="transporter"
       @noteset="onNoteSet"
       @noteadd="onAddNote"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
       @notequantize="onQuantizeNote"
       @notecopy="onCopyNote"
-      @cursorset="onCursorSet"
       @pan="onMidiEditorPan"
     />
     <node-editor
@@ -151,7 +151,7 @@ export default {
       split: 0.3,
       context,
       transporter: new Transporter(context),
-      timeouts: new Array(15),
+      timeouts: new Array(50),
       lastStoredTimeout: 0
     };
   },
@@ -178,12 +178,14 @@ export default {
   mounted() {
     dispatchEvent(new CustomEvent("test"));
     window.addEventListener("keydown", this.onKeyDown);
+    window.addEventListener("keyup", this.onKeyUp);
     this.loadGraph(graph);
     this.transporter.on("schedule", this.scheduleCursor);
     this.transporter.on("clear", this.clearCursorSchedule);
   },
   beforeDestroy() {
     window.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener("keyup", this.onKeyUp);
   },
   methods: {
     loadGraph(graph) {
@@ -192,7 +194,7 @@ export default {
       }
     },
     onKeyDown(e) {
-      if (e.key === " ") this.transporter.play(this.playbackStart);
+      if (e.key === " ") this.transporter.pause();
       if (e.key === "s") this.transporter.pause();
       else if (e.key === "Tab") {
         if (this.mode === "split") this.mode = "midi";
@@ -200,24 +202,33 @@ export default {
         else if (this.mode === "node") this.mode = "split";
       }
     },
+    onKeyUp(e) {
+      if (e.key === " ") this.transporter.play(this.playbackStart);
+    },
     scheduleCursor(data) {
-      // Small hack to store the last 20 timeouts from here so they can be
-      // cleared on pause
-      let id = setTimeout(() => {
-        console.log("executed:", id);
+      // Do it syncronously if possible
+      if (data.after === 0) {
         this.playbackLocation = data.beat;
-      }, data.after);
-      console.log("scheduled:", id);
-      this.timeouts[this.lastStoredTimeout] = id;
-      // console.log(data.beat, data.after, this.timeouts[this.lastStoredTimeout]);
+      } else {
+        let id = window.setTimeout(() => {
+          this.playbackLocation = data.beat;
+        }, data.after);
 
-      this.lastStoredTimeout = (this.lastStoredTimeout + 1) % 15;
+        this.timeouts[this.lastStoredTimeout] = id;
+
+        // Small hack to store the last few timeouts from here so they can be
+        // cleared on pause
+        this.lastStoredTimeout = (this.lastStoredTimeout + 1) % 50;
+      }
     },
     clearCursorSchedule() {
-      for (let timeout of this.timeouts) {
-        clearTimeout(timeout);
-        console.log("cleared:", timeout);
-      }
+      requestAnimationFrame(() => {
+        console.log("clearded:", this.timeouts);
+
+        for (let timeout of this.timeouts) {
+          window.clearTimeout(timeout);
+        }
+      });
     },
     onNoteSet(noteBuffer) {
       for (const note of Object.values(noteBuffer)) {
@@ -273,8 +284,9 @@ export default {
       }
     },
     onCursorSet({ beat }) {
-      this.playbackLocation = beat;
-      this.playbackStart = beat;
+      // this.playbackLocation = beat;
+      // this.transporter.play(beat);
+      // this.playbackStart = beat;
     },
     onMidiEditorPan({ x }) {
       this.viewStart += x;
