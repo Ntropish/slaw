@@ -53,6 +53,8 @@ export default class Transporter extends EventEmitter {
   // This function automatically speeds up or slows down
   // to try to maintain a lead of this.scheduleAhead ms on current time
   schedule() {
+    const now = this.context.getOutputTimestamp().contextTime
+
     // This is how far ahead things are currently scheduled
     const ahead = this.position - this.currentPosition
 
@@ -66,6 +68,7 @@ export default class Transporter extends EventEmitter {
     this.emit('schedule', {
       beat: this.position,
       after: ahead,
+      at: now + ahead,
       beats,
     })
     this.position += beats
