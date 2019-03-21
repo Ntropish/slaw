@@ -98,40 +98,59 @@ export default {
   },
   mounted() {
     const osc = this.transporter.context.createOscillator();
+    osc.connect(this.transporter.context.destination);
     const track = this.tracks[0];
     const notesPlaying = [];
+    const timeoutBufferSize = 50;
+    const timeoutBuffer = new Array(timeoutBufferSize);
+    let timeoutIndex = 0;
 
     this.transporter.on("schedule", data => {
       track.events
         .map(id => this.events[id])
         .forEach(note => {
           if (note.beat >= data.beat && note.beat < data.beat + data.beats) {
-            const delay =
-              data.after + (note.beat - data.beat) / this.transporter.bpms;
-            window.setTimeout(() => {
-              console.log("on", note.id);
+            const bpms = this.transporter.bpms;
+            const delay = data.after + (note.beat - data.beat) / bpms;
+            timeoutBuffer[timeoutIndex++] = window.setTimeout(() => {
+              // Because this is monophonic clear playing notes
+              clearNotes();
+              triggerNote(note.id, delay);
               notesPlaying.push(note.id);
             }, delay);
             const offDelay =
-              data.after +
-              (note.beat + note.beats - data.beat) / this.transporter.bpms;
-            window.setTimeout(() => {
-              const index = notesPlaying.indexOf(note.id);
-              if (index === -1) return;
-              console.log("off", note.id);
-              notesPlaying.splice(index);
+              data.after + (note.beat + note.beats - data.beat) / bpms;
+            timeoutBuffer[timeoutIndex++] = window.setTimeout(() => {
+              clearNote(note.id);
             }, offDelay);
           }
         });
-      // console.log("schedule", data);
     });
 
     this.transporter.on("clear", () => {
-      while (notesPlaying.length) {
-        const note = notesPlaying.pop();
-        console.log("off", note);
+      for (let i = 0; i < timeoutBufferSize; i++) {
+        window.clearTimeout(timeoutBuffer[i]);
       }
+      clearNotes();
     });
+
+    function triggerNote(id) {
+      console.log("on", id);
+    }
+
+    function clearNote(id) {
+      const index = notesPlaying.indexOf(id);
+      if (index === -1) return;
+      console.log("off", id);
+      notesPlaying.splice(index);
+    }
+
+    function clearNotes() {
+      while (notesPlaying.length) {
+        const note = notesPlaying[0];
+        clearNote(note);
+      }
+    }
   },
   methods: {
     render() {
