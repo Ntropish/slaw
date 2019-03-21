@@ -17,6 +17,7 @@
 import { range } from "lodash";
 import GridLand from "./GridLand";
 import AudioNode from "./AudioNode.vue";
+import { setTimeout } from "timers";
 const tools = {};
 export default {
   components: { AudioNode },
@@ -101,11 +102,16 @@ export default {
     const notesPlaying = [];
 
     this.transporter.on("schedule", data => {
+      console.log(data);
       track.events
         .map(id => this.events[id])
         .forEach(note => {
-          if (note.beat > data.beat && note.beat < data.beat + data.beats) {
-            console.log("on", note.id);
+          if (note.beat >= data.beat && note.beat < data.beat + data.beats) {
+            const delay =
+              data.after + (note.beat - data.beat) / this.transporter.bpms;
+            window.setTimeout(() => {
+              console.log("on", note.id);
+            }, delay);
           }
         });
       // console.log("schedule", data);
