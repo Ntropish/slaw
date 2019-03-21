@@ -294,13 +294,12 @@ export default {
       }
 
       if (!noteClicked) {
+        const [unsnappedBeat, unsnappedPitch] = this.pxToXY(x, y);
+        const pitch = Math.round(unsnappedPitch / this.ySnap) * this.ySnap;
+        const beat = Math.round(unsnappedBeat / this.xSnap) * this.xSnap;
         selectedNotes.splice(0);
         // Ctrl click to add note
         if (this.keysState.includes("Control")) {
-          const [unsnappedBeat, unsnappedPitch] = this.pxToXY(x, y);
-          const pitch = Math.round(unsnappedPitch / this.ySnap) * this.ySnap;
-          const beat = Math.round(unsnappedBeat / this.xSnap) * this.xSnap;
-
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
         } else if (
           this.mouseState.includes(0) &&
@@ -309,8 +308,9 @@ export default {
           // Else just move the cursor to the clicked location
           // Snapping can't be disabled on click because ctrl click
           // is already for adding notes
-          // this.$emit("cursorset", { beat: this.pxToX(x) });
-          this.transporter.pause(this.pxToX(x));
+          this.$emit("playbackstartset", beat);
+          this.transporter.jump(beat);
+          this.transporter.pause();
         }
       }
 
@@ -363,8 +363,12 @@ export default {
           ? Math.round(x / this.xSnap) * this.xSnap
           : x;
         this.transporter.jump(beat);
+        this.$emit("playbackstartset", beat);
       }
     },
+
+    // Note buffer sets aside notes into a bucket to operate on
+    // This leaves the originals unchanged until ready to apply
     bufferNotes(e) {
       Vue.set(this, "noteBuffer", {});
       this.selectedNotes.forEach(noteId => {

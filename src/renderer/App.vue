@@ -21,6 +21,7 @@
       @notequantize="onQuantizeNote"
       @notecopy="onCopyNote"
       @pan="onMidiEditorPan"
+      @playbackstartset="onPlaybackStartSet"
     />
     <node-editor
       ref="nodeEditor"
@@ -145,7 +146,7 @@ export default {
       beatSnap: 1 / 4,
       pitchSnap: 100,
       playbackLocation,
-      playbackStart: 1.3,
+      playbackStart: playbackLocation,
       bpm: 80,
       lastPlaybackUpdate: Date.now(),
       iisPlaying: false,
@@ -182,7 +183,8 @@ export default {
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
     this.loadGraph(graph);
-    this.transporter.on("schedule", this.scheduleCursor);
+    // this.transporter.on("schedule", this.scheduleCursor);
+    this.transporter.on("positionUpdate", this.scheduleCursor);
     this.transporter.on("clear", this.clearCursorSchedule);
   },
   beforeDestroy() {
@@ -205,23 +207,13 @@ export default {
       }
     },
     onKeyUp(e) {
-      if (e.key === " ") this.transporter.play(this.playbackStart);
-    },
-    scheduleCursor(data) {
-      // Do it syncronously if possible
-      if (data.after === 0) {
-        this.playbackLocation = data.beat;
-      } else {
-        let id = window.setTimeout(() => {
-          this.playbackLocation = data.beat;
-        }, data.after);
-
-        this.timeouts[this.lastStoredTimeout] = id;
-
-        // Small hack to store the last few timeouts from here so they can be
-        // cleared on pause
-        this.lastStoredTimeout = (this.lastStoredTimeout + 1) % 50;
+      if (e.key === " ") {
+        this.transporter.jump(this.playbackStart);
+        this.transporter.play();
       }
+    },
+    scheduleCursor(beat) {
+      this.playbackLocation = beat;
     },
     clearCursorSchedule() {
       requestAnimationFrame(() => {
@@ -283,10 +275,8 @@ export default {
         this.tracks[trackId].events.push(newNoteId);
       }
     },
-    onCursorSet({ beat }) {
-      // this.playbackLocation = beat;
-      // this.transporter.play(beat);
-      // this.playbackStart = beat;
+    onPlaybackStartSet(beat) {
+      this.playbackStart = beat;
     },
     onMidiEditorPan({ x }) {
       this.viewStart += x;

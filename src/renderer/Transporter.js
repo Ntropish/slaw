@@ -3,94 +3,81 @@ import EventEmitter from 'events'
 export default class Transporter extends EventEmitter {
   constructor(context, position) {
     super()
+    // Position is in beats, beats after this still need to be scheduled
     this.position = position
-    this.currentPosition = position
+    // Store this to make calculating stuff easier
+    this.startPosition = position
     this.bpm = 80
+    this.bps = this.bpm / 60
+    this.bpms = this.bps / 1000
+
     this.lastSchedule = 0
     this.scheduleAhead = 100
-    this.scheduleSize = 20
+    this.scheduleSize = 30
+    this.scheduleBeatsSize = this.scheduleSize * 60000 * this.bpm
     this.timerID = null
     this.context = context
     this.isPlaying = false
-
-    // Tracks the last scheduling so
-    // current position can be calculated on pause
-    this.lastPosition = this.position
-    this.lastNow = 0
-    this.lastAfter = 0
   }
 
-  play(start) {
+  play() {
+    if (this.isPlaying) return
     this.isPlaying = true
-    window.clearTimeout(this.timerID)
-    if (typeof start === 'number') this.position = start
-    this.lastSchedule = this.context.getOutputTimestamp().contextTime * 1000
+    this.jump(this.position)
     this.schedule()
   }
 
-  pause(start) {
-    if (this.isPlaying) {
-      window.clearTimeout(this.timerID)
-      if (typeof start === 'number') this.position = start
-      this.emit('clear')
-    }
-    const now = this.context.getOutputTimestamp().contextTime
-    let beat = start
-    // If an exact time wasn't given we have to calculate the current position
-    // (Only the buffered position is tracked)
-    if (typeof start !== 'number') {
-      const timeDiff = now - this.lastNow
-      beat =
-        this.lastPosition - ((this.lastAfter + timeDiff) / 60000) * this.bpm
-    }
-
-    this.emit('schedule', {
-      beat,
-      now: now,
-      after: 0,
-      beats: 0,
-    })
+  pause() {
+    if (!this.isPlaying) return
+    window.clearTimeout(this.timerID)
+    this.emit('clear')
+    this.emit('positionUpdate', this.currentPosition)
+    this.position = this.currentPosition
     this.isPlaying = false
   }
 
   jump(time) {
-    if (this.isPlaying) {
-      this.play(time)
-    } else {
-      this.pause(time)
-    }
+    if (this.isPlaying) this.emit('clear')
+    this.position = time
+    this.startPosition = time
+    this.startTime = this.context.getOutputTimestamp().contextTime
+    this.emit('positionUpdate', this.currentPosition)
   }
 
   // This function automatically speeds up or slows down
-  // to try to maintain a lead of this.scheduleAhead ms
+  // to try to maintain a lead of this.scheduleAhead ms on current time
   schedule() {
-    const now = this.context.getOutputTimestamp().contextTime
+    // positionUpdate is mostly just to update time cursor
+    // Could be moved to a setInterval instead of here
+    const currentPosition = this.currentPosition
+    this.emit('positionUpdate', currentPosition)
 
-    const after = this.lastSchedule - now * 1000
+    // This is how far ahead things are currently scheduled
+    const ahead = this.position - currentPosition
 
-    // // Number of beats progressed
-    const beats = (this.scheduleSize / 60000) * this.bpm
+    // Number of ms needed to schedule to maintain scheduleAhead
+    const schedulingNeeded = this.scheduleAhead - ahead / this.bpms
 
+    const nextSchedule = Math.max(0, ahead) / this.bpms
+
+    // Number of beats going to be scheduled in this function call
+    const beats = clamp(0, schedulingNeeded * this.bpms, this.scheduleBeatsSize)
     this.emit('schedule', {
       beat: this.position,
-      now: now,
-      after,
+      after: ahead,
       beats,
     })
     this.position += beats
-
-    this.lastPosition = this.position
-    this.lastNow = now
-    this.lastAfter = after
-
-    this.lastSchedule += this.scheduleSize
-
-    // Always work off of these context given times to maintain parity
-    const schedulingNeeded = this.scheduleAhead - after
-    const nextSchedule = Math.max(20, -schedulingNeeded)
-    this.timerID = window.setTimeout(() => {
-      // requestAnimationFrame(() => this.schedule())
-      this.schedule()
-    }, nextSchedule)
+    this.timerID = window.setTimeout(this.schedule.bind(this), nextSchedule)
   }
+
+  // Only really valid while playing
+  get currentPosition() {
+    const now = this.context.getOutputTimestamp().contextTime
+    return this.startPosition + (now - this.startTime) * this.bps
+  }
+}
+
+function clamp(min, val, max) {
+  return Math.max(min, Math.min(max, val))
 }
