@@ -16,6 +16,7 @@ export default class Transporter extends EventEmitter {
     this.scheduleSize = 30
     this.scheduleBeatsSize = this.scheduleSize * 60000 * this.bpm
     this.timerID = null
+    this.positionUpdateID = null
     this.context = context
     this.isPlaying = false
   }
@@ -25,10 +26,15 @@ export default class Transporter extends EventEmitter {
     this.isPlaying = true
     this.jump(this.position)
     this.schedule()
+    // Update 60 times a second
+    this.positionUpdateID = setInterval(() => {
+      this.emit('positionUpdate', this.currentPosition)
+    }, 16)
   }
 
   pause() {
     if (!this.isPlaying) return
+    window.clearInterval(this.positionUpdateID)
     window.clearTimeout(this.timerID)
     this.emit('clear')
     this.emit('positionUpdate', this.currentPosition)
@@ -47,13 +53,8 @@ export default class Transporter extends EventEmitter {
   // This function automatically speeds up or slows down
   // to try to maintain a lead of this.scheduleAhead ms on current time
   schedule() {
-    // positionUpdate is mostly just to update time cursor
-    // Could be moved to a setInterval instead of here
-    const currentPosition = this.currentPosition
-    this.emit('positionUpdate', currentPosition)
-
     // This is how far ahead things are currently scheduled
-    const ahead = this.position - currentPosition
+    const ahead = this.position - this.currentPosition
 
     // Number of ms needed to schedule to maintain scheduleAhead
     const schedulingNeeded = this.scheduleAhead - ahead / this.bpms
