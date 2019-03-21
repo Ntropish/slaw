@@ -97,8 +97,18 @@ export default {
   },
   mounted() {
     const osc = this.transporter.context.createOscillator();
+    const track = this.tracks[0];
+    const notesPlaying = [];
+
     this.transporter.on("schedule", data => {
-      console.log("schedule", data);
+      track.events
+        .map(id => this.events[id])
+        .forEach(note => {
+          if (note.beat > data.beat && note.beat < data.beat + data.beats) {
+            console.log("on", note.id);
+          }
+        });
+      // console.log("schedule", data);
     });
   },
   methods: {
