@@ -102,7 +102,6 @@ export default {
     const notesPlaying = [];
 
     this.transporter.on("schedule", data => {
-      console.log(data);
       track.events
         .map(id => this.events[id])
         .forEach(note => {
@@ -111,6 +110,16 @@ export default {
               data.after + (note.beat - data.beat) / this.transporter.bpms;
             window.setTimeout(() => {
               console.log("on", note.id);
+              notesPlaying.push(note.id);
+            }, delay);
+            const offDelay =
+              data.after +
+              (note.beat + note.beats - data.beat) / this.transporter.bpms;
+            window.setTimeout(() => {
+              const index = notesPlaying.indexOf(note.id);
+              if (index === -1) return;
+              console.log("off", note.id);
+              notesPlaying.splice(index);
             }, delay);
           }
         });
