@@ -41,10 +41,13 @@ export default {
     tempo: {
       type: Number,
       default: () => 60
+    },
+    transporter: {
+      type: Object,
+      required: true
     }
   },
   data: () => ({
-    context: new AudioContext(),
     processors: [],
     modules: {},
     gridSize: 25,
@@ -61,6 +64,7 @@ export default {
       default: () => 1
     }
   }),
+
   computed: {
     canvases() {
       const canvasNames = ["background", "nodes", "edges"];
@@ -86,14 +90,16 @@ export default {
       return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
     }
   },
-
   watch: {
     nodes(nodes) {
       this.render();
     }
   },
   mounted() {
-    const osc = this.context.createOscillator();
+    const osc = this.transporter.context.createOscillator();
+    this.transporter.on("schedule", data => {
+      console.log("schedule", data);
+    });
   },
   methods: {
     render() {
@@ -179,7 +185,7 @@ export default {
       const moduleToLoad = import("renderer/" + moduleSpecifier);
       for (const processor of moduleToLoad.processors) {
         if (this.processors.includes(processor)) continue;
-        await this.context.audioWorklet.addModule(processor);
+        await this.transporter.context.audioWorklet.addModule(processor);
         this.processors.push(processor);
       }
     }

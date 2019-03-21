@@ -29,6 +29,7 @@
       :edges="edges"
       :tracks="tracks"
       :events="events"
+      :transporter="transporter"
     />
   </div>
 </template>
@@ -94,6 +95,7 @@ export default {
   },
   data: () => {
     const context = new AudioContext();
+    const playbackLocation = 1;
     return {
       trackCount: 1,
       eventCount: 4,
@@ -142,7 +144,7 @@ export default {
       viewEnd: 16,
       beatSnap: 1 / 4,
       pitchSnap: 100,
-      playbackLocation: 1.3,
+      playbackLocation,
       playbackStart: 1.3,
       bpm: 80,
       lastPlaybackUpdate: Date.now(),
@@ -150,7 +152,7 @@ export default {
       mode: "split",
       split: 0.3,
       context,
-      transporter: new Transporter(context),
+      transporter: new Transporter(context, playbackLocation),
       timeouts: new Array(50),
       lastStoredTimeout: 0
     };

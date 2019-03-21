@@ -1,9 +1,10 @@
 import EventEmitter from 'events'
 
 export default class Transporter extends EventEmitter {
-  constructor(context) {
+  constructor(context, position) {
     super()
-    this.position = 0
+    this.position = position
+    this.currentPosition = position
     this.bpm = 80
     this.lastSchedule = 0
     this.scheduleAhead = 100

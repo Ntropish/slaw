@@ -79,7 +79,6 @@ export default {
     onMouseUp(e) {
       const index = this.mouseState.indexOf(e.button)
       if (index !== -1) this.mouseState.splice(index, 1)
-      this.mouseUp(e)
       this.dragStart = null
       this.dragEnd = null
       this.render()
