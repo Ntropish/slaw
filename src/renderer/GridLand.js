@@ -81,6 +81,7 @@ export default {
       if (index !== -1) this.mouseState.splice(index, 1)
       this.dragStart = null
       this.dragEnd = null
+      this.mouseUp(e)
       this.render()
     },
     onMouseMove(e) {

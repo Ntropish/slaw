@@ -323,12 +323,10 @@ export default {
 
       this.bufferNotes();
     },
+    // global mouseup called by gridland mixin
     mouseUp(e) {
-      const note = this.scanForNotes(e.offsetX, e.offsetY)[0];
       if (this.boxSelecting) {
         this.boxSelectFinish(e);
-      } else if (!note) {
-        this.transporter.play(this.pxToX(e.offsetX));
       }
       this.unbufferNotes();
     },
@@ -415,6 +413,7 @@ export default {
       this.boxSelecting = true;
     },
     boxSelectFinish(e) {
+      this.boxSelecting = false;
       this.boxSelectUpdate(e);
       Object.values(this.noteBuffer).forEach(note => {
         if (!this.selectedNotes.includes(note.id)) {
@@ -422,9 +421,9 @@ export default {
         }
       });
       this.unbufferNotes();
-      this.boxSelecting = false;
     },
     boxSelectUpdate(e) {
+      if (!this.boxSelecting) return;
       this.boxSelectEnd = { x: e.offsetX, y: e.offsetY };
 
       const notes = this.scanBoxForNotes(

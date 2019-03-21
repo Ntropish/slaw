@@ -120,10 +120,17 @@ export default {
               if (index === -1) return;
               console.log("off", note.id);
               notesPlaying.splice(index);
-            }, delay);
+            }, offDelay);
           }
         });
       // console.log("schedule", data);
+    });
+
+    this.transporter.on("clear", () => {
+      while (notesPlaying.length) {
+        const note = notesPlaying.pop();
+        console.log("off", note);
+      }
     });
   },
   methods: {
