@@ -102,7 +102,7 @@ export default {
     osc.connect(this.transporter.context.destination);
     const now = this.transporter.context.getOutputTimestamp().contextTime;
     const track = this.tracks[0];
-    const oscillators = [];
+    const nodes = [];
 
     this.transporter.on("schedule", data => {
       const events = [];
@@ -119,6 +119,8 @@ export default {
             const noteEnd = at + note.beats / this.transporter.bps;
             const [a, d, s, r] = [0.05, 0.1, 0.7, 0.1];
 
+            console.log(envelope.gain);
+
             envelope.gain.setValueAtTime(0, at);
             envelope.gain.linearRampToValueAtTime(1, at + a);
             envelope.gain.linearRampToValueAtTime(s, at + a + d);
@@ -129,10 +131,25 @@ export default {
             osc.start(at);
             osc.stop(at + note.beats / this.transporter.bps + r);
             osc.onended = () => {
-              osc.disconnect();
+              if (nodes.includes(osc)) {
+                nodes.splice(nodes.indexOf(osc), 1);
+                osc.disconnect();
+              }
+              if (nodes.includes(envelope)) {
+                nodes.splice(nodes.indexOf(envelope), 1);
+                envelope.disconnect();
+              }
             };
+            nodes.push(osc);
+            nodes.push(envelope);
           }
         });
+    });
+
+    this.transporter.on("clear", () => {
+      while (nodes.length) {
+        nodes.pop().disconnect();
+      }
     });
   },
   methods: {
