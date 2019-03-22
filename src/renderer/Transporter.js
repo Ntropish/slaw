@@ -70,6 +70,7 @@ export default class Transporter extends EventEmitter {
       after: ahead,
       at: now + ahead,
       beats,
+      now,
     })
     this.position += beats
     this.timerID = window.setTimeout(this.schedule.bind(this), nextSchedule)

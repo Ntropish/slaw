@@ -98,17 +98,26 @@ export default {
   },
   mounted() {
     const osc = this.transporter.context.createOscillator();
-    osc.connect(this.transporter.context.destination);
-    const track = this.tracks[0];
-    let isPlaying = false;
-    let timeoutIndex = 0;
 
+    osc.connect(this.transporter.context.destination);
+    const now = this.transporter.context.getOutputTimestamp().contextTime;
+    const track = this.tracks[0];
+    let timers = [];
+    let timerIndex = 0;
+    let isPlaying = false;
+    const delay = (fn, seconds, msg) => {
+      console.log("register delay", msg);
+      if (!seconds) return fn();
+      timers[timerIndex++] = window.setTimeout(fn, seconds * 1000);
+    };
     this.transporter.on("schedule", data => {
+      console.log(data);
       const events = [];
       track.events
         .map(id => this.events[id])
         .forEach(note => {
           const at = data.at + (note.beat - data.beat) / this.transporter.bps;
+          // console.log(note, data);
           if (note.beat >= data.beat && note.beat < data.beat + data.beats) {
             events.push({
               type: "on",
@@ -124,7 +133,7 @@ export default {
             events.push({
               type: "off",
               beat: note.beat + note.beats,
-              at
+              at: at + note.beats / this.transporter.bps
             });
           }
         });
@@ -147,55 +156,49 @@ export default {
           return true;
         });
 
-      filteredEvents.forEach(event => {
-        if (event.type === "on") {
-          if (!isPlaying) osc.start(event.at);
-          isPlaying = true;
-          osc.frequency.setValueAtTime(event.frequency, event.at);
-        } else {
-          osc.stop(event.at);
-          isPlaying = false;
-        }
-      });
-
       console.log(events, filteredEvents);
 
-      // const note = startNotes[0];
-      // if (!note) return;
+      filteredEvents.forEach((event, index) => {
+        // Every frequency change can be scheduled immediately
+        if (event.type === "on") {
+          osc.frequency.setValueAtTime(event.frequency, event.at);
+        }
+        const now = this.transporter.context.getOutputTimestamp().contextTime;
+        const delayAmount = Math.max(0, event.at - now);
 
-      // const bpms = this.transporter.bpms;
-      // const delay = data.after + (note.beat - data.beat) / bpms;
-      // if (!isPlaying) {
-      //   osc.start(delay);
-      //   isPlaying = true;
-      // }
+        if (event.type === "on") {
+          // console.log("start", delayAmount);
 
-      // osc.frequency.setValueAtTime(440 + note.pitch / 4, delay);
-      // timeoutBuffer[timeoutIndex++] = window.setTimeout(() => {
-      //   // Because this is monophonic clear playing notes
-      //   clearNotes();
-      //   triggerNote(note.id, delay);
-      //   notesPlaying.push(note.id);
-      // }, delay);
-      // const offDelay = data.after + (note.beat + note.beats - data.beat) / bpms;
-      // osc.stop(offDelay);
+          delay(
+            () => {
+              const now = this.transporter.context.getOutputTimestamp()
+                .contextTime;
+              // if (isPlaying) return console.log("abort play");
+              console.log("starting", now, index, event);
+              osc.start();
+              isPlaying = true;
+            },
+            delayAmount,
+            "start" + index
+          );
+        } else {
+          // console.log("stop", delayAmount, event.at, now);
 
-      // timeoutBuffer[timeoutIndex++] = window.setTimeout(() => {
-      //   clearNote(note.id);
-      // }, offDelay);
+          delay(
+            () => {
+              const now = this.transporter.context.getOutputTimestamp()
+                .contextTime;
+              if (!isPlaying) return console.log("abort stop");
+              console.log("stopping", now, index, event);
+              osc.stop();
+              isPlaying = false;
+            },
+            delayAmount,
+            "stop" + index
+          );
+        }
+      });
     });
-
-    // this.transporter.on("clear", () => {
-    //   clearNotes();
-    // });
-
-    // function triggerNote(id, delay) {
-    //   console.log("on", id);
-    // }
-
-    // function clearNote(id, delay) {
-    //   console.log("off", id);
-    // }
   },
   methods: {
     render() {
