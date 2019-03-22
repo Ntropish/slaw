@@ -102,102 +102,37 @@ export default {
     osc.connect(this.transporter.context.destination);
     const now = this.transporter.context.getOutputTimestamp().contextTime;
     const track = this.tracks[0];
-    let timers = [];
-    let timerIndex = 0;
-    let isPlaying = false;
-    const delay = (fn, seconds, msg) => {
-      console.log("register delay", msg);
-      if (!seconds) return fn();
-      timers[timerIndex++] = window.setTimeout(fn, seconds * 1000);
-    };
+    const oscillators = [];
+
     this.transporter.on("schedule", data => {
-      console.log(data);
       const events = [];
       track.events
         .map(id => this.events[id])
         .forEach(note => {
           const at = data.at + (note.beat - data.beat) / this.transporter.bps;
-          // console.log(note, data);
           if (note.beat >= data.beat && note.beat < data.beat + data.beats) {
-            events.push({
-              type: "on",
-              beat: note.beat,
-              frequency: 440 * 2 ** (note.pitch / 1200),
-              at
-            });
-          }
-          if (
-            note.beat + note.beats >= data.beat &&
-            note.beat + note.beats < data.beat + data.beats
-          ) {
-            events.push({
-              type: "off",
-              beat: note.beat + note.beats,
-              at: at + note.beats / this.transporter.bps
-            });
+            const osc = this.transporter.context.createOscillator();
+            const envelope = this.transporter.context.createGain();
+            osc.connect(envelope);
+            envelope.connect(this.transporter.context.destination);
+
+            const noteEnd = at + note.beats / this.transporter.bps;
+            const [a, d, s, r] = [0.05, 0.1, 0.7, 0.1];
+
+            envelope.gain.setValueAtTime(0, at);
+            envelope.gain.linearRampToValueAtTime(1, at + a);
+            envelope.gain.linearRampToValueAtTime(s, at + a + d);
+            envelope.gain.setValueAtTime(s, noteEnd);
+            envelope.gain.linearRampToValueAtTime(0, noteEnd + r);
+
+            osc.frequency.setValueAtTime(440 * 2 ** (note.pitch / 1200), at);
+            osc.start(at);
+            osc.stop(at + note.beats / this.transporter.bps + r);
+            osc.onended = () => {
+              osc.disconnect();
+            };
           }
         });
-
-      let state = "off";
-      let filteredEvents = events
-        .sort((a, b) => {
-          return a.beat - b.beat;
-        })
-        .filter(event => {
-          if (event.type === state) return false;
-
-          if (event.type === "off") {
-            const matchingNoteOn = events.find(
-              e => e.type === "on" && e.beat === event.beat
-            );
-            if (matchingNoteOn) return false;
-          }
-          state = event.state;
-          return true;
-        });
-
-      console.log(events, filteredEvents);
-
-      filteredEvents.forEach((event, index) => {
-        // Every frequency change can be scheduled immediately
-        if (event.type === "on") {
-          osc.frequency.setValueAtTime(event.frequency, event.at);
-        }
-        const now = this.transporter.context.getOutputTimestamp().contextTime;
-        const delayAmount = Math.max(0, event.at - now);
-
-        if (event.type === "on") {
-          // console.log("start", delayAmount);
-
-          delay(
-            () => {
-              const now = this.transporter.context.getOutputTimestamp()
-                .contextTime;
-              // if (isPlaying) return console.log("abort play");
-              console.log("starting", now, index, event);
-              osc.start();
-              isPlaying = true;
-            },
-            delayAmount,
-            "start" + index
-          );
-        } else {
-          // console.log("stop", delayAmount, event.at, now);
-
-          delay(
-            () => {
-              const now = this.transporter.context.getOutputTimestamp()
-                .contextTime;
-              if (!isPlaying) return console.log("abort stop");
-              console.log("stopping", now, index, event);
-              osc.stop();
-              isPlaying = false;
-            },
-            delayAmount,
-            "stop" + index
-          );
-        }
-      });
     });
   },
   methods: {
