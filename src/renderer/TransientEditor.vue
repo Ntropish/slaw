@@ -446,8 +446,8 @@ export default {
       const foundNotes = [];
       for (const noteId of this.track.events) {
         const note = this.events[noteId];
-        const a = note.pitch + 50 > pitch1;
-        const b = note.pitch - 50 < pitch2;
+        const a = note.pitch - 50 < pitch1;
+        const b = note.pitch + 50 > pitch2;
         const c = note.beat + note.beats > beat1;
         const d = note.beat < beat2;
         if (a && b && c && d) {
