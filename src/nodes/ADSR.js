@@ -29,7 +29,7 @@ export default function ADSRFactory({ context, bps }) {
       {
         type: 'buffer',
         // Connect to
-        args: [this.gainNode],
+        args: [gainNode],
       },
       {
         type: 'event',
@@ -40,10 +40,10 @@ export default function ADSRFactory({ context, bps }) {
       {
         type: 'buffer',
         connect: (node, index) => {
-          this.gainNode.connect(...node.inputs[index].args)
+          gainNode.connect(...node.inputs[index].args)
         },
         disconnect: (node, index) => {
-          this.gainNode.disconnect(...node.inputs[index].args)
+          gainNode.disconnect(...node.inputs[index].args)
         },
       },
     ],

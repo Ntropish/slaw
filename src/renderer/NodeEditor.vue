@@ -18,6 +18,9 @@ import { range } from "lodash";
 import GridLand from "./GridLand";
 import AudioNode from "./AudioNode.vue";
 import { setTimeout } from "timers";
+import SinFactory from "nodes/Sin";
+import EventTrackFactory from "nodes/EventTrack";
+import ADSRFactory from "nodes/ADSR";
 const tools = {};
 export default {
   components: { AudioNode },
@@ -97,70 +100,16 @@ export default {
     }
   },
   mounted() {
-    const osc = this.transporter.context.createOscillator();
+    const events = this.tracks[0].events.map(id => this.events[id]);
 
-    osc.connect(this.transporter.context.destination);
-    const now = this.transporter.context.getOutputTimestamp().contextTime;
-    const track = this.tracks[0];
-    const nodes = [];
+    const track0 = EventTrackFactory(this.transporter, events);
+    const osc = SinFactory(this.transporter);
+    const env = ADSRFactory(this.transporter);
 
-    this.transporter.on("schedule", data => {
-      const events = [];
-      track.events
-        .map(id => this.events[id])
-        .forEach(note => {
-          const at = data.at + (note.beat - data.beat) / this.transporter.bps;
-          if (note.beat >= data.beat && note.beat < data.beat + data.beats) {
-            // For each note an oscillator and gain node are made
-            // The oscillator is the source of sound and the gain
-            // puts an ADSR envelope on it
-            const osc = this.transporter.context.createOscillator();
-            const envelope = this.transporter.context.createGain();
-            osc.connect(envelope);
-            envelope.connect(this.transporter.context.destination);
-
-            const noteEnd = at + note.beats / this.transporter.bps;
-            const [a, d, s, r] = [0.1, 0.3, 0.1, 0.2];
-
-            envelope.gain.setValueAtTime(0, at - 0);
-            // Math min to make sure gain doesn't come in after note should be stopping
-            envelope.gain.linearRampToValueAtTime(
-              0.8,
-              Math.min(noteEnd, at + a)
-            );
-            envelope.gain.linearRampToValueAtTime(
-              s,
-              Math.min(noteEnd, at + a + d)
-            );
-            envelope.gain.setValueAtTime(s, noteEnd);
-            envelope.gain.linearRampToValueAtTime(0, noteEnd + r);
-
-            osc.frequency.setValueAtTime(440 * 2 ** (note.pitch / 1200), at);
-            osc.start(at);
-            osc.stop(at + note.beats / this.transporter.bps + r);
-
-            // Register working nodes so they can be cleared on the clear event
-            osc.onended = () => {
-              if (nodes.includes(osc)) {
-                nodes.splice(nodes.indexOf(osc), 1);
-                osc.disconnect();
-              }
-              if (nodes.includes(envelope)) {
-                nodes.splice(nodes.indexOf(envelope), 1);
-                envelope.disconnect();
-              }
-            };
-            nodes.push(osc);
-            nodes.push(envelope);
-          }
-        });
-    });
-
-    this.transporter.on("clear", () => {
-      while (nodes.length) {
-        nodes.pop().disconnect();
-      }
-    });
+    track0.connect(osc, 0, 0);
+    track0.connect(env, 0, 1);
+    osc.connect(env, 0, 0);
+    env.connect(this.transporter.context.destination, 0, 0);
   },
   methods: {
     render() {

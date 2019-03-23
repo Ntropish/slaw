@@ -1,11 +1,17 @@
-import { connect } from './util'
+import { connect, timeSort } from './util'
 
-export default function SinFactory({ context, bps }) {
+export default function SinFactory(transporter) {
+  const { context, bps } = transporter
   const osc = context.createOscillator()
   const gainNode = context.createGain()
   osc.connect(gainNode)
   let onMap = []
   let frequencyMap = []
+
+  transporter.on('clear', () => {
+    gainNode.gain.cancelScheduledValues()
+    gainNode.gain.setValueAtTime(0, context.getOutputTimestamp().contextTime)
+  })
 
   // This complicated function finds all of the
   // on/off and frequency change scheduling that
@@ -58,10 +64,6 @@ export default function SinFactory({ context, bps }) {
     })
   }
 
-  function timeSort({ aTime }, { bTime }) {
-    return aTime - bTime
-  }
-
   // Find the highest timed event below or equal the time
   function scanMap(map, time) {
     return map.reduce((acc, event) => {
@@ -90,10 +92,10 @@ export default function SinFactory({ context, bps }) {
       {
         type: 'buffer',
         connect: (node, index) => {
-          this.gainNode.connect(...node.inputs[index].args)
+          gainNode.connect(...node.inputs[index].args)
         },
         disconnect: (node, index) => {
-          this.gainNode.disconnect(...node.inputs[index].args)
+          gainNode.disconnect(...node.inputs[index].args)
         },
       },
     ],
