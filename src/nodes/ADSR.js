@@ -1,10 +1,18 @@
 import { connect } from './util'
 
-export default function ADSRFactory({ context, bps }) {
+export default function ADSRFactory(transporter) {
+  const { context, bps } = transporter
   const gainNode = context.createGain()
   const adsr = [0.1, 0.3, 0.1, 0.2]
 
-  function onEvent({ beats, time }) {
+  transporter.on('clear', () => {
+    gainNode.gain.cancelScheduledValues(
+      context.getOutputTimestamp().contextTime,
+    )
+    gainNode.gain.setValueAtTime(0, context.getOutputTimestamp().contextTime)
+  })
+
+  function onEvent({ detail: { beats, time } }) {
     const noteEnd = time + beats / bps
     const [a, d, s, r] = adsr
 

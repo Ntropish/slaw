@@ -21,7 +21,7 @@ import { setTimeout } from "timers";
 import SinFactory from "nodes/Sin";
 import EventTrackFactory from "nodes/EventTrack";
 import ADSRFactory from "nodes/ADSR";
-import DestinationFactory from "nodes/ADSR";
+import DestinationFactory from "nodes/Destination";
 const tools = {};
 export default {
   components: { AudioNode },

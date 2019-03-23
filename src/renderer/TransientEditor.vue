@@ -316,6 +316,11 @@ export default {
       }
 
       if (this.keysState.includes("Alt") && selectedNotes.length) {
+        selectedNotes.forEach(note => {
+          if (this.noteBuffer[note.id]) {
+            Vue.delete(this.noteBuffer, note.id);
+          }
+        });
         this.$emit("noteremove", {
           notes: selectedNotes,
           trackId: this.track.id
@@ -390,6 +395,7 @@ export default {
     },
     moveToolUpdate(xMove, yMove) {
       Object.values(this.noteBuffer).forEach(note => {
+        // if (!this.events[note.id]) return
         note.beat = this.events[note.id].beat + xMove;
         note.pitch = this.events[note.id].pitch + yMove;
       });

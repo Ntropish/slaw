@@ -14,7 +14,12 @@ export function connect(node, outputIndex, inputIndex) {
   }
 
   console.log('connect:', outputIndex, ' -> ', outputIndex, this, node)
-
+  // ports must exist
+  if (
+    (!this.outputs && !this.outputs[outputIndex]) ||
+    (!node.inputs && !node.inputs[inputIndex])
+  )
+    return false
   // edge type must match
   if (this.outputs[outputIndex].type !== node.inputs[inputIndex].type)
     return false
@@ -23,4 +28,8 @@ export function connect(node, outputIndex, inputIndex) {
 
 export function timeSort({ time: aTime }, { time: bTime }) {
   return aTime - bTime
+}
+
+export function pitchToFrequency(pitch) {
+  return 440 * 2 ** (pitch / 1200)
 }
