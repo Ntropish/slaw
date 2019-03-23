@@ -286,9 +286,9 @@ export default {
       this.viewEnd += x;
     },
     onZoom({ x }) {
-      const width = -this.viewEnd + this.viewStart;
+      const width = this.viewEnd - this.viewStart;
       const newWidth = clamp(4, x + width, 160);
-      const deltaX = newWidth - width;
+      const deltaX = width - newWidth;
       this.viewStart += deltaX / 2;
       this.viewEnd -= deltaX / 2;
     }

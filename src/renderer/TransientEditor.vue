@@ -11,6 +11,7 @@
 import Vue from "vue";
 import { range } from "lodash";
 import GridLand from "./GridLand";
+import { clamp } from "renderer/util";
 
 const dark = 0;
 const light = 1;
@@ -482,12 +483,11 @@ export default {
       this.render();
     },
     zoom2d(data) {
-      const yMinBounded = data.y < 0 && this.yEnd - this.yStart > -1200;
-      const yMaxBounded = data.y > 0 && this.yEnd - this.yStart < -7 * 1200;
-      if (!yMinBounded && !yMaxBounded) {
-        this.yStart += data.y / 2;
-        this.yEnd -= data.y / 2;
-      }
+      const height = this.yStart - this.yEnd;
+      const newHeight = clamp(1200, height + data.y, 7 * 1200);
+      const deltaY = newHeight - height;
+      this.yStart += deltaY / 2;
+      this.yEnd -= deltaY / 2;
 
       this.$emit("zoom", data);
       this.render();
