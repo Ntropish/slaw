@@ -9,7 +9,7 @@
       :node="node.node"
       :style="node.style"
     />
-    {{ keysState }} {{ mouseState }}
+    <!-- {{ keysState }} {{ mouseState }} -->
   </div>
 </template>
 
@@ -111,25 +111,35 @@ export default {
         .forEach(note => {
           const at = data.at + (note.beat - data.beat) / this.transporter.bps;
           if (note.beat >= data.beat && note.beat < data.beat + data.beats) {
+            // For each note an oscillator and gain node are made
+            // The oscillator is the source of sound and the gain
+            // puts an ADSR envelope on it
             const osc = this.transporter.context.createOscillator();
             const envelope = this.transporter.context.createGain();
             osc.connect(envelope);
             envelope.connect(this.transporter.context.destination);
 
             const noteEnd = at + note.beats / this.transporter.bps;
-            const [a, d, s, r] = [0.05, 0.1, 0.7, 0.1];
+            const [a, d, s, r] = [0.1, 0.3, 0.1, 0.2];
 
-            console.log(envelope.gain);
-
-            envelope.gain.setValueAtTime(0, at);
-            envelope.gain.linearRampToValueAtTime(1, at + a);
-            envelope.gain.linearRampToValueAtTime(s, at + a + d);
+            envelope.gain.setValueAtTime(0, at - 0);
+            // Math min to make sure gain doesn't come in after note should be stopping
+            envelope.gain.linearRampToValueAtTime(
+              0.8,
+              Math.min(noteEnd, at + a)
+            );
+            envelope.gain.linearRampToValueAtTime(
+              s,
+              Math.min(noteEnd, at + a + d)
+            );
             envelope.gain.setValueAtTime(s, noteEnd);
             envelope.gain.linearRampToValueAtTime(0, noteEnd + r);
 
             osc.frequency.setValueAtTime(440 * 2 ** (note.pitch / 1200), at);
             osc.start(at);
             osc.stop(at + note.beats / this.transporter.bps + r);
+
+            // Register working nodes so they can be cleared on the clear event
             osc.onended = () => {
               if (nodes.includes(osc)) {
                 nodes.splice(nodes.indexOf(osc), 1);

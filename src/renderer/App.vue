@@ -96,7 +96,7 @@ export default {
   },
   data: () => {
     const context = new AudioContext();
-    const playbackLocation = 1;
+    const playbackLocation = 0;
     return {
       trackCount: 1,
       eventCount: 4,
@@ -115,21 +115,21 @@ export default {
           pitch: -1300,
           beat: 0,
           velocity: 0.8,
-          beats: 1
+          beats: 0.25
         },
         "1": {
           id: "1",
           pitch: -1400,
           beat: 1,
           velocity: 0.6,
-          beats: 0.95
+          beats: 0.25
         },
         "2": {
           id: "2",
           pitch: -1320,
-          beat: 2,
+          beat: 1.5,
           velocity: 0.8,
-          beats: 1.02
+          beats: 0.25
         },
         "3": {
           id: "3",

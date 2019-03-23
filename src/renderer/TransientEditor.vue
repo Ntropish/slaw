@@ -88,8 +88,8 @@ export default {
     transporter: { type: Object, required: true }
   },
   data: () => ({
-    yStart: -2000,
-    yEnd: 1000,
+    yStart: 2000,
+    yEnd: -3000,
     canvasWidth: 300,
     canvasHeight: 150,
     selectedNotes: [],
@@ -145,7 +145,7 @@ export default {
       const verticalStart = Math.floor(this.yStart / 100) * 100;
       const verticalEnd = Math.ceil(this.yEnd / 100) * 100;
 
-      const verticalLines = range(verticalStart, verticalEnd, 100);
+      const verticalLines = range(verticalStart, verticalEnd, -100);
       backgroundCtx.fillStyle = `hsla(0, 0%, 0%, 0.2)`;
 
       for (const line of verticalLines) {
