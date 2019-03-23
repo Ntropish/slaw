@@ -474,7 +474,15 @@ export default {
       return foundNotes;
     },
     pan(data) {
+      this.yStart += data.y;
+      this.yEnd += data.y;
       this.$emit("pan", data);
+      this.render();
+    },
+    zoom2d(data) {
+      this.yStart += data.y / 2;
+      this.yEnd -= data.y / 2;
+      this.$emit("zoom", data);
       this.render();
     }
   }

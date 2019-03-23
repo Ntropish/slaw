@@ -21,6 +21,7 @@
       @notequantize="onQuantizeNote"
       @notecopy="onCopyNote"
       @pan="onMidiEditorPan"
+      @zoom="onZoom"
       @playbackstartset="onPlaybackStartSet"
     />
     <node-editor
@@ -281,6 +282,10 @@ export default {
     onMidiEditorPan({ x }) {
       this.viewStart += x;
       this.viewEnd += x;
+    },
+    onZoom({ x }) {
+      this.viewStart += x / 2;
+      this.viewEnd -= x / 2;
     }
   }
 };
