@@ -1,58 +1,44 @@
-// The code in the main global scope.
-export default class ADSR {
-  constructor({ context, bps }) {
-    this.bps = bps
-    this.context = context
-    this.gainNode = context.createGain()
-    this.asdr = [0.1, 0.3, 0.1, 0.2]
-  }
+import { connect } from './util'
 
-  onEvent({ beats, time }) {
-    const noteEnd = time + beats / this.transporter.bps
-    const [a, d, s, r] = this.asdr
+export default function ADSRFactory({ context, bps }) {
+  const gainNode = context.createGain()
+  const asdr = [0.1, 0.3, 0.1, 0.2]
 
-    this.gainNode.gain.setValueAtTime(0, time)
+  function onEvent({ beats, time }) {
+    const noteEnd = time + beats / bps
+    const [a, d, s, r] = asdr
+
+    gainNode.gain.setValueAtTime(0, time)
     // Math min to make sure gain doesn't come in after note should be stopping
-    this.gainNode.gain.linearRampToValueAtTime(0.8, Math.min(noteEnd, time + a))
-    this.gainNode.gain.linearRampToValueAtTime(
-      s,
-      Math.min(noteEnd, time + a + d),
-    )
-    this.gainNode.gain.setValueAtTime(s, noteEnd)
-    this.gainNode.gain.linearRampToValueAtTime(0, noteEnd + r)
+    gainNode.gain.linearRampToValueAtTime(0.8, Math.min(noteEnd, time + a))
+    gainNode.gain.linearRampToValueAtTime(s, Math.min(noteEnd, time + a + d))
+    gainNode.gain.setValueAtTime(s, noteEnd)
+    gainNode.gain.linearRampToValueAtTime(0, noteEnd + r)
   }
 
-  connectOutputTo(outputIndex, node, inputIndex) {
-    console.log('connect:', outputIndex, ' -> ', outputIndex, node)
-
-    // edge type must match
-    if (this.outputs[outputIndex].type !== node.inputs[inputIndex].type)
-      return false
-    this.outputs[outputIndex].connect(node, inputIndex)
-    node.inputs[inputIndex].connect(this, outputIndex)
+  return {
+    connect,
+    inputs: [
+      {
+        type: 'buffer',
+        // Connect to
+        args: [this.gainNode],
+      },
+      {
+        type: 'event',
+        args: [onEvent],
+      },
+    ],
+    outputs: [
+      {
+        type: 'buffer',
+        connect: (node, index) => {
+          this.gainNode.connect(...node.inputs[index].args)
+        },
+        disconnect: (node, index) => {
+          this.gainNode.disconnect(...node.inputs[index].args)
+        },
+      },
+    ],
   }
-
-  inputs = [
-    {
-      type: 'buffer',
-      // Connect to
-      args: [this.gainNode],
-    },
-    {
-      type: 'event',
-      args: [this.onEvent.bind(this)],
-    },
-  ]
-
-  outputs = [
-    {
-      type: 'buffer',
-      connect: (node, index) => {
-        this.gainNode.connect(...node.inputs[index].args)
-      },
-      disconnect: (node, index) => {
-        this.gainNode.disconnect(...node.inputs[index].args)
-      },
-    },
-  ]
 }
