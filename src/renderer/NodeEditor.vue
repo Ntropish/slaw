@@ -21,6 +21,7 @@ import { setTimeout } from "timers";
 import SinFactory from "nodes/Sin";
 import EventTrackFactory from "nodes/EventTrack";
 import ADSRFactory from "nodes/ADSR";
+import DestinationFactory from "nodes/ADSR";
 const tools = {};
 export default {
   components: { AudioNode },
@@ -105,11 +106,12 @@ export default {
     const track0 = EventTrackFactory(this.transporter, events);
     const osc = SinFactory(this.transporter);
     const env = ADSRFactory(this.transporter);
+    const destination = DestinationFactory(this.transporter);
 
     track0.connect(osc, 0, 0);
     track0.connect(env, 0, 1);
     osc.connect(env, 0, 0);
-    env.connect(this.transporter.context.destination, 0, 0);
+    env.connect(destination, 0, 0);
   },
   methods: {
     render() {
