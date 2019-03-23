@@ -482,10 +482,13 @@ export default {
       this.render();
     },
     zoom2d(data) {
-      if (data.y < 0 && this.yEnd - this.yStart > -1200) return;
-      if (data.y > 0 && this.yEnd - this.yStart < -7 * 1200) return;
-      this.yStart += data.y / 2;
-      this.yEnd -= data.y / 2;
+      const yMinBounded = data.y < 0 && this.yEnd - this.yStart > -1200;
+      const yMaxBounded = data.y > 0 && this.yEnd - this.yStart < -7 * 1200;
+      if (!yMinBounded && !yMaxBounded) {
+        this.yStart += data.y / 2;
+        this.yEnd -= data.y / 2;
+      }
+
       this.$emit("zoom", data);
       this.render();
     }

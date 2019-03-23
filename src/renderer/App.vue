@@ -45,6 +45,8 @@ import MenuPanel from "renderer/MenuPanel.vue";
 import NodeEditor from "renderer/NodeEditor.vue";
 import Transporter from "renderer/Transporter.js";
 import { clearTimeout } from "timers";
+import { clamp } from "renderer/util";
+
 const graph = {
   nodes: {
     "0": {
@@ -284,8 +286,11 @@ export default {
       this.viewEnd += x;
     },
     onZoom({ x }) {
-      this.viewStart += x / 2;
-      this.viewEnd -= x / 2;
+      const width = -this.viewEnd + this.viewStart;
+      const newWidth = clamp(4, x + width, 160);
+      const deltaX = newWidth - width;
+      this.viewStart += deltaX / 2;
+      this.viewEnd -= deltaX / 2;
     }
   }
 };

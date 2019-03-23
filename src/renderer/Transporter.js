@@ -1,4 +1,5 @@
 import EventEmitter from 'events'
+import { clamp } from 'renderer/util'
 
 export default class Transporter extends EventEmitter {
   constructor(context, position) {
@@ -81,8 +82,4 @@ export default class Transporter extends EventEmitter {
     const now = this.context.getOutputTimestamp().contextTime
     return this.startPosition + (now - this.startTime) * this.bps
   }
-}
-
-function clamp(min, val, max) {
-  return Math.max(min, Math.min(max, val))
 }
