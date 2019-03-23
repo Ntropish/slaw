@@ -17,28 +17,18 @@ _Note: I haven't verified that all dependencies are included in the `package.jso
 
 ## Controls
 
-Press `tab` to toggle modes, (Midi/Split/Node Editor)
+Controls are changing very frequently right now, but experiment with `ctrl`, `shift`, and `alt`.
 
-Select notes with the left mouse button, `LMB`
+Play with `space`, pause with `s`
 
-Select multiple notes by holding `ctrl`
+`right click` to pan
 
-Move notes by dragging them
+`middle click` or `mouse scroll` to zoom
 
-Duplicate notes by holding `shift` before dragging
+`ctrl click` to add notes, alt click to remove them
 
-Snapping is disabled while holding `ctrl`
+box select by holding `shift` and dragging
 
-Add notes with `ctrl + LMB`
+Quantize selected nots with `q`
 
-Remove notes with `alt + LMB`
-
-Box select by holding `shift` and dragging
-
-Resize notes by holding `A` and dragging
-
-Quantize selected notes by pressing `Q`
-
-Pan with `RMB`
-
-Zoom with the mouse wheel
+Resize by holding `a` and dragging
