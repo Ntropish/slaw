@@ -66,6 +66,10 @@ export default {
     onMouseDown(e) {
       if (!this.mouseState.includes(e.button)) this.mouseState.push(e.button)
 
+      if (e.button === 1) {
+        this.canvases[0].requestPointerLock()
+      }
+
       const x = e.offsetX
       const y = e.offsetY
 
@@ -77,6 +81,7 @@ export default {
       this.render()
     },
     onMouseUp(e) {
+      if (e.button === 1) document.exitPointerLock()
       const index = this.mouseState.indexOf(e.button)
       if (index !== -1) this.mouseState.splice(index, 1)
       this.dragStart = null
@@ -97,9 +102,10 @@ export default {
       }
 
       if (this.mouseState.includes(1) && this.mouseState.length === 1) {
+        const growthFactor = 2.0
         this.zoom2d({
-          x: -e.movementX / this.pxPerX,
-          y: -e.movementY / this.pxPerY,
+          x: (-e.movementX / this.pxPerX) * growthFactor,
+          y: (-e.movementY / this.pxPerY) * growthFactor,
         })
       }
 

@@ -474,12 +474,16 @@ export default {
       return foundNotes;
     },
     pan(data) {
+      if (data.y > 0 && this.yStart > 1200 * 8) return;
+      if (data.y < 0 && this.yEnd < -1200 * 8) return;
       this.yStart += data.y;
       this.yEnd += data.y;
       this.$emit("pan", data);
       this.render();
     },
     zoom2d(data) {
+      if (data.y < 0 && this.yEnd - this.yStart > -1200) return;
+      if (data.y > 0 && this.yEnd - this.yStart < -7 * 1200) return;
       this.yStart += data.y / 2;
       this.yEnd -= data.y / 2;
       this.$emit("zoom", data);
