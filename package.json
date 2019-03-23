@@ -31,7 +31,7 @@
     "webpack-dev-server": "^3.2.1"
   },
   "scripts": {
-    "webpack": "webpack-dev-server --open --config ./config/webpack.config.js",
+    "webpack": "webpack-dev-server --open --config ./webpack.config.js",
     "start": "electron ."
   }
 }
