@@ -86,7 +86,7 @@ export default {
       type: Number,
       default: () => 0
     },
-    transporter: { type: Object, required: true }
+    transporter: { type: Object, default: null }
   },
   data: () => ({
     yStart: 2000,

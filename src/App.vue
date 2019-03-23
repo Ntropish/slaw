@@ -95,7 +95,6 @@ export default {
     NodeEditor
   },
   data: () => {
-    const context = new AudioContext();
     const playbackLocation = 0;
     return {
       trackCount: 1,
@@ -152,8 +151,8 @@ export default {
       iisPlaying: false,
       mode: "split",
       split: 0.3,
-      context,
-      transporter: new Transporter(context, playbackLocation),
+      context: null,
+      transporter: null,
       timeouts: new Array(50),
       lastStoredTimeout: 0
     };
@@ -179,22 +178,30 @@ export default {
     }
   },
   mounted() {
-    dispatchEvent(new CustomEvent("test"));
+    window.addEventListener("keydown", this.buildTransporter, { once: true });
+    window.addEventListener("mousedown", this.buildTransporter, { once: true });
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
-    window.addEventListener("contextmenu", e => {
-      e.preventDefault();
-      return false;
-    });
+    window.addEventListener("contextmenu", this.disableContextMenu);
     this.loadGraph(graph);
-    this.transporter.on("positionUpdate", this.scheduleCursor);
-    this.transporter.on("clear", this.clearCursorSchedule);
   },
   beforeDestroy() {
     window.removeEventListener("keydown", this.onKeyDown);
     window.removeEventListener("keyup", this.onKeyUp);
+    window.removeEventListener("contextmenu", this.disableContextMenu);
   },
   methods: {
+    buildTransporter(e) {
+      const context = new AudioContext();
+      const transporter = new Transporter(context, this.playbackLocation);
+      this.transporter = transporter;
+      this.transporter.on("positionUpdate", this.scheduleCursor);
+      this.transporter.on("clear", this.clearCursorSchedule);
+    },
+    disableContextMenu(e) {
+      e.preventDefault();
+      return false;
+    },
     loadGraph(graph) {
       for (const node of Object.values(graph.nodes)) {
         Vue.set(this.nodes, node.id, node);

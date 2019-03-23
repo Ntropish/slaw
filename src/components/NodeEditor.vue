@@ -47,10 +47,7 @@ export default {
       type: Number,
       default: () => 60
     },
-    transporter: {
-      type: Object,
-      required: true
-    }
+    transporter: { type: Object, default: null }
   },
   data: () => ({
     processors: [],
@@ -98,22 +95,25 @@ export default {
   watch: {
     nodes(nodes) {
       this.render();
+    },
+    transporter(transporter) {
+      if (transporter) this.onTransporter();
     }
   },
-  mounted() {
-    const events = this.tracks[0].events.map(id => this.events[id]);
-
-    const track0 = EventTrackFactory(this.transporter, events);
-    const osc = SinFactory(this.transporter);
-    const env = ADSRFactory(this.transporter);
-    const destination = DestinationFactory(this.transporter);
-
-    track0.connect(osc, 0, 0);
-    track0.connect(env, 0, 1);
-    osc.connect(env, 0, 0);
-    env.connect(destination, 0, 0);
-  },
   methods: {
+    onTransporter() {
+      const events = this.tracks[0].events.map(id => this.events[id]);
+
+      const track0 = EventTrackFactory(this.transporter, events);
+      const osc = SinFactory(this.transporter);
+      const env = ADSRFactory(this.transporter);
+      const destination = DestinationFactory(this.transporter);
+
+      track0.connect(osc, 0, 0);
+      track0.connect(env, 0, 1);
+      osc.connect(env, 0, 0);
+      env.connect(destination, 0, 0);
+    },
     render() {
       // Prepare canvases
       this.contexts.forEach(ctx =>
