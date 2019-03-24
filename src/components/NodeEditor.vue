@@ -70,7 +70,16 @@ export default {
     yEnd() {
       return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
     },
-    ...mapState(["nodes", "edges"])
+    ...mapState(["nodes", "edges", "tracks", "events"]),
+    ...mapState({
+      _transporter: "transporter",
+      transporter() {
+        if (!this._transporter) {
+          this.$store.commit("BUILD_TRANSPORTER");
+        }
+        return this._transporter;
+      }
+    })
   },
   watch: {
     nodes(nodes) {
