@@ -3,6 +3,7 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
+    {{ mouseState }} {{ keyboardState }}
   </div>
 </template>
 
@@ -93,7 +94,7 @@ export default {
       return [this.$refs.background, this.$refs.notes, this.$refs.util];
     },
     dragTool() {
-      if (this.keysState.includes("a")) return "resize";
+      if (this.keyboardState.includes("a")) return "resize";
       return "move";
     },
     cursor() {
@@ -118,7 +119,13 @@ export default {
       trackId: "selectedTrackId",
       track: state => state.tracks[state.selectedTrackId]
     }),
-    ...mapState(["playbackStart"]),
+    ...mapState([
+      "playbackStart",
+      "mouseState",
+      "keyboardState",
+      "beatSnap",
+      "centsSnap"
+    ]),
     ...mapState({
       _transporter: "transporter",
       transporter() {
@@ -135,9 +142,9 @@ export default {
       // start a new transform start/end when changing tools
       this.redrag();
     },
-    transporter(val) {
-      val.off("positionUpdate", this.setPlaybackStart);
-      val.on("positionUpdate", this.setPlaybackStart);
+    transporter(newTransporter, oldTransporter) {
+      oldTransporter.off("positionUpdate", this.setPlaybackStart);
+      newTransporter.on("positionUpdate", this.setPlaybackStart);
     },
     playbackStart(val) {
       this.render();
@@ -155,8 +162,10 @@ export default {
       const [backgroundCtx, notesCtx, utilCtx] = this.contexts;
 
       // Draw piano keys, assume snap is 100, traditional keyboard layout
-      const verticalStart = Math.floor(this.yStart / 100) * 100;
-      const verticalEnd = Math.ceil(this.yEnd / 100) * 100;
+      const verticalStart =
+        Math.ceil(this.yStart / this.centsSnap) * this.centsSnap;
+      const verticalEnd =
+        Math.floor(this.yEnd / this.centsSnap) * this.centsSnap - 50;
 
       const verticalLines = range(verticalStart, verticalEnd, -100);
       backgroundCtx.fillStyle = `hsla(0, 0%, 0%, 0.2)`;
@@ -261,7 +270,7 @@ export default {
     setPlaybackStart(beat) {
       this.$store.commit("SET_PLAYBACK_START", beat);
     },
-    buildBeatMark(ctx, opacity, lightness, spread = 0.2) {
+    buildBeatMark(ctx, opacity, lightness, spread = 0.0) {
       var gradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
       gradient.addColorStop("0", "hsla(0, 0%, 0%, 0)");
       gradient.addColorStop(spread, `hsla(0, 0%, ${lightness}%, ${opacity})`);
@@ -273,15 +282,7 @@ export default {
       return gradient;
     },
     keyDown(e) {
-      if (this.keysState.includes("q")) this.quantize();
-    },
-    keyUp(e) {
-      const index = this.keysState.indexOf(e.key);
-      if (index === -1) return;
-      this.keysState.splice(index, 1);
-    },
-    clearkeysState(e) {
-      this.keysState.splice(0);
+      if (this.keyboardState.includes("q")) this.quantize();
     },
     mouseDown({ offsetX: x, offsetY: y }) {
       const noteClicked = this.scanForNotes(x, y)[0];
@@ -289,14 +290,14 @@ export default {
 
       // Handle selection first
       if (noteClicked && !this.selectedNotes.includes(noteClicked)) {
-        if (!this.keysState.includes("Control")) selectedNotes.splice(0);
+        if (!this.keyboardState.includes("Control")) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
       }
 
-      if (this.keysState.includes("Shift")) {
+      if (this.keyboardState.includes("shift")) {
         if (!noteClicked) {
           // Trigger box select
-          if (!this.keysState.includes("Control")) selectedNotes.splice(0);
+          if (!this.keyboardState.includes("control")) selectedNotes.splice(0);
           this.boxSelectStart();
         } else {
           // Trigger note copy
@@ -313,11 +314,11 @@ export default {
         const beat = Math.round(unsnappedBeat / this.xSnap) * this.xSnap;
         selectedNotes.splice(0);
         // Ctrl click to add note
-        if (this.keysState.includes("Control")) {
+        if (this.keyboardState.includes("control")) {
           this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
         } else if (
           this.mouseState.includes(0) &&
-          !this.keysState.includes("Shift")
+          !this.keyboardState.includes("shift")
         ) {
           // Else just move the cursor to the clicked location
           // Snapping can't be disabled on click because ctrl click
@@ -327,7 +328,7 @@ export default {
         }
       }
 
-      if (this.keysState.includes("Alt") && selectedNotes.length) {
+      if (this.keyboardState.includes("alt") && selectedNotes.length) {
         selectedNotes.forEach(note => {
           if (this.noteBuffer[note.id]) {
             Vue.delete(this.noteBuffer, note.id);
@@ -357,7 +358,7 @@ export default {
         this.boxSelectUpdate(e);
       } else if (this.mouseState.includes(0) && this.selectedNotes.length) {
         // Hold control to move without snap
-        const snap = !this.keysState.includes("Control");
+        const snap = !this.keyboardState.includes("Control");
 
         const xDelta = (this.dragEnd.x - this.dragStart.x) / this.pxPerX;
         const yDelta = (this.dragEnd.y - this.dragStart.y) / this.pxPerY;
@@ -375,7 +376,7 @@ export default {
         }
       } else if (this.mouseState.includes(0)) {
         const x = this.pxToX(e.offsetX);
-        const beat = !this.keysState.includes("Control")
+        const beat = !this.keyboardState.includes("Control")
           ? Math.round(x / this.xSnap) * this.xSnap
           : x;
         this.transporter.jump(beat);

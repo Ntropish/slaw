@@ -1,10 +1,13 @@
 import { connect, timeSort, pitchToFrequency } from './util'
+import { store } from '../index'
 
-export default function EventTrackFactory(transporter, events) {
+export default function EventTrackFactory(transporter, trackId) {
   const eventSender = new EventTarget()
+
   transporter.on('schedule', data => {
     // Send events in this schedule chunk in order
-    events
+    store.getters
+      .eventsOfTrack(trackId)
       .filter(
         event => event.beat >= data.beat && event.beat < data.beat + data.beats,
       )
@@ -17,14 +20,8 @@ export default function EventTrackFactory(transporter, events) {
         eventSender.dispatchEvent(new CustomEvent('event', { detail: event }))
       })
   })
-
-  function updateEvents(_events) {
-    events = _events
-  }
-
   return {
     connect,
-    updateEvents,
     outputs: [
       {
         type: 'event',

@@ -1,9 +1,9 @@
 import { Store } from 'vuex'
 import Transporter from 'modules/Transporter'
-import { getDiffieHellman } from 'crypto'
+import inputTracker from './inputTracker'
 
 const lastIds = {
-  event: 3,
+  event: 4,
 }
 function getId(type) {
   let id = lastIds[type] || 0
@@ -12,19 +12,21 @@ function getId(type) {
 }
 
 export default () => {
-  return new Store({
+  const store = new Store({
     state: {
       selectedTrackId: '',
       transporter: null,
       playbackStart: 0,
       beatSnap: 1 / 4,
-      pianoSnap: 100,
+      centsSnap: 100,
       events: {},
       tracks: {},
       nodes: {},
       edges: {},
       keyboardState: [],
       mouseState: [],
+      // Last element clicked
+      focus: null,
     },
     mutations: {
       SET_NODES(state, nodes) {
@@ -70,6 +72,23 @@ export default () => {
       SET_PLAYBACK_START(state, beat) {
         state.playbackStart = beat
       },
+      ADD_MOUSE_BUTTON(state, button) {
+        if (!state.mouseState.includes(button)) state.mouseState.push(button)
+      },
+      REMOVE_MOUSE_BUTTON(state, button) {
+        const index = state.mouseState.indexOf(button)
+        if (index !== -1) state.mouseState.splice(index)
+      },
+      ADD_KEYBOARD_KEY(state, key) {
+        if (!state.keyboardState.includes(key)) state.keyboardState.push(key)
+      },
+      REMOVE_KEYBOARD_KEY(state, key) {
+        const index = state.keyboardState.indexOf(key)
+        if (index !== -1) state.keyboardState.splice(index, 1)
+      },
+      FOCUS_ELEMENT(state, element) {
+        state.focus = element
+      },
     },
     actions: {
       fetchSomething(context) {
@@ -88,4 +107,6 @@ export default () => {
       },
     },
   })
+  inputTracker(store)
+  return store
 }

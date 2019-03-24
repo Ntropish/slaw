@@ -1,4 +1,5 @@
 import { range } from 'lodash'
+import { mapState } from 'vuex'
 
 export default {
   data: () => ({
@@ -6,8 +7,6 @@ export default {
     canvasHeight: 150,
     dragStart: null,
     dragEnd: null,
-    mouseState: [],
-    keysState: [],
   }),
   computed: {
     xCount() {
@@ -25,6 +24,7 @@ export default {
     contexts() {
       return this.canvases.map(c => c.getContext('2d'))
     },
+    ...mapState(['focus']),
   },
   mounted() {
     this.sizeCanvases()
@@ -52,20 +52,10 @@ export default {
       return (y - this.yStart) * this.pxPerY
     },
     onKeyDown(e) {
-      if (!this.keysState.includes(e.key)) this.keysState.push(e.key)
       this.keyDown(e)
       this.render()
     },
-    onKeyUp(e) {
-      const index = this.keysState.indexOf(e.key)
-      if (index !== -1) this.keysState.splice(index, 1)
-    },
-    clearKeysState(e) {
-      this.keysState.splice(0)
-    },
     onMouseDown(e) {
-      if (!this.mouseState.includes(e.button)) this.mouseState.push(e.button)
-
       if (e.button === 1) {
         this.canvases[0].requestPointerLock()
       }
@@ -82,16 +72,14 @@ export default {
     },
     onMouseUp(e) {
       e.preventDefault()
-
       if (e.button === 1) document.exitPointerLock()
-      const index = this.mouseState.indexOf(e.button)
-      if (index !== -1) this.mouseState.splice(index, 1)
       this.dragStart = null
       this.dragEnd = null
       this.mouseUp(e)
       this.render()
     },
     onMouseMove(e) {
+      if (!this.$el.contains(this.focus)) return
       const { x, y } = this.getMousePosition(e)
 
       if (this.dragStart) this.dragEnd = { x, y }

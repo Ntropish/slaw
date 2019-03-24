@@ -13,7 +13,6 @@ export function connect(node, outputIndex, inputIndex) {
     }
   }
 
-  console.log('connect:', outputIndex, ' -> ', outputIndex, this, node)
   // ports must exist
   if (
     (!this.outputs && !this.outputs[outputIndex]) ||

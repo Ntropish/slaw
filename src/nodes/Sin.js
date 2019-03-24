@@ -105,7 +105,6 @@ export default function SinFactory(transporter) {
       {
         type: 'buffer',
         connect: (node, index) => {
-          console.log('connect sin', node, index)
           gainNode.connect(...node.inputs[index].args)
         },
         disconnect: (node, index) => {

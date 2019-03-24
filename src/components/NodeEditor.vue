@@ -9,7 +9,7 @@
       :node="node.node"
       :style="node.style"
     />
-    <!-- {{ keysState }} {{ mouseState }} -->
+    <!-- {{ keyboardState }} {{ mouseState }} -->
   </div>
 </template>
 
@@ -36,14 +36,8 @@ export default {
     xStart: 0,
     xEnd: 800,
     yStart: 0,
-    xSnap: {
-      type: Number,
-      default: () => 1 / 4
-    },
-    ySnap: {
-      type: Number,
-      default: () => 1
-    }
+    xSnap: 25,
+    ySnap: 25
   }),
 
   computed: {
@@ -70,7 +64,14 @@ export default {
     yEnd() {
       return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
     },
-    ...mapState(["nodes", "edges", "tracks", "events"]),
+    ...mapState([
+      "nodes",
+      "edges",
+      "tracks",
+      "events",
+      "mouseState",
+      "keyboardState"
+    ]),
     ...mapState({
       _transporter: "transporter",
       transporter() {
@@ -91,9 +92,7 @@ export default {
   },
   methods: {
     onTransporter() {
-      const events = this.tracks[0].events.map(id => this.events[id]);
-
-      const track0 = EventTrackFactory(this.transporter, events);
+      const track0 = EventTrackFactory(this.transporter, "0");
       const osc = SinFactory(this.transporter);
       const env = ADSRFactory(this.transporter);
       const destination = DestinationFactory(this.transporter);

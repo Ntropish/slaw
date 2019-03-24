@@ -5,7 +5,7 @@ import Store from './Store'
 
 Vue.use(Vuex)
 
-const store = Store()
+export const store = Store()
 
 new Vue({
   el: '#app',
@@ -64,7 +64,7 @@ const tracks = {
   '0': {
     id: '0',
     name: 'Track 1',
-    events: ['0', '1', '2', '3'],
+    events: ['0', '1', '2', '3', '4'],
     hue: 90,
   },
 }
@@ -79,9 +79,9 @@ const events = {
   },
   '1': {
     id: '1',
-    pitch: -2600,
+    pitch: -2550,
     beat: 1,
-    velocity: 0.3,
+    velocity: 0.4,
     beats: 0.25,
   },
   '2': {
@@ -96,6 +96,13 @@ const events = {
     pitch: -2600,
     beat: 3,
     velocity: 0.6,
+    beats: 1,
+  },
+  '4': {
+    id: '4',
+    pitch: -3700,
+    beat: 4,
+    velocity: 0.5,
     beats: 1,
   },
 }
