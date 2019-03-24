@@ -3,7 +3,6 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    <!-- Keys: {{ keysState }} Mouse: {{ mouseState}} SelectedNotes: {{ selectedNotes }} Notes Hovered: {{ hoveredNotes }} -->
   </div>
 </template>
 
@@ -12,6 +11,7 @@ import Vue from "vue";
 import { range } from "lodash";
 import GridLand from "modules/GridLand";
 import { clamp } from "../util";
+import { mapState } from "vuex";
 
 const dark = 0;
 const light = 1;
@@ -66,14 +66,6 @@ export default {
       type: Number,
       required: true
     },
-    track: {
-      type: Object,
-      default: () => {}
-    },
-    events: {
-      type: Object,
-      default: () => {}
-    },
     xSnap: {
       type: Number,
       default: () => 1 / 4
@@ -85,8 +77,7 @@ export default {
     beatCursor: {
       type: Number,
       default: () => 0
-    },
-    transporter: { type: Object, default: null }
+    }
   },
   data: () => ({
     yStart: 1000,
@@ -123,7 +114,15 @@ export default {
         this.buildBeatMark(backgroundCtx, 0.11, 100),
         this.buildBeatMark(backgroundCtx, 0.3, 100, 0.1)
       ];
-    }
+    },
+    events() {
+      return this.$store.getters.eventsOfTrack(this.trackId);
+    },
+    ...mapState({
+      trackId: "selectedTrackId",
+      track: state => state.tracks[state.selectedTrackId],
+      transporter: "transporter"
+    })
   },
   watch: {
     beatCursor(val) {
@@ -184,16 +183,15 @@ export default {
       const bufferedIds = Object.keys(this.noteBuffer);
 
       // Draw notes
-      this.track.events.forEach(eventId => {
-        const note = this.events[eventId];
-        // Detuned notes need some indication
+      this.events.forEach(note => {
+        // Detuned notes need some indication so shift their hue
         let hueMod =
           (note.pitch - Math.round(note.pitch / this.ySnap) * this.ySnap) / 2;
         if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
-        if (bufferedIds.includes(eventId)) {
+        if (bufferedIds.includes(note.id)) {
           notesCtx.fillStyle = `hsla(${this.track.hue -
             hueMod}, 40%, 60%, 0.15)`;
-        } else if (this.selectedNotes.includes(eventId)) {
+        } else if (this.selectedNotes.includes(note.id)) {
           notesCtx.fillStyle = `hsla(${this.track.hue -
             hueMod}, 40%, 90%, 0.8)`;
         } else {
@@ -380,7 +378,11 @@ export default {
       });
     },
     unbufferNotes(e) {
-      this.$emit("noteset", this.noteBuffer);
+      // this.$emit("noteset", this.noteBuffer);
+      Object.values(this.noteBuffer).forEach(note =>
+        this.$store.commit("SET_EVENT", note)
+      );
+
       Vue.set(this, "noteBuffer", {});
     },
     // When switching between tools the last transform needs to
@@ -467,14 +469,13 @@ export default {
       let [beat, pitch] = this.pxToXY(x, y);
 
       const foundNotes = [];
-      for (const noteId of this.track.events) {
-        const note = this.events[noteId];
+      for (const note of this.events) {
         if (
           Math.abs(note.pitch - pitch) < 50 &&
           note.beat < beat &&
           beat < note.beat + note.beats
         ) {
-          foundNotes.push(noteId);
+          foundNotes.push(note.id);
         }
       }
 

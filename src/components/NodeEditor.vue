@@ -22,33 +22,12 @@ import SinFactory from "nodes/Sin";
 import EventTrackFactory from "nodes/EventTrack";
 import ADSRFactory from "nodes/ADSR";
 import DestinationFactory from "nodes/Destination";
+import { mapState } from "vuex";
 const tools = {};
 export default {
   components: { AudioNode },
   mixins: [GridLand],
-  props: {
-    nodes: {
-      type: Object,
-      default: () => {}
-    },
-    edges: {
-      type: Object,
-      default: () => {}
-    },
-    tracks: {
-      type: Object,
-      default: () => {}
-    },
-    events: {
-      type: Object,
-      default: () => {}
-    },
-    tempo: {
-      type: Number,
-      default: () => 60
-    },
-    transporter: { type: Object, default: null }
-  },
+  props: {},
   data: () => ({
     processors: [],
     modules: {},
@@ -90,7 +69,8 @@ export default {
     },
     yEnd() {
       return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
-    }
+    },
+    ...mapState(["nodes", "edges"])
   },
   watch: {
     nodes(nodes) {

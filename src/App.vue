@@ -7,13 +7,7 @@
       class="midi-editor app-item"
       :x-start="viewStart"
       :x-end="viewEnd"
-      :track="tracks[0]"
-      :events="events"
-      :x-snap="beatSnap"
-      :y-snap="pitchSnap"
       :beat-cursor="playbackLocation"
-      :transporter="transporter"
-      @noteset="onNoteSet"
       @noteadd="onAddNote"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
@@ -23,15 +17,7 @@
       @zoom="onZoom"
       @playbackstartset="onPlaybackStartSet"
     />
-    <node-editor
-      ref="nodeEditor"
-      class="node-editor app-item"
-      :nodes="nodes"
-      :edges="edges"
-      :tracks="tracks"
-      :events="events"
-      :transporter="transporter"
-    />
+    <node-editor ref="nodeEditor" class="node-editor app-item"/>
   </div>
 </template>
 
@@ -45,48 +31,7 @@ import Transporter from "modules/Transporter.js";
 import { clearTimeout } from "timers";
 import { clamp } from "./util";
 
-const graph = {
-  nodes: {
-    "0": {
-      id: "0",
-      type: "track",
-      data: {
-        track: "0"
-      },
-      position: {
-        x: 100,
-        y: 100
-      },
-      inputs: [],
-      outputs: ["MIDI"]
-    },
-    "1": {
-      id: "1",
-      type: "worklet",
-      data: {
-        track: "0"
-      },
-      position: {
-        x: 300,
-        y: 130
-      },
-      inputs: ["MIDI"],
-      outputs: []
-    }
-  },
-  edges: {
-    "0": {
-      from: {
-        node: "0",
-        output: "0"
-      },
-      to: {
-        node: "1",
-        output: "0"
-      }
-    }
-  }
-};
+const graph = {};
 export default {
   components: {
     TransportBar,
@@ -97,64 +42,12 @@ export default {
   data: () => {
     const playbackLocation = 0;
     return {
-      trackCount: 1,
-      eventCount: 4,
-      nodeCount: 2,
-      tracks: {
-        "0": {
-          id: "0",
-          name: "Track 1",
-          events: ["0", "1", "2", "3"],
-          hue: 90
-        }
-      },
-      events: {
-        "0": {
-          id: "0",
-          pitch: -2500,
-          beat: 0,
-          velocity: 0.8,
-          beats: 0.25
-        },
-        "1": {
-          id: "1",
-          pitch: -2600,
-          beat: 1,
-          velocity: 0.3,
-          beats: 0.25
-        },
-        "2": {
-          id: "2",
-          pitch: -2520,
-          beat: 1.5,
-          velocity: 0.8,
-          beats: 0.25
-        },
-        "3": {
-          id: "3",
-          pitch: -2600,
-          beat: 3,
-          velocity: 0.6,
-          beats: 1
-        }
-      },
-      nodes: {},
-      edges: {},
       viewStart: 0,
       viewEnd: 16,
-      beatSnap: 1 / 4,
-      pitchSnap: 100,
       playbackLocation,
       playbackStart: playbackLocation,
-      bpm: 80,
-      lastPlaybackUpdate: Date.now(),
-      iisPlaying: false,
       mode: "split",
-      split: 0.3,
-      context: null,
-      transporter: null,
-      timeouts: new Array(50),
-      lastStoredTimeout: 0
+      split: 0.25
     };
   },
 
@@ -183,7 +76,6 @@ export default {
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
     window.addEventListener("contextmenu", this.disableContextMenu);
-    this.loadGraph(graph);
   },
   beforeDestroy() {
     window.removeEventListener("keydown", this.onKeyDown);
@@ -192,20 +84,11 @@ export default {
   },
   methods: {
     buildTransporter(e) {
-      const context = new AudioContext();
-      const transporter = new Transporter(context, this.playbackLocation);
-      this.transporter = transporter;
-      this.transporter.on("positionUpdate", this.scheduleCursor);
-      this.transporter.on("clear", this.clearCursorSchedule);
+      this.$store.commit("BUILD_TRANSPORTER");
     },
     disableContextMenu(e) {
       e.preventDefault();
       return false;
-    },
-    loadGraph(graph) {
-      for (const node of Object.values(graph.nodes)) {
-        Vue.set(this.nodes, node.id, node);
-      }
     },
     onKeyDown(e) {
       if (e.key === " ") this.transporter.pause();
@@ -220,24 +103,6 @@ export default {
       if (e.key === " ") {
         this.transporter.jump(this.playbackStart);
         this.transporter.play();
-      }
-    },
-    scheduleCursor(beat) {
-      this.playbackLocation = beat;
-    },
-    clearCursorSchedule() {
-      requestAnimationFrame(() => {
-        for (let timeout of this.timeouts) {
-          window.clearTimeout(timeout);
-        }
-      });
-    },
-    onNoteSet(noteBuffer) {
-      for (const note of Object.values(noteBuffer)) {
-        if (!this.events[note.id]) return;
-        this.events[note.id].beat = note.beat;
-        this.events[note.id].pitch = note.pitch;
-        this.events[note.id].beats = note.beats;
       }
     },
     onAddNote({ beat, pitch, trackId }) {

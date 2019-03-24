@@ -5,9 +5,9 @@ export default class Transporter extends EventEmitter {
   constructor(context, position) {
     super()
     // Position is in beats, beats after this still need to be scheduled
-    this.position = position
+    this.position = position || 0
     // Store this to make calculating stuff easier
-    this.startPosition = position
+    this.startPosition = this.position
     this.bpm = 80
     this.bps = this.bpm / 60
     this.bpms = this.bps / 1000
