@@ -202,8 +202,6 @@ export default {
 .app-item {
   background: hsla(0, 0%, 7%, 1);
   color: hsla(0, 0%, 80%, 0.8);
-  /* background: hsla(180, 5%, 40%, 1); */
-  /* border: 1px solid hsla(180, 5%, 30%, 1); */
   min-width: 0;
   min-height: 0;
 }
@@ -215,5 +213,6 @@ body {
   height: 100%;
   width: 100%;
   margin: 0;
+  background: hsla(0, 0%, 7%, 1);
 }
 </style>

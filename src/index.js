@@ -23,41 +23,36 @@ const nodes = {
     id: '0',
     type: 'track',
     data: {
-      track: '0',
+      trackId: '0',
     },
-    position: {
-      x: 100,
-      y: 100,
-    },
-    inputs: [],
-    outputs: ['MIDI'],
+    x: 100,
+    y: 100,
+    width: 100,
+    height: 200,
   },
   '1': {
     id: '1',
-    type: 'worklet',
-    data: {
-      track: '0',
-    },
-    position: {
-      x: 300,
-      y: 130,
-    },
-    inputs: ['MIDI'],
-    outputs: [],
+    type: 'sin',
+    data: {},
+    x: 300,
+    y: 130,
+    width: 100,
+    height: 200,
+  },
+  '2': {
+    id: '2',
+    type: 'destination',
+    data: {},
+    x: 600,
+    y: 110,
+    width: 100,
+    height: 200,
   },
 }
 
 const edges = {
-  '0': {
-    from: {
-      node: '0',
-      output: '0',
-    },
-    to: {
-      node: '1',
-      output: '0',
-    },
-  },
+  '0': ['0', '0', '1', '0'],
+  '1': ['1', '0', '2', '0'],
 }
 
 const tracks = {

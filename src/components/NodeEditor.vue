@@ -23,6 +23,7 @@ import EventTrackFactory from "nodes/EventTrack";
 import ADSRFactory from "nodes/ADSR";
 import DestinationFactory from "nodes/Destination";
 import { mapState } from "vuex";
+import nodeMap from "nodes";
 const tools = {};
 export default {
   components: { AudioNode },
@@ -37,7 +38,8 @@ export default {
     xEnd: 800,
     yStart: 0,
     xSnap: 25,
-    ySnap: 25
+    ySnap: 25,
+    nodeWorkers: {}
   }),
 
   computed: {
@@ -52,10 +54,10 @@ export default {
       return Object.values(this.nodes).map(node => {
         return {
           style: {
-            left: this.pxOfX(node.position.x) + "px",
-            top: this.pxOfY(node.position.y) + "px",
-            width: 150 * this.pxPerX + "px",
-            height: 200 * this.pxPerY + "px"
+            left: this.pxOfX(node.x) + "px",
+            top: this.pxOfY(node.y) + "px",
+            width: node.width * this.pxPerX + "px",
+            height: node.height * this.pxPerY + "px"
           },
           node
         };
@@ -92,15 +94,16 @@ export default {
   },
   methods: {
     onTransporter() {
-      const track0 = EventTrackFactory(this.transporter, "0");
-      const osc = SinFactory(this.transporter);
-      const env = ADSRFactory(this.transporter);
-      const destination = DestinationFactory(this.transporter);
+      for (const node of Object.values(this.nodes)) {
+        this.nodeWorkers[node.id] = nodeMap[node.type](
+          this.transporter,
+          node.data
+        );
+      }
 
-      track0.connect(osc, 0, 0);
-      track0.connect(env, 0, 1);
-      osc.connect(env, 0, 0);
-      env.connect(destination, 0, 0);
+      for (const [from, output, to, input] of Object.values(this.edges)) {
+        this.nodeWorkers[from].connect(this.nodeWorkers[to], output, input);
+      }
     },
     render() {
       // Prepare canvases
@@ -145,15 +148,35 @@ export default {
         backgroundCtx.stroke();
       }
 
-      nodesCtx.strokeStyle = `hsla(0, 0%, 60%, 0.9)`;
-      for (const node of Object.values(this.nodes)) {
-        const x = this.pxOfX(node.position.x);
-        const y = this.pxOfY(node.position.y);
-        const width = 150 * this.pxPerX;
-        const height = 200 * this.pxPerY;
+      nodesCtx.strokeStyle = "hsla(0, 0%, 100%, 0.6)";
+      nodesCtx.lineWidth = "3";
 
-        nodesCtx.strokeRect(x, y, width, height);
+      for (const [from, output, to, input] of Object.values(this.edges)) {
+        const fromNode = this.nodes[from];
+        const toNode = this.nodes[to];
+
+        this.drawEdge(
+          nodesCtx,
+          this.pxOfX(fromNode.x + fromNode.width),
+          this.pxOfY(fromNode.y + 10 + 10 * output),
+          this.pxOfX(toNode.x),
+          this.pxOfY(toNode.y + 10 + 10 * input)
+        );
       }
+    },
+    drawEdge(context, fromX, fromY, toX, toY) {
+      const handleWidth = this.pxPerX * 50;
+      context.beginPath();
+      context.moveTo(fromX, fromY);
+      context.bezierCurveTo(
+        fromX + handleWidth,
+        fromY,
+        toX - handleWidth,
+        toY,
+        toX,
+        toY
+      );
+      context.stroke();
     },
     pan({ x, y }) {
       this.xStart = this.xStart + x;

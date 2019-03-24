@@ -1,6 +1,8 @@
 <template>
   <div class="root">
-    <div v-if="node.type === 'track'">Track: {{ node.data.track }}</div>
+    {{ node.type }}
+    <br>
+    {{ node.data }}
   </div>
 </template>
 
@@ -12,16 +14,19 @@ export default {
       required: true
     }
   },
-  data: () => ({})
+  data: () => ({}),
+  methods: {}
 };
 </script>
 
 <style scoped>
 .root {
-  /* padding: 0.4em; */
+  padding: 0.6em;
+  box-sizing: border-box;
   background: hsla(0, 0%, 70%, 0.2);
   position: absolute;
   pointer-events: none;
+  box-shadow: 0 0 3px hsla(0, 0%, 0%, 0.8);
 }
 </style>
 

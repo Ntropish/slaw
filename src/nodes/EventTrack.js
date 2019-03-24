@@ -1,7 +1,7 @@
 import { connect, timeSort, pitchToFrequency } from './util'
 import { store } from '../index'
 
-export default function EventTrackFactory(transporter, trackId) {
+export default function EventTrackFactory(transporter, { trackId }) {
   const eventSender = new EventTarget()
 
   transporter.on('schedule', data => {
