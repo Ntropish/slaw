@@ -66,7 +66,8 @@ export default function SinFactory(transporter) {
 
     gainNode.gain.cancelScheduledValues(now)
     onMap.forEach(({ value, time }) => {
-      gainNode.gain.setValueAtTime(value ? 1 : 0, time)
+      // Use setTargetAtTime to prevent clicking
+      gainNode.gain.setTargetAtTime(value ? 1 : 0, time, 0.01)
     })
 
     osc.frequency.cancelScheduledValues(now)

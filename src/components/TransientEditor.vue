@@ -89,8 +89,8 @@ export default {
     transporter: { type: Object, default: null }
   },
   data: () => ({
-    yStart: 2000,
-    yEnd: -3000,
+    yStart: 1000,
+    yEnd: -4000,
     canvasWidth: 300,
     canvasHeight: 150,
     selectedNotes: [],

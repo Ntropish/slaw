@@ -3,7 +3,7 @@ import { connect } from './util'
 export default function ADSRFactory(transporter) {
   const { context, bps } = transporter
   const gainNode = context.createGain()
-  const adsr = [0.1, 0.3, 0.1, 0.2]
+  const adsr = [0.01, 0.1, 0.4, 0.1]
 
   transporter.on('clear', () => {
     gainNode.gain.cancelScheduledValues(
@@ -12,15 +12,18 @@ export default function ADSRFactory(transporter) {
     gainNode.gain.setValueAtTime(0, context.getOutputTimestamp().contextTime)
   })
 
-  function onEvent({ detail: { beats, time } }) {
+  function onEvent({ detail: { beats, time, velocity } }) {
     const noteEnd = time + beats / bps
     const [a, d, s, r] = adsr
 
     gainNode.gain.setValueAtTime(0, time)
     // Math min to make sure gain doesn't come in after note should be stopping
-    gainNode.gain.linearRampToValueAtTime(0.8, Math.min(noteEnd, time + a))
-    gainNode.gain.linearRampToValueAtTime(s, Math.min(noteEnd, time + a + d))
-    gainNode.gain.setValueAtTime(s, noteEnd)
+    gainNode.gain.linearRampToValueAtTime(velocity, Math.min(noteEnd, time + a))
+    gainNode.gain.linearRampToValueAtTime(
+      s * velocity,
+      Math.min(noteEnd, time + a + d),
+    )
+    gainNode.gain.setTargetAtTime(s * velocity, noteEnd, 0.1)
     gainNode.gain.linearRampToValueAtTime(0, noteEnd + r)
   }
 

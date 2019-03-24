@@ -29,6 +29,6 @@ Play with `space`, pause with `s`
 
 box select by holding `shift` and dragging
 
-Quantize selected nots with `q`
+Quantize selected notes with `q`
 
 Resize by holding `a` and dragging
