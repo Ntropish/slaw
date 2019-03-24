@@ -11,7 +11,7 @@ import Vue from "vue";
 import { range } from "lodash";
 import GridLand from "modules/GridLand";
 import { clamp } from "../util";
-import { mapState } from "vuex";
+import { mapState, mapGetters } from "vuex";
 
 const dark = 0;
 const light = 1;
@@ -73,10 +73,6 @@ export default {
     ySnap: {
       type: Number,
       default: () => 1
-    },
-    beatCursor: {
-      type: Number,
-      default: () => 0
     }
   },
   data: () => ({
@@ -120,8 +116,15 @@ export default {
     },
     ...mapState({
       trackId: "selectedTrackId",
-      track: state => state.tracks[state.selectedTrackId],
-      transporter: "transporter"
+      track: state => state.tracks[state.selectedTrackId]
+    }),
+    ...mapState(["playbackStart"]),
+    ...mapState({
+      _transporter: "transporter",
+      transporter() {
+        if (!this._transporter) this.$store.commit("BUILD_TRANSPORTER");
+        return this._transporter;
+      }
     })
   },
   watch: {
@@ -131,6 +134,16 @@ export default {
     dragTool(val) {
       // start a new transform start/end when changing tools
       this.redrag();
+    },
+    transporter(val) {
+      val.off("positionUpdate", this.setPlaybackStart);
+      val.on("positionUpdate", this.setPlaybackStart);
+    },
+    playbackStart(val) {
+      this.render();
+    },
+    events(val) {
+      this.render();
     }
   },
   methods: {
@@ -156,7 +169,6 @@ export default {
         const y = this.pxOfY(line - 50);
 
         backgroundCtx.fillRect(0, y, this.canvasWidth, 100 * this.pxPerY);
-        // backgroundCtx.stroke();
       }
 
       // Draw beat marks
@@ -239,12 +251,15 @@ export default {
         );
       }
 
-      const cursorX = Math.round(this.pxOfX(this.beatCursor));
+      const cursorX = Math.round(this.pxOfX(this.playbackStart));
       utilCtx.strokeStyle = this.gradients[4];
       utilCtx.beginPath();
       utilCtx.moveTo(cursorX, 0);
       utilCtx.lineTo(cursorX, this.canvasHeight);
       utilCtx.stroke();
+    },
+    setPlaybackStart(beat) {
+      this.$store.commit("SET_PLAYBACK_START", beat);
     },
     buildBeatMark(ctx, opacity, lightness, spread = 0.2) {
       var gradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
@@ -285,9 +300,9 @@ export default {
           this.boxSelectStart();
         } else {
           // Trigger note copy
-          this.$emit("notecopy", {
-            notes: selectedNotes,
-            trackId: this.track.id
+          this.$store.commit("COPY_EVENTS", {
+            eventIds: selectedNotes,
+            trackId: this.trackId
           });
         }
       }
@@ -307,7 +322,6 @@ export default {
           // Else just move the cursor to the clicked location
           // Snapping can't be disabled on click because ctrl click
           // is already for adding notes
-          this.$emit("playbackstartset", beat);
           this.transporter.jump(beat);
           this.transporter.pause();
         }
@@ -365,7 +379,6 @@ export default {
           ? Math.round(x / this.xSnap) * this.xSnap
           : x;
         this.transporter.jump(beat);
-        this.$emit("playbackstartset", beat);
       }
     },
 
@@ -409,9 +422,7 @@ export default {
     },
     quantize() {
       this.unbufferNotes();
-      this.$emit("notequantize", {
-        notes: this.selectedNotes
-      });
+      this.$store.commit("QUANTIZE_EVENTS", { eventIds: this.selectedNotes });
       this.render();
     },
     onMouseLeave(e) {

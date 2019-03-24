@@ -7,15 +7,11 @@
       class="midi-editor app-item"
       :x-start="viewStart"
       :x-end="viewEnd"
-      :beat-cursor="playbackLocation"
       @noteadd="onAddNote"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
-      @notequantize="onQuantizeNote"
-      @notecopy="onCopyNote"
       @pan="onMidiEditorPan"
       @zoom="onZoom"
-      @playbackstartset="onPlaybackStartSet"
     />
     <node-editor ref="nodeEditor" class="node-editor app-item"/>
   </div>
@@ -30,6 +26,7 @@ import NodeEditor from "components/NodeEditor.vue";
 import Transporter from "modules/Transporter.js";
 import { clearTimeout } from "timers";
 import { clamp } from "./util";
+import { mapState } from "vuex";
 
 const graph = {};
 export default {
@@ -40,12 +37,9 @@ export default {
     NodeEditor
   },
   data: () => {
-    const playbackLocation = 0;
     return {
       viewStart: 0,
       viewEnd: 16,
-      playbackLocation,
-      playbackStart: playbackLocation,
       mode: "split",
       split: 0.25
     };
@@ -60,7 +54,8 @@ export default {
             gridTemplateRows: `6em ${this.split}fr ${1 - this.split}fr`
           }
         : {};
-    }
+    },
+    ...mapState(["transporter", "playbackStart"])
   },
   watch: {
     mode(val) {
@@ -131,27 +126,6 @@ export default {
           1 / 32
         );
       }
-    },
-    onQuantizeNote({ notes }) {
-      for (const id of notes) {
-        const note = this.events[id];
-        note.beat = Math.round(note.beat / this.beatSnap) * this.beatSnap;
-        note.beats = Math.round(note.beats / this.beatSnap) * this.beatSnap;
-      }
-    },
-    onCopyNote({ notes, trackId }) {
-      for (const id of notes) {
-        const newNoteId = (this.eventCount++).toString();
-        const copyFrom = this.events[id];
-        this.events[newNoteId] = {
-          ...copyFrom,
-          id: newNoteId
-        };
-        this.tracks[trackId].events.push(newNoteId);
-      }
-    },
-    onPlaybackStartSet(beat) {
-      this.playbackStart = beat;
     },
     onMidiEditorPan({ x }) {
       this.viewStart += x;

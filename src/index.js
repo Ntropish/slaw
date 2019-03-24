@@ -75,7 +75,7 @@ const events = {
     pitch: -2500,
     beat: 0,
     velocity: 0.8,
-    beats: 0.25,
+    beats: 0.45,
   },
   '1': {
     id: '1',
