@@ -26,6 +26,7 @@ export default class Transporter extends EventEmitter {
   async play() {
     if (this.context.state !== 'running') await this.context.resume()
     const now = this.context.getOutputTimestamp().contextTime
+    console.log('play from:', now)
 
     if (this.isPlaying) return
     this.isPlaying = true

@@ -321,6 +321,7 @@ export default {
           // Else just move the cursor to the clicked location
           // Snapping can't be disabled on click because ctrl click
           // is already for adding notes
+          this.$store.commit("SET_PLAYBACK_START", beat);
           this.transporter.jump(beat);
           this.transporter.pause();
         }

@@ -100,8 +100,8 @@ export default class Destination extends Brain {
 // Find the highest timed event below or equal the time
 function scanMap(map, time) {
   const result = map.reduce((acc, event) => {
-    if (!acc) return event
-    if (event.time > acc.time && event.time <= time) return event
+    if (!acc && event.time < time) return event
+    if (acc && event.time > acc.time && event.time <= time) return event
     return acc
   }, null)
   return result
