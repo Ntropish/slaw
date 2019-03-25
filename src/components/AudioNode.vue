@@ -1,7 +1,7 @@
 <template>
   <div class="root">
     <div class="io">
-      <div v-if="brain" :style="outputStyle" class="outputs">
+      <div :style="outputStyle" class="outputs">
         <div
           v-for="(output, index) in brain.outputs"
           :key="index"
@@ -13,7 +13,7 @@
       </div>
 
       <div class="info">{{ node.type }}</div>
-      <div v-if="brain" :style="inputStyle" class="inputs">
+      <div :style="inputStyle" class="inputs">
         <div
           v-for="(input, index) in brain.inputs"
           :key="index"
@@ -33,10 +33,6 @@ export default {
     node: {
       type: Object,
       required: true
-    },
-    brain: {
-      type: Object,
-      default: () => null
     },
     handleSpacing: {
       type: Number,
@@ -63,6 +59,10 @@ export default {
       return {
         marginBottom: 0.5 * this.handleSpacing + "px"
       };
+    },
+    brain() {
+      const brains = this.$store.state.brains;
+      return brains[this.node.brain];
     }
   },
   methods: {

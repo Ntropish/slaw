@@ -3,31 +3,17 @@ export default class NodeInterface {
     this.transporter = transporter
     this.id = NodeInterface.lastId++
   }
-  connect(node, outputIndex, inputIndex) {
-    // Auto choose input/outputs
-    if (typeof outputIndex !== 'number' && typeof inputIndex !== 'number') {
-      const inputTypes = node.inputs.map(input => input.type)
-      const outputTypes = node.outputs.map(input => input.type)
-
-      for (let i = 0; i < inputTypes.length; i++) {
-        const j = outputTypes.indexOf(inputTypes[i])
-        if (j !== -1) {
-          inputIndex = i
-          outputIndex = j
-        }
-      }
-    }
-
+  connect(brain, outputIndex, inputIndex) {
     // ports must exist
     if (
       (!this.outputs && !this.outputs[outputIndex]) ||
-      (!node.inputs && !node.inputs[inputIndex])
+      (!brain.inputs && !brain.inputs[inputIndex])
     )
       return false
     // edge type must match
-    if (this.outputs[outputIndex].type !== node.inputs[inputIndex].type)
+    if (this.outputs[outputIndex].type !== brain.inputs[inputIndex].type)
       return false
-    this.outputs[outputIndex].connect(node, inputIndex)
+    this.outputs[outputIndex].connect(this, brain, inputIndex)
   }
 }
 

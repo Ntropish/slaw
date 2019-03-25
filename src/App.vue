@@ -66,8 +66,6 @@ export default {
     }
   },
   mounted() {
-    window.addEventListener("keydown", this.buildTransporter, { once: true });
-    window.addEventListener("mousedown", this.buildTransporter, { once: true });
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
     window.addEventListener("contextmenu", this.disableContextMenu);
@@ -78,9 +76,6 @@ export default {
     window.removeEventListener("contextmenu", this.disableContextMenu);
   },
   methods: {
-    buildTransporter(e) {
-      this.$store.commit("BUILD_TRANSPORTER");
-    },
     disableContextMenu(e) {
       e.preventDefault();
       return false;

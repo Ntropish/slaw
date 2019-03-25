@@ -2,6 +2,7 @@ import { Store } from 'vuex'
 import Transporter from 'modules/Transporter'
 import inputTracker from './inputTracker'
 import nodeMap from 'nodes'
+import Vue from 'vue'
 
 const lastIds = {
   event: 4,
@@ -16,7 +17,7 @@ export default () => {
   const store = new Store({
     state: {
       selectedTrackId: '',
-      transporter: null,
+      transporter: new Transporter(new AudioContext()),
       playbackStart: 0,
       beatSnap: 1 / 4,
       centsSnap: 100,
@@ -31,18 +32,16 @@ export default () => {
       focus: null,
     },
     mutations: {
-      BRAINIFY_NODE(state, { nodeId }) {
-        const node = state.nodes[nodeId]
-        const brain = new nodeMap[node.type](node.data)
-        node.brain = brain.id
-        state.brains[brain.id] = brain
+      ADD_BRAIN(state, { brain }) {
+        Vue.set(state.brains, brain.id, brain)
       },
-      SET_NODES(state, nodes) {
-        state.nodes = nodes
+      ADD_NODE(state, { node, id }) {
+        Vue.set(state.nodes, id, node)
       },
-      SET_EDGES(state, edges) {
-        state.edges = edges
+      ADD_EDGE(state, { id, edge }) {
+        Vue.set(state.edges, id, edge)
       },
+      REMOVE_EDGE(state, id) {},
       SET_EVENTS(state, events) {
         state.events = events
       },
@@ -74,9 +73,6 @@ export default () => {
       SET_SELECTED_TRACK(state, id) {
         state.selectedTrackId = id
       },
-      BUILD_TRANSPORTER(state) {
-        state.transporter = new Transporter(new AudioContext())
-      },
       SET_PLAYBACK_START(state, beat) {
         state.playbackStart = beat
       },
@@ -104,12 +100,34 @@ export default () => {
         // do async stuff
         // do more commits
       },
-      makeTransporter(context) {
-        if (context.state.transporter) return
-        context.commit('BUILD_TRANSPORTER')
-        for (const node of Object.keys(context.state.nodes)) {
-          context.commit('BRAINIFY_NODE', node)
-        }
+      addEdge(context, edgeDescriptor) {
+        context.commit('ADD_EDGE', {
+          id: Object.keys(context.state.edges).length,
+          edge: edgeDescriptor,
+        })
+        console.log(edgeDescriptor)
+        const [fromId, output, toId, input] = edgeDescriptor
+        const fromBrainId = context.state.nodes[fromId].brain
+        const toBrainId = context.state.nodes[toId].brain
+        context.state.brains[fromBrainId].connect(
+          context.state.brains[toBrainId],
+          output,
+          input,
+        )
+      },
+      async addNode(context, node) {
+        const brain = new nodeMap[node.type](
+          context.state.transporter,
+          node.data,
+        )
+        context.commit('ADD_BRAIN', { brain })
+
+        const id = Object.keys(context.state.nodes).length
+        context.commit('ADD_NODE', {
+          id,
+          node: { id, ...node, brain: brain.id },
+        })
+        return id
       },
     },
     getters: {

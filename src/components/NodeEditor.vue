@@ -43,6 +43,9 @@ export default {
     ySnap: 25,
     isDraggingHandle: false
   }),
+  mounted() {
+    this.render();
+  },
 
   computed: {
     canvases() {
@@ -59,6 +62,9 @@ export default {
   },
   watch: {
     nodes(nodes) {
+      this.render();
+    },
+    edges(edges) {
       this.render();
     }
   },
@@ -79,18 +85,7 @@ export default {
       console.log("from", this.isDraggingHandle, "to", [node, type, index]);
       this.isDraggingHandle = false;
     },
-    // onTransporter() {
-    //   for (const node of Object.values(this.nodes)) {
-    //     this.nodeWorkers[node.id] = nodeMap[node.type](
-    //       this.transporter,
-    //       node.data
-    //     );
-    //   }
 
-    //   for (const [from, output, to, input] of Object.values(this.edges)) {
-    //     this.nodeWorkers[from].connect(this.nodeWorkers[to], output, input);
-    //   }
-    // },
     render() {
       // Prepare canvases
       this.contexts.forEach(ctx =>
@@ -141,7 +136,7 @@ export default {
         const fromNode = this.nodes[from];
         const toNode = this.nodes[to];
 
-        const inputLength = nodeMap[toNode.type].inputs.length;
+        const inputLength = nodeMap[toNode.type].prototype.inputs.length;
 
         const handleSpace = 10;
 

@@ -129,7 +129,8 @@ export default {
     ...mapState({
       _transporter: "transporter",
       transporter() {
-        if (!this._transporter) this.$store.commit("BUILD_TRANSPORTER");
+        if (!this._transporter) this.$store.dispatch("makeTransporter");
+
         return this._transporter;
       }
     })
@@ -143,8 +144,10 @@ export default {
       this.redrag();
     },
     transporter(newTransporter, oldTransporter) {
-      oldTransporter.off("positionUpdate", this.setPlaybackStart);
-      newTransporter.on("positionUpdate", this.setPlaybackStart);
+      if (oldTransporter)
+        oldTransporter.off("positionUpdate", this.setPlaybackStart);
+      if (newTransporter)
+        newTransporter.on("positionUpdate", this.setPlaybackStart);
     },
     playbackStart(val) {
       this.render();

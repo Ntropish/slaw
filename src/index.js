@@ -18,43 +18,6 @@ new Vue({
 
 // Temp code below
 
-const nodes = {
-  '0': {
-    id: '0',
-    type: 'track',
-    data: {
-      trackId: '0',
-    },
-    x: 100,
-    y: 100,
-    width: 100,
-    height: 150,
-  },
-  '1': {
-    id: '1',
-    type: 'sin',
-    data: {},
-    x: 300,
-    y: 130,
-    width: 100,
-    height: 150,
-  },
-  '2': {
-    id: '2',
-    type: 'destination',
-    data: {},
-    x: 600,
-    y: 110,
-    width: 100,
-    height: 150,
-  },
-}
-
-const edges = {
-  '0': ['0', '0', '1', '0'],
-  '1': ['1', '0', '2', '0'],
-}
-
 const tracks = {
   '0': {
     id: '0',
@@ -102,8 +65,39 @@ const events = {
   },
 }
 
-store.commit('SET_NODES', nodes)
-store.commit('SET_EDGES', edges)
-store.commit('SET_EVENTS', events)
-store.commit('SET_TRACKS', tracks)
-store.commit('SET_SELECTED_TRACK', '0')
+;(async () => {
+  // store.commit('SET_NODES', nodes)
+  const id1 = await store.dispatch('addNode', {
+    type: 'track',
+    data: {
+      trackId: '0',
+    },
+    x: 100,
+    y: 100,
+    width: 100,
+    height: 150,
+  })
+  const id2 = await store.dispatch('addNode', {
+    type: 'sin',
+    data: {},
+    x: 300,
+    y: 130,
+    width: 100,
+    height: 150,
+  })
+  const id3 = await store.dispatch('addNode', {
+    type: 'destination',
+    data: {},
+    x: 600,
+    y: 110,
+    width: 100,
+    height: 150,
+  })
+  // store.commit('SET_EDGES', edges)
+  console.log(id1, id2, id3)
+  store.dispatch('addEdge', [id1, '0', id2, '0'])
+  store.dispatch('addEdge', [id2, '0', id3, '0'])
+  store.commit('SET_EVENTS', events)
+  store.commit('SET_TRACKS', tracks)
+  store.commit('SET_SELECTED_TRACK', '0')
+})()

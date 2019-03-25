@@ -4,7 +4,7 @@ import Brain from './Brain'
 
 export default class EventTrack extends Brain {
   constructor(transporter, trackId) {
-    super()
+    super(transporter)
     this.eventSender = new EventTarget()
     this.trackId = trackId
 
@@ -30,16 +30,19 @@ export default class EventTrack extends Brain {
   }
 }
 
-EventTrack.inputs = []
+EventTrack.prototype.inputs = []
 
-EventTrack.outputs = [
+EventTrack.prototype.outputs = [
   {
     type: 'event',
-    connect: (node, index) => {
-      this.eventSender.addEventListener('event', ...node.inputs[index].args)
+    connect: (n, node, index) => {
+      n.eventSender.addEventListener('event', ...node.inputs[index].args(node))
     },
-    disconnect: (node, index) => {
-      this.eventSender.removeEventListener('event', ...node.inputs[index].args)
+    disconnect: (n, node, index) => {
+      n.eventSender.removeEventListener(
+        'event',
+        ...node.inputs[index].args(node),
+      )
     },
   },
 ]

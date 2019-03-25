@@ -2,11 +2,11 @@ import Brain from './Brain'
 
 export default class Destination extends Brain {}
 
-Destination.inputs = [
+Destination.prototype.inputs = [
   {
     type: 'buffer',
-    args: n => n.transporter.context.destination,
+    args: n => [n.transporter.context.destination],
   },
 ]
 
-Destination.outputs = []
+Destination.prototype.outputs = []

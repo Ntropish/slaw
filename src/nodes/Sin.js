@@ -4,8 +4,7 @@ import Brain from './Brain'
 
 export default class Destination extends Brain {
   constructor(transporter) {
-    super()
-    this.transporter = transporter
+    super(transporter)
     const { context, bps } = transporter
     this.context = context
     this.bps = bps
@@ -108,21 +107,22 @@ function scanMap(map, time) {
   return result
 }
 
-Destination.inputs = [
+Destination.prototype.inputs = [
   {
     type: 'event',
     args: n => [n.onEvent.bind(n)],
   },
 ]
 
-Destination.outputs = [
+Destination.prototype.outputs = [
   {
     type: 'buffer',
     connect: (n, node, index) => {
-      n.gainNode.connect(...node.inputs[index].args)
+      console.log(node.inputs[index].args(node))
+      n.gainNode.connect(...node.inputs[index].args(node))
     },
     disconnect: (n, node, index) => {
-      n.gainNode.disconnect(...node.inputs[index].args)
+      n.gainNode.disconnect(...node.inputs[index].args(node))
     },
   },
 ]

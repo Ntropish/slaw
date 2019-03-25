@@ -48,25 +48,25 @@ export default class ADSR extends Brain {
   }
 }
 
-ADSR.inputs = [
+ADSR.prototype.inputs = [
   {
     type: 'buffer',
-    args: n => n.gainNode,
+    args: n => [n.gainNode],
   },
   {
     type: 'event',
-    args: n => n.onEvent,
+    args: n => [n.onEvent],
   },
 ]
 
-ADSR.outputs = [
+ADSR.prototype.outputs = [
   {
     type: 'buffer',
     connect: (node, index) => {
-      this.gainNode.connect(...node.inputs[index].args)
+      this.gainNode.connect(...node.inputs[index].args(node))
     },
     disconnect: (node, index) => {
-      this.gainNode.disconnect(...node.inputs[index].args)
+      this.gainNode.disconnect(...node.inputs[index].args(node))
     },
   },
 ]
