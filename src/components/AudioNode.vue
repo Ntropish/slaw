@@ -7,6 +7,8 @@
           :key="index"
           class="handle"
           :style="handleStyle"
+          @mouseup="handleMouseUp('input', index)"
+          @mousedown="handleMouseDown('input', index)"
         >{{ output.type }}</div>
       </div>
 
@@ -17,6 +19,8 @@
           :key="index"
           class="handle"
           :style="handleStyle"
+          @mouseup="handleMouseUp('output', index)"
+          @mousedown="handleMouseDown('output', index)"
         >{{ input.type }}</div>
       </div>
     </div>
@@ -60,6 +64,14 @@ export default {
         marginBottom: 0.5 * this.handleSpacing + "px"
       };
     }
+  },
+  methods: {
+    handleMouseUp(type, i) {
+      this.$emit("handle-drop", { type, i });
+    },
+    handleMouseDown(type, i) {
+      this.$emit("handle-drag", { type, i });
+    }
   }
 };
 </script>
@@ -68,8 +80,8 @@ export default {
 .root {
   box-sizing: border-box;
   background: hsla(0, 0%, 70%, 0.2);
+  user-select: none;
   position: absolute;
-  pointer-events: none;
   box-shadow: 0 0 3px hsla(0, 0%, 0%, 0.8);
 }
 

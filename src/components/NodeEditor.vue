@@ -4,12 +4,15 @@
     <canvas ref="nodes" class="canvas nodes" oncontextmenu="return false"/>
     <canvas ref="edges" class="canvas edges" oncontextmenu="return false"/>
     <Audio-node
+      class="node"
       v-for="node in displayNodes"
       :key="node.node.id"
       :node="node.node"
       :brain="node.brain"
       :style="node.style"
       :handle-spacing="10 * pxPerY"
+      @handle-drag="handleDrag(node.id, $event.type, $event.i)"
+      @handle-drop="handleDrop(node.id, $event.type, $event.i)"
     />
     <!-- {{ keyboardState }} {{ mouseState }} -->
   </div>
@@ -41,7 +44,8 @@ export default {
     yStart: 0,
     xSnap: 25,
     ySnap: 25,
-    nodeWorkers: {}
+    nodeWorkers: {},
+    isDraggingHandle: false
   }),
 
   computed: {
@@ -63,7 +67,8 @@ export default {
             height: node.height * this.pxPerY + "px"
           },
           node,
-          brain: this.nodeWorkers[node.id]
+          brain: this.nodeWorkers[node.id],
+          id: node.id
         };
       });
     },
@@ -97,18 +102,26 @@ export default {
     }
   },
   methods: {
-    onTransporter() {
-      for (const node of Object.values(this.nodes)) {
-        this.nodeWorkers[node.id] = nodeMap[node.type](
-          this.transporter,
-          node.data
-        );
-      }
-
-      for (const [from, output, to, input] of Object.values(this.edges)) {
-        this.nodeWorkers[from].connect(this.nodeWorkers[to], output, input);
-      }
+    handleDrag(node, type, index) {
+      this.isDraggingHandle = [node, type, index];
     },
+
+    handleDrop(node, type, index) {
+      console.log("from", this.isDraggingHandle, "to", [node, type, index]);
+      this.isDraggingHandle = false;
+    },
+    // onTransporter() {
+    //   for (const node of Object.values(this.nodes)) {
+    //     this.nodeWorkers[node.id] = nodeMap[node.type](
+    //       this.transporter,
+    //       node.data
+    //     );
+    //   }
+
+    //   for (const [from, output, to, input] of Object.values(this.edges)) {
+    //     this.nodeWorkers[from].connect(this.nodeWorkers[to], output, input);
+    //   }
+    // },
     render() {
       // Prepare canvases
       this.contexts.forEach(ctx =>
@@ -213,7 +226,7 @@ export default {
       // console.log("mousedown");
     },
     mouseUp(e) {
-      // console.log("mouseup");
+      this.isDraggingHandle = false;
     },
     mouseMove(e) {
       // console.log("move");
@@ -241,6 +254,9 @@ export default {
   position: absolute;
   top: 0;
   left: 0;
+}
+.node {
+  z-index: 10;
 }
 </style>
 

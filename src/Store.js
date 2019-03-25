@@ -1,6 +1,7 @@
 import { Store } from 'vuex'
 import Transporter from 'modules/Transporter'
 import inputTracker from './inputTracker'
+import nodeMap from 'nodes'
 
 const lastIds = {
   event: 4,
@@ -22,13 +23,20 @@ export default () => {
       events: {},
       tracks: {},
       nodes: {},
+      brains: {},
       edges: {},
       keyboardState: [],
       mouseState: [],
-      // Last element clicked
+      // Last element clicked - scan upwards to see the focus
       focus: null,
     },
     mutations: {
+      BRAINIFY_NODE(state, { nodeId }) {
+        const node = state.nodes[nodeId]
+        const brain = new nodeMap[node.type](node.data)
+        node.brain = brain.id
+        state.brains[brain.id] = brain
+      },
       SET_NODES(state, nodes) {
         state.nodes = nodes
       },
@@ -95,6 +103,13 @@ export default () => {
         // context.commit ('SET_NODES', [])
         // do async stuff
         // do more commits
+      },
+      makeTransporter(context) {
+        if (context.state.transporter) return
+        context.commit('BUILD_TRANSPORTER')
+        for (const node of Object.keys(context.state.nodes)) {
+          context.commit('BRAINIFY_NODE', node)
+        }
       },
     },
     getters: {

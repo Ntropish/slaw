@@ -1,15 +1,12 @@
-import { connect, timeSort } from './util'
+import Brain from './Brain'
 
-export default function DestinationFactory(transporter) {
-  return {
-    connect,
-    outputs: [],
-    inputs: [
-      {
-        type: 'buffer',
-        // Connect to
-        args: [transporter.context.destination],
-      },
-    ],
-  }
-}
+export default class Destination extends Brain {}
+
+Destination.inputs = [
+  {
+    type: 'buffer',
+    args: n => n.transporter.context.destination,
+  },
+]
+
+Destination.outputs = []
