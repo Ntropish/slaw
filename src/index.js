@@ -28,7 +28,7 @@ const nodes = {
     x: 100,
     y: 100,
     width: 100,
-    height: 200,
+    height: 150,
   },
   '1': {
     id: '1',
@@ -37,7 +37,7 @@ const nodes = {
     x: 300,
     y: 130,
     width: 100,
-    height: 200,
+    height: 150,
   },
   '2': {
     id: '2',
@@ -46,7 +46,7 @@ const nodes = {
     x: 600,
     y: 110,
     width: 100,
-    height: 200,
+    height: 150,
   },
 }
 

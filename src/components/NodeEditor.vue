@@ -7,7 +7,9 @@
       v-for="node in displayNodes"
       :key="node.node.id"
       :node="node.node"
+      :brain="node.brain"
       :style="node.style"
+      :handle-spacing="10 * pxPerY"
     />
     <!-- {{ keyboardState }} {{ mouseState }} -->
   </div>
@@ -51,6 +53,7 @@ export default {
       return this.pxPerUnit * this.canvasHeight;
     },
     displayNodes() {
+      if (!this.transporter) return [];
       return Object.values(this.nodes).map(node => {
         return {
           style: {
@@ -59,7 +62,8 @@ export default {
             width: node.width * this.pxPerX + "px",
             height: node.height * this.pxPerY + "px"
           },
-          node
+          node,
+          brain: this.nodeWorkers[node.id]
         };
       });
     },
@@ -155,12 +159,22 @@ export default {
         const fromNode = this.nodes[from];
         const toNode = this.nodes[to];
 
+        const toBrain = this.nodeWorkers[to];
+        const inputLength = toBrain ? toBrain.inputs.length : 1;
+
+        const handleSpace = 10;
+
         this.drawEdge(
           nodesCtx,
           this.pxOfX(fromNode.x + fromNode.width),
-          this.pxOfY(fromNode.y + 10 + 10 * output),
+          this.pxOfY(fromNode.y + handleSpace + handleSpace * output),
           this.pxOfX(toNode.x),
-          this.pxOfY(toNode.y + 10 + 10 * input)
+          this.pxOfY(
+            toNode.y +
+              toNode.height -
+              handleSpace * inputLength +
+              handleSpace * input
+          )
         );
       }
     },
