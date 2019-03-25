@@ -4,12 +4,11 @@
     <canvas ref="nodes" class="canvas nodes" oncontextmenu="return false"/>
     <canvas ref="edges" class="canvas edges" oncontextmenu="return false"/>
     <Audio-node
+      v-for="(node, id) in nodes"
+      :key="id"
       class="node"
-      v-for="node in displayNodes"
-      :key="node.node.id"
-      :node="node.node"
-      :brain="node.brain"
-      :style="node.style"
+      :node="node"
+      :style="computeNodeStyle(node)"
       :handle-spacing="10 * pxPerY"
       @handle-drag="handleDrag(node.id, $event.type, $event.i)"
       @handle-drop="handleDrop(node.id, $event.type, $event.i)"
@@ -35,8 +34,6 @@ export default {
   mixins: [GridLand],
   props: {},
   data: () => ({
-    processors: [],
-    modules: {},
     gridSize: 25,
     selectedNodes: [],
     xStart: 0,
@@ -44,7 +41,6 @@ export default {
     yStart: 0,
     xSnap: 25,
     ySnap: 25,
-    nodeWorkers: {},
     isDraggingHandle: false
   }),
 
@@ -56,52 +52,25 @@ export default {
     viewHeight() {
       return this.pxPerUnit * this.canvasHeight;
     },
-    displayNodes() {
-      if (!this.transporter) return [];
-      return Object.values(this.nodes).map(node => {
-        return {
-          style: {
-            left: this.pxOfX(node.x) + "px",
-            top: this.pxOfY(node.y) + "px",
-            width: node.width * this.pxPerX + "px",
-            height: node.height * this.pxPerY + "px"
-          },
-          node,
-          brain: this.nodeWorkers[node.id],
-          id: node.id
-        };
-      });
-    },
     yEnd() {
       return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
     },
-    ...mapState([
-      "nodes",
-      "edges",
-      "tracks",
-      "events",
-      "mouseState",
-      "keyboardState"
-    ]),
-    ...mapState({
-      _transporter: "transporter",
-      transporter() {
-        if (!this._transporter) {
-          this.$store.commit("BUILD_TRANSPORTER");
-        }
-        return this._transporter;
-      }
-    })
+    ...mapState(["nodes", "edges", "tracks", "mouseState", "keyboardState"])
   },
   watch: {
     nodes(nodes) {
       this.render();
-    },
-    transporter(transporter) {
-      if (transporter) this.onTransporter();
     }
   },
   methods: {
+    computeNodeStyle(node) {
+      return {
+        left: this.pxOfX(node.x) + "px",
+        top: this.pxOfY(node.y) + "px",
+        width: node.width * this.pxPerX + "px",
+        height: node.height * this.pxPerY + "px"
+      };
+    },
     handleDrag(node, type, index) {
       this.isDraggingHandle = [node, type, index];
     },
@@ -172,8 +141,7 @@ export default {
         const fromNode = this.nodes[from];
         const toNode = this.nodes[to];
 
-        const toBrain = this.nodeWorkers[to];
-        const inputLength = toBrain ? toBrain.inputs.length : 1;
+        const inputLength = nodeMap[toNode.type].inputs.length;
 
         const handleSpace = 10;
 
