@@ -2,8 +2,10 @@ import EventEmitter from 'events'
 import { clamp } from '../util'
 
 export default class Transporter extends EventEmitter {
-  constructor(context, position) {
+  constructor(position) {
     super()
+
+    this.context = new AudioContext()
     // Position is in beats, beats after this still need to be scheduled
     this.position = position || 0
     // Store this to make calculating stuff easier
@@ -18,14 +20,13 @@ export default class Transporter extends EventEmitter {
     this.scheduleBeatsSize = this.scheduleSize * 60000 * this.bpm
     this.timerID = null
     this.positionUpdateID = null
-    this.context = context
     this.isPlaying = false
   }
 
-  play() {
+  async play() {
+    if (this.context.state !== 'running') await this.context.resume()
     const now = this.context.getOutputTimestamp().contextTime
 
-    console.log('play?', now)
     if (this.isPlaying) return
     this.isPlaying = true
     this.jump(this.position)

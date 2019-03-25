@@ -17,7 +17,7 @@ export default () => {
   const store = new Store({
     state: {
       selectedTrackId: '',
-      transporter: new Transporter(new AudioContext()),
+      transporter: new Transporter(),
       playbackStart: 0,
       playbackPosition: 0,
       beatSnap: 1 / 4,
