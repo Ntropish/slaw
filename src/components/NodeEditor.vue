@@ -13,7 +13,9 @@
       @handle-drag="handleDrag(node.id, $event.type, $event.i)"
       @handle-drop="handleDrop(node.id, $event.type, $event.i)"
     />
+    <add-menu v-if="isAddingNode" type="node" :style="addMenuStyle"/>
     <!-- {{ keyboardState }} {{ mouseState }} -->
+    {{ mousePosition }} {{ isAddingNode }}
   </div>
 </template>
 
@@ -21,7 +23,7 @@
 import { range } from "lodash";
 import GridLand from "modules/GridLand";
 import AudioNode from "components/AudioNode.vue";
-import { setTimeout } from "timers";
+import AddMenu from "components/AddMenu.vue";
 import SinFactory from "nodes/Sin";
 import EventTrackFactory from "nodes/EventTrack";
 import ADSRFactory from "nodes/ADSR";
@@ -30,7 +32,7 @@ import { mapState } from "vuex";
 import nodeMap from "nodes";
 const tools = {};
 export default {
-  components: { AudioNode },
+  components: { AudioNode, AddMenu },
   mixins: [GridLand],
   props: {},
   data: () => ({
@@ -41,11 +43,9 @@ export default {
     yStart: 0,
     xSnap: 25,
     ySnap: 25,
-    isDraggingHandle: false
+    isDraggingHandle: false,
+    isAddingNode: false
   }),
-  mounted() {
-    this.render();
-  },
 
   computed: {
     canvases() {
@@ -58,7 +58,20 @@ export default {
     yEnd() {
       return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
     },
-    ...mapState(["nodes", "edges", "tracks", "mouseState", "keyboardState"])
+    addMenuStyle() {
+      return {
+        top: this.isAddingNode.y + "px",
+        left: this.isAddingNode.x + "px"
+      };
+    },
+    ...mapState([
+      "nodes",
+      "edges",
+      "tracks",
+      "mouseState",
+      "keyboardState",
+      "mousePosition"
+    ])
   },
   watch: {
     nodes(nodes) {
@@ -67,6 +80,9 @@ export default {
     edges(edges) {
       this.render();
     }
+  },
+  mounted() {
+    this.render();
   },
   methods: {
     computeNodeStyle(node) {
@@ -183,11 +199,14 @@ export default {
       this.render();
     },
     keyDown(e) {
-      // console.log("keydown");
+      if (
+        this.keyboardState.includes("shift") &&
+        this.keyboardState.includes("a")
+      ) {
+        this.isAddingNode = this.mousePosition;
+      }
     },
-    mouseDown(e) {
-      // console.log("mousedown");
-    },
+    mouseDown(e) {},
     mouseUp(e) {
       this.isDraggingHandle = false;
     },

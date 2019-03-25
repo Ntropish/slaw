@@ -29,6 +29,7 @@ export default () => {
       edges: {},
       keyboardState: [],
       mouseState: [],
+      mousePosition: { x: 0, y: 0 },
       // Last element clicked - scan upwards to see the focus
       focus: null,
     },
@@ -96,6 +97,9 @@ export default () => {
       },
       SET_PLAYBACK_POSITION(state, position) {
         state.playbackPosition = position
+      },
+      SET_MOUSE_POSITION(state, position) {
+        state.mousePosition = position
       },
     },
     actions: {
