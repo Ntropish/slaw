@@ -23,6 +23,9 @@ export default class Transporter extends EventEmitter {
   }
 
   play() {
+    const now = this.context.getOutputTimestamp().contextTime
+
+    console.log('play?', now)
     if (this.isPlaying) return
     this.isPlaying = true
     this.jump(this.position)

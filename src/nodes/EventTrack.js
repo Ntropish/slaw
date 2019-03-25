@@ -3,7 +3,7 @@ import { pitchToFrequency, timeSort } from './util'
 import Brain from './Brain'
 
 export default class EventTrack extends Brain {
-  constructor(transporter, trackId) {
+  constructor(transporter, { trackId }) {
     super(transporter)
     this.eventSender = new EventTarget()
     this.trackId = trackId

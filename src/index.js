@@ -94,7 +94,6 @@ const events = {
     height: 150,
   })
   // store.commit('SET_EDGES', edges)
-  console.log(id1, id2, id3)
   store.dispatch('addEdge', [id1, '0', id2, '0'])
   store.dispatch('addEdge', [id2, '0', id3, '0'])
   store.commit('SET_EVENTS', events)

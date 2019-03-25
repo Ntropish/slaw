@@ -120,6 +120,7 @@ export default {
       track: state => state.tracks[state.selectedTrackId]
     }),
     ...mapState([
+      "playbackPosition",
       "playbackStart",
       "mouseState",
       "keyboardState",
@@ -143,11 +144,8 @@ export default {
       // start a new transform start/end when changing tools
       this.redrag();
     },
-    transporter(newTransporter, oldTransporter) {
-      if (oldTransporter)
-        oldTransporter.off("positionUpdate", this.setPlaybackStart);
-      if (newTransporter)
-        newTransporter.on("positionUpdate", this.setPlaybackStart);
+    playbackPosition(val) {
+      this.render();
     },
     playbackStart(val) {
       this.render();
@@ -263,15 +261,12 @@ export default {
         );
       }
 
-      const cursorX = Math.round(this.pxOfX(this.playbackStart));
+      const cursorX = Math.round(this.pxOfX(this.playbackPosition));
       utilCtx.strokeStyle = this.gradients[4];
       utilCtx.beginPath();
       utilCtx.moveTo(cursorX, 0);
       utilCtx.lineTo(cursorX, this.canvasHeight);
       utilCtx.stroke();
-    },
-    setPlaybackStart(beat) {
-      this.$store.commit("SET_PLAYBACK_START", beat);
     },
     buildBeatMark(ctx, opacity, lightness, spread = 0.0) {
       var gradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);

@@ -19,6 +19,7 @@ export default () => {
       selectedTrackId: '',
       transporter: new Transporter(new AudioContext()),
       playbackStart: 0,
+      playbackPosition: 0,
       beatSnap: 1 / 4,
       centsSnap: 100,
       events: {},
@@ -93,6 +94,9 @@ export default () => {
       FOCUS_ELEMENT(state, element) {
         state.focus = element
       },
+      SET_PLAYBACK_POSITION(state, position) {
+        state.playbackPosition = position
+      },
     },
     actions: {
       fetchSomething(context) {
@@ -105,7 +109,6 @@ export default () => {
           id: Object.keys(context.state.edges).length,
           edge: edgeDescriptor,
         })
-        console.log(edgeDescriptor)
         const [fromId, output, toId, input] = edgeDescriptor
         const fromBrainId = context.state.nodes[fromId].brain
         const toBrainId = context.state.nodes[toId].brain
@@ -141,5 +144,8 @@ export default () => {
     },
   })
   inputTracker(store)
+  store.state.transporter.on('positionUpdate', position => {
+    store.commit('SET_PLAYBACK_POSITION', position)
+  })
   return store
 }

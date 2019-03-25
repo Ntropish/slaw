@@ -118,7 +118,6 @@ Destination.prototype.outputs = [
   {
     type: 'buffer',
     connect: (n, node, index) => {
-      console.log(node.inputs[index].args(node))
       n.gainNode.connect(...node.inputs[index].args(node))
     },
     disconnect: (n, node, index) => {
