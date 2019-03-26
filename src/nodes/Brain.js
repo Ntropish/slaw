@@ -15,6 +15,17 @@ export default class NodeInterface {
       return false
     this.outputs[outputIndex].connect(this, brain, inputIndex)
   }
+
+  disconnect(brain, outputIndex, inputIndex) {
+    // ports must exist
+    if (
+      (!this.outputs && !this.outputs[outputIndex]) ||
+      (!brain.inputs && !brain.inputs[inputIndex])
+    )
+      return false
+
+    this.outputs[outputIndex].disconnect(this, brain, inputIndex)
+  }
 }
 
 NodeInterface.lastId = 0

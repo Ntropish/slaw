@@ -49,7 +49,9 @@ export default () => {
       ADD_EDGE(state, { id, edge }) {
         Vue.set(state.edges, id, edge)
       },
-      REMOVE_EDGE(state, id) {},
+      REMOVE_EDGE(state, { id }) {
+        Vue.delete(state.edges, id)
+      },
       SET_EVENTS(state, events) {
         state.events = events
       },
@@ -123,6 +125,18 @@ export default () => {
         const fromBrainId = context.state.nodes[fromId].brain
         const toBrainId = context.state.nodes[toId].brain
         context.state.brains[fromBrainId].connect(
+          context.state.brains[toBrainId],
+          output,
+          input,
+        )
+      },
+      removeEdge(context, id) {
+        const [fromId, output, toId, input] = context.state.edges[id]
+        context.commit('REMOVE_EDGE', { id })
+        const fromBrainId = context.state.nodes[fromId].brain
+        const toBrainId = context.state.nodes[toId].brain
+
+        context.state.brains[fromBrainId].disconnect(
           context.state.brains[toBrainId],
           output,
           input,

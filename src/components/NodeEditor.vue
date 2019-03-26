@@ -41,6 +41,7 @@ export default {
     gridSize: 25,
     selectedNodes: [],
     nodeBuffer: [],
+    temporaryEdge: [],
     xStart: 0,
     xEnd: 800,
     yStart: 0,
@@ -89,8 +90,9 @@ export default {
         height: node.height * this.pxPerY + "px"
       };
     },
-    handleDrag(node, type, index) {
-      this.isDraggingHandle = [node, type, index];
+    handleDrag(nodeId, type, index) {
+      this.$store.dispatch("removeEdge", nodeId);
+      this.isDraggingHandle = [nodeId, type, index];
     },
 
     handleDrop(node, type, index) {
