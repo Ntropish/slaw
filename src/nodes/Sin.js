@@ -37,7 +37,6 @@ export default class Destination extends Brain {
   // needs to be done based on all of the previous.
   // It maintains sorted arrays of state changes
   onEvent({ detail: { beats, time, frequency } }) {
-    console.log('event:', beats, time, frequency)
     const now = this.context.getOutputTimestamp().contextTime
     const eventEnd = time + beats / this.bps
 
