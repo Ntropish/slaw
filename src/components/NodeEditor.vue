@@ -2,7 +2,7 @@
   <div class="node-editor" @mousedown="onMouseDown" @wheel="onWheel">
     <canvas ref="background" class="canvas background" oncontextmenu="return false"/>
     <canvas ref="nodes" class="canvas nodes" oncontextmenu="return false"/>
-    <canvas ref="edges" class="canvas edges" oncontextmenu="return false"/>
+    <canvas ref="edges" class="canvas edges" oncontextmenu="return false" @click="deselect"/>
     <Audio-node
       v-for="(node, id) in nodes"
       :key="id"
@@ -15,9 +15,9 @@
       @handle-drag="handleDrag(node.id, $event.type, $event.i)"
       @handle-drop="handleDrop(node.id, $event.type, $event.i)"
     />
-    <add-menu class="add-menu" type="node" :style="addMenuStyle"/>
+    <add-menu class="add-menu" type="node"/>
     <!-- {{ keyboardState }} {{ mouseState }} -->
-    {{ mousePosition }} {{ isAddingNode }}
+    {{ mousePosition }}
   </div>
 </template>
 
@@ -40,13 +40,13 @@ export default {
   data: () => ({
     gridSize: 25,
     selectedNodes: [],
+    nodeBuffer: [],
     xStart: 0,
     xEnd: 800,
     yStart: 0,
     xSnap: 25,
     ySnap: 25,
-    isDraggingHandle: false,
-    isAddingNode: false
+    isDraggingHandle: false
   }),
 
   computed: {
@@ -59,12 +59,6 @@ export default {
     },
     yEnd() {
       return this.yStart + (this.xCount * this.canvasHeight) / this.canvasWidth;
-    },
-    addMenuStyle() {
-      return {
-        top: this.isAddingNode.y + "px",
-        left: this.isAddingNode.x + "px"
-      };
     },
     ...mapState([
       "nodes",
@@ -186,6 +180,9 @@ export default {
       );
       context.stroke();
     },
+    deselect() {
+      this.selectedNodes.splice(0);
+    },
     pan({ x, y }) {
       this.xStart = this.xStart + x;
       this.xEnd = this.xEnd + x;
@@ -200,23 +197,23 @@ export default {
       this.yStart -= (zoom * yOrigin) / 2;
       this.render();
     },
-    keyDown(e) {
-      if (
-        this.keyboardState.includes("shift") &&
-        this.keyboardState.includes("a")
-      ) {
-        this.isAddingNode = this.mousePosition;
-      }
-    },
+    keyDown(e) {},
     nodeMouseDown(id) {
+      if (!this.keyboardState.includes("control")) this.deselect();
       if (!this.selectedNodes.includes(id)) this.selectedNodes.push(id);
     },
     mouseDown(e) {},
     mouseUp(e) {
       this.isDraggingHandle = false;
     },
-    mouseMove(e) {
-      // console.log("move");
+    mouseMove({ e }) {
+      if (this.mouseState.includes(0)) {
+        this.$store.commit("PAN_NODES", {
+          x: e.movementX,
+          y: e.movementY,
+          nodeIds: this.selectedNodes
+        });
+      }
     },
     loadModule: async function(moduleSpecifier) {
       // const moduleToLoad = import("src/" + moduleSpecifier);
@@ -225,7 +222,9 @@ export default {
       //   await this.transporter.context.audioWorklet.addModule(processor);
       //   this.processors.push(processor);
       // }
-    }
+    },
+    bufferNodes() {},
+    unbufferNodes() {}
   }
 };
 </script>

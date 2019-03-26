@@ -40,6 +40,12 @@ export default () => {
       ADD_NODE(state, { node, id }) {
         Vue.set(state.nodes, id, node)
       },
+      PAN_NODES(state, { x, y, nodeIds }) {
+        for (const id of nodeIds) {
+          state.nodes[id].x = state.nodes[id].x + x
+          state.nodes[id].y = state.nodes[id].y + y
+        }
+      },
       ADD_EDGE(state, { id, edge }) {
         Vue.set(state.edges, id, edge)
       },

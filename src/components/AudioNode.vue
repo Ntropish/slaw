@@ -103,7 +103,7 @@ export default {
 
 <style scoped>
 .root {
-  border-radius: 4px;
+  border-radius: 2.5px;
   box-sizing: border-box;
   user-select: none;
   position: absolute;
