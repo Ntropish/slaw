@@ -1,5 +1,5 @@
 <template>
-  <div class="root">
+  <div class="root" :class="{selected: selected}">
     <div class="io">
       <div :style="outputStyle" class="outputs">
         <div
@@ -36,6 +36,10 @@ export default {
   props: {
     node: {
       type: Object,
+      required: true
+    },
+    selected: {
+      type: Boolean,
       required: true
     },
     handleSpacing: {
@@ -105,6 +109,10 @@ export default {
   position: absolute;
   background: hsla(0, 0%, 15%, 1);
   box-shadow: 0 0 6px hsla(0, 0%, 0%, 0.3);
+}
+
+.root.selected {
+  box-shadow: 0 0 2px hsla(0, 0%, 100%, 0.9);
 }
 
 .io {

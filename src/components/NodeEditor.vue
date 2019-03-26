@@ -10,6 +10,8 @@
       :node="node"
       :style="computeNodeStyle(node)"
       :handle-spacing="10 * pxPerY"
+      :selected="selectedNodes.includes(node.id)"
+      @mousedown.native="nodeMouseDown(node.id)"
       @handle-drag="handleDrag(node.id, $event.type, $event.i)"
       @handle-drop="handleDrop(node.id, $event.type, $event.i)"
     />
@@ -205,6 +207,9 @@ export default {
       ) {
         this.isAddingNode = this.mousePosition;
       }
+    },
+    nodeMouseDown(id) {
+      if (!this.selectedNodes.includes(id)) this.selectedNodes.push(id);
     },
     mouseDown(e) {},
     mouseUp(e) {
