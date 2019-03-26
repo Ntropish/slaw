@@ -288,7 +288,7 @@ export default {
 
       // Handle selection first
       if (noteClicked && !this.selectedNotes.includes(noteClicked)) {
-        if (!this.keyboardState.includes("Control")) selectedNotes.splice(0);
+        if (!this.keyboardState.includes("control")) selectedNotes.splice(0);
         selectedNotes.push(noteClicked);
       }
 
@@ -357,7 +357,7 @@ export default {
         this.boxSelectUpdate(e);
       } else if (this.mouseState.includes(0) && this.selectedNotes.length) {
         // Hold control to move without snap
-        const snap = !this.keyboardState.includes("Control");
+        const snap = !this.keyboardState.includes("control");
 
         const xDelta = (this.dragEnd.x - this.dragStart.x) / this.pxPerX;
         const yDelta = (this.dragEnd.y - this.dragStart.y) / this.pxPerY;
@@ -375,7 +375,7 @@ export default {
         }
       } else if (this.mouseState.includes(0)) {
         const x = this.pxToX(e.offsetX);
-        const beat = !this.keyboardState.includes("Control")
+        const beat = !this.keyboardState.includes("control")
           ? Math.round(x / this.xSnap) * this.xSnap
           : x;
         this.transporter.jump(beat);
