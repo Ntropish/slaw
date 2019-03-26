@@ -142,6 +142,7 @@ export default {
 
 .info {
   flex-grow: 1;
+  padding: 1em;
 }
 
 .outputs {

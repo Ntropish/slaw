@@ -17,9 +17,11 @@
       @handle-input-drop="handleInputDrop(node.id, $event.i)"
       @handle-output-drop="handleOutputDrop(node.id, $event.i)"
     />
-    <add-menu class="add-menu" type="node"/>
-    <!-- {{ keyboardState }} {{ mouseState }} -->
-    {{ mousePosition }}
+    <add-menu
+      class="add-menu"
+      :selected-node-type="selectedNodeType"
+      @selected-node-type-change="selectNodeType"
+    />
   </div>
 </template>
 
@@ -50,7 +52,8 @@ export default {
     xSnap: 25,
     ySnap: 25,
     isDraggingHandle: false,
-    handleSpace: 10
+    handleSpace: 10,
+    selectedNodeType: "track"
   }),
 
   computed: {
@@ -295,6 +298,9 @@ export default {
       //   await this.transporter.context.audioWorklet.addModule(processor);
       //   this.processors.push(processor);
       // }
+    },
+    selectNodeType(nodeType) {
+      this.selectedNodeType = nodeType;
     },
     bufferNodes() {},
     unbufferNodes() {}

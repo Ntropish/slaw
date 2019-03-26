@@ -3,7 +3,6 @@
     <canvas ref="background" class="canvas background"/>
     <canvas ref="notes" class="canvas notes"/>
     <canvas ref="util" class="canvas util"/>
-    {{ mouseState }} {{ keyboardState }}
   </div>
 </template>
 
@@ -268,9 +267,9 @@ export default {
       utilCtx.lineTo(cursorX, this.canvasHeight);
       utilCtx.stroke();
     },
-    buildBeatMark(ctx, opacity, lightness, spread = 0.0) {
+    buildBeatMark(ctx, opacity, lightness, spread = 0.15) {
       var gradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
-      gradient.addColorStop("0", "hsla(0, 0%, 0%, 0)");
+      gradient.addColorStop("0", `hsla(0, 0%, ${lightness}%, ${opacity / 10})`);
       gradient.addColorStop(spread, `hsla(0, 0%, ${lightness}%, ${opacity})`);
       gradient.addColorStop(
         1 - spread,
