@@ -97,33 +97,38 @@ export default {
       };
     },
     handleInputDrag(to, input) {
-      this.nodes[to].inputs
-        .filter(edge => edge[0] === input)
-        .forEach(([_input, from, output]) => {
-          this.$store.dispatch("removeEdge", { from, to, input, output });
-          this.temporaryEdges.push(["output", from, output]);
-        });
+      const ports = this.nodes[to].inputs.filter(edge => edge[0] === input);
+      ports.forEach(([_input, from, output]) => {
+        this.$store.dispatch("removeEdge", { from, to, input, output });
+        this.temporaryEdges.push(["output", from, output]);
+      });
+      if (!ports.length) {
+        this.temporaryEdges.push(["input", to, input]);
+      }
     },
     handleOutputDrag(from, output) {
-      this.nodes[from].outputs
-        .filter(edge => edge[0] === output)
-        .forEach(([_ouput, to, input]) => {
-          this.$store.dispatch("removeEdge", { from, to, input, output });
-          this.temporaryEdges.push(["input", to, input]);
-        });
-
-      // this.isDraggingHandle = [from, type, index];
+      const ports = this.nodes[from].outputs.filter(edge => edge[0] === output);
+      ports.forEach(([_ouput, to, input]) => {
+        this.$store.dispatch("removeEdge", { from, to, input, output });
+        this.temporaryEdges.push(["input", to, input]);
+      });
+      if (!ports.length) {
+        this.temporaryEdges.push(["output", from, output]);
+      }
     },
-    handleInputDrop(nodeId, input) {
-      console.log(nodeId, input);
-
-      // this.$store.dispatch("removeEdge", { from, to, input, output });
-      // this.isDraggingHandle = [nodeId, type, index];
+    handleInputDrop(to, input) {
+      this.temporaryEdges.forEach(([type, from, output]) => {
+        // Can't drag an input to an input so just abort
+        if (type === "input") return;
+        this.$store.dispatch("addEdge", { from, to, input, output });
+      });
     },
-    handleOutputDrop(nodeId, output) {
-      console.log(nodeId, output);
-      // this.$store.dispatch("removeEdge", { from, to, input, output });
-      // this.isDraggingHandle = [from, type, index];
+    handleOutputDrop(from, output) {
+      this.temporaryEdges.forEach(([type, to, input]) => {
+        // Can't drag an input to an input so just abort
+        if (type === "output") return;
+        this.$store.dispatch("addEdge", { from, to, input, output });
+      });
     },
 
     handleDrop(node, type, index) {
@@ -184,6 +189,7 @@ export default {
 
           const inputLength = nodeMap[toNode.type].prototype.inputs.length;
 
+          // TODO: Use utility functions xyOfMouse, xyOfPort instead
           this.drawEdge(
             nodesCtx,
             this.pxOfX(fromNode.x + fromNode.width),
