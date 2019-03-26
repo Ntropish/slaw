@@ -2,7 +2,7 @@ import { timeSort } from './util'
 
 import Brain from './Brain'
 
-export default class Destination extends Brain {
+export default class Sin extends Brain {
   constructor(transporter) {
     super(transporter)
     const { context, bps } = transporter
@@ -25,9 +25,10 @@ export default class Destination extends Brain {
       this.gainNode.gain.cancelScheduledValues(
         context.getOutputTimestamp().contextTime,
       )
-      this.gainNode.gain.setValueAtTime(
+      this.gainNode.gain.setTargetAtTime(
         0,
         context.getOutputTimestamp().contextTime,
+        0.01,
       )
     })
   }
@@ -63,7 +64,10 @@ export default class Destination extends Brain {
     }
     if (onAtStart && !onAtEnd) {
       // Landed half off an on state, extend it to include this event
-      this.onMap.splice(this.onMap.indexOf(onStateStart), 1)
+      const indexOfStop = this.onMap.indexOf(onStateEnd)
+      if (indexOfStop !== -1) {
+        this.onMap.splice(indexOfStop, 1)
+      }
       this.onMap.push({ time: eventEnd, value: false })
     }
     // Keep the map sorted so the above logic works
@@ -110,14 +114,14 @@ function scanMap(map, time) {
   return result
 }
 
-Destination.prototype.inputs = [
+Sin.prototype.inputs = [
   {
     type: 'event',
     args: n => [n.onEvent.bind(n)],
   },
 ]
 
-Destination.prototype.outputs = [
+Sin.prototype.outputs = [
   {
     type: 'buffer',
     connect: (n, node, index) => {
