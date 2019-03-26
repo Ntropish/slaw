@@ -101,7 +101,10 @@ export default class Destination extends Brain {
 function scanMap(map, time) {
   const result = map.reduce((acc, event) => {
     if (!acc && event.time < time) return event
-    if (acc && event.time > acc.time && event.time <= time) return event
+    // Accept anything also 0.03 above this time because times will not be exactly the same
+    // and we wouldn't be able to detect state changes on top of each other, they
+    // would end up on one side or the other
+    if (acc && event.time > acc.time && event.time <= time + 0.03) return event
     return acc
   }, null)
   return result

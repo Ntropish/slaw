@@ -67,7 +67,7 @@ export default () => {
         }
       },
       SET_EVENTS(state, events) {
-        state.events = events
+        Vue.set(state, 'events', events)
       },
       SET_EVENT(state, event) {
         state.events[event.id] = event
