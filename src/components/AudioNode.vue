@@ -24,7 +24,7 @@
           @mouseup="handleMouseUp('output', index)"
           @mousedown="handleMouseDown('output', index)"
         >
-          <div class="handle" :style="handleStyle(input.type)"/>
+          <div class="handle" :style="handleStyle(input.type, true)"/>
         </div>
       </div>
     </div>
@@ -76,16 +76,22 @@ export default {
     handleMouseDown(type, i) {
       this.$emit("handle-drag", { type, i });
     },
-    handleStyle(type) {
+    handleStyle(type, isLeft) {
       const typeMap = {
         buffer: "hsla(0, 40%, 30%, 1)",
         event: "hsla(60, 40%, 30%, 1)"
       };
-      return {
+      const style = {
         background: typeMap[type],
         width: this.handleSpacing + "px",
         height: this.handleSpacing + "px"
       };
+      if (isLeft) {
+        style.right = `calc(100% - ${this.handleSpacing / 2}px)`;
+      } else {
+        style.left = `calc(100% - ${this.handleSpacing / 2}px)`;
+      }
+      return style;
     }
   }
 };
@@ -137,16 +143,18 @@ export default {
   position: absolute;
   width: 12px;
   height: 12px;
+  z-index: 11;
+  box-shadow: 0 0 1em hsla(0, 0%, 0%, 1);
 }
 
 .inputs > .holster > .handle {
-  right: 99%;
-  border-radius: 50% 0 0 50%;
+  right: 100%;
+  border-radius: 50%;
 }
 
 .outputs > .holster > .handle {
-  left: 99%;
-  border-radius: 0 50% 50% 0;
+  left: 100%;
+  border-radius: 50%;
 }
 </style>
 
