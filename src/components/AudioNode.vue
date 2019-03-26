@@ -7,8 +7,8 @@
           :key="index"
           class="holster"
           :style="holsterStyle"
-          @mouseup="handleMouseUp('input', index)"
-          @mousedown="handleMouseDown('input', index)"
+          @mouseup="handleOutputMouseUp('input', index)"
+          @mousedown="handleOutputMouseDown('input', index)"
         >
           <div class="handle" :style="handleStyle(output.type)"/>
         </div>
@@ -21,8 +21,8 @@
           :key="index"
           class="holster"
           :style="holsterStyle"
-          @mouseup="handleMouseUp('output', index)"
-          @mousedown="handleMouseDown('output', index)"
+          @mouseup="handleInputMouseUp('output', index)"
+          @mousedown="handleInputMouseDown('output', index)"
         >
           <div class="handle" :style="handleStyle(input.type, true)"/>
         </div>
@@ -74,11 +74,17 @@ export default {
     }
   },
   methods: {
-    handleMouseUp(type, i) {
-      this.$emit("handle-drop", { type, i });
+    handleInputMouseUp(type, i) {
+      this.$emit("handle-input-drop", { i });
     },
-    handleMouseDown(type, i) {
-      this.$emit("handle-drag", { type, i });
+    handleInputMouseDown(type, i) {
+      this.$emit("handle-input-drag", { i });
+    },
+    handleOutputMouseUp(type, i) {
+      this.$emit("handle-output-drop", { i });
+    },
+    handleOutputMouseDown(type, i) {
+      this.$emit("handle-output-drag", { i });
     },
     handleStyle(type, isLeft) {
       const typeMap = {

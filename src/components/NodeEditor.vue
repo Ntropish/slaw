@@ -12,8 +12,10 @@
       :handle-spacing="10 * pxPerY"
       :selected="selectedNodes.includes(node.id)"
       @mousedown.native="nodeMouseDown(node.id)"
-      @handle-drag="handleDrag(node.id, $event.type, $event.i)"
-      @handle-drop="handleDrop(node.id, $event.type, $event.i)"
+      @handle-input-drag="handleInputDrag(node.id, $event.i)"
+      @handle-output-drag="handleOutputDrag(node.id, $event.i)"
+      @handle-input-drop="handleInputDrop(node.id, $event.i)"
+      @handle-output-drop="handleOutputDrop(node.id, $event.i)"
     />
     <add-menu class="add-menu" type="node"/>
     <!-- {{ keyboardState }} {{ mouseState }} -->
@@ -41,7 +43,7 @@ export default {
     gridSize: 25,
     selectedNodes: [],
     nodeBuffer: [],
-    temporaryEdge: [],
+    temporaryEdges: [],
     xStart: 0,
     xEnd: 800,
     yStart: 0,
@@ -93,14 +95,39 @@ export default {
         height: node.height * this.pxPerY + "px"
       };
     },
-    handleDrag(nodeId, type, index) {
-      this.$store.dispatch("removeEdge", nodeId);
-      this.isDraggingHandle = [nodeId, type, index];
+    handleInputDrag(to, input) {
+      this.nodes[to].inputs
+        .filter(edge => edge[0] === input)
+        .forEach(([_input, from, output]) => {
+          this.$store.dispatch("removeEdge", { from, to, input, output });
+          this.temporaryEdges.push(["output", from, output]);
+        });
+    },
+    handleOutputDrag(from, output) {
+      this.nodes[from].outputs
+        .filter(edge => edge[0] === output)
+        .forEach(([_ouput, to, input]) => {
+          this.$store.dispatch("removeEdge", { from, to, input, output });
+          this.temporaryEdges.push(["input", to, input]);
+        });
+
+      // this.isDraggingHandle = [from, type, index];
+    },
+    handleInputDrop(nodeId, input) {
+      console.log(nodeId, input);
+
+      // this.$store.dispatch("removeEdge", { from, to, input, output });
+      // this.isDraggingHandle = [nodeId, type, index];
+    },
+    handleOutputDrop(nodeId, output) {
+      console.log(nodeId, output);
+      // this.$store.dispatch("removeEdge", { from, to, input, output });
+      // this.isDraggingHandle = [from, type, index];
     },
 
     handleDrop(node, type, index) {
-      console.log("from", this.isDraggingHandle, "to", [node, type, index]);
-      this.isDraggingHandle = false;
+      // console.log("from", this.isDraggingHandle, "to", [node, type, index]);
+      // this.isDraggingHandle = false;
     },
 
     render() {
@@ -150,7 +177,7 @@ export default {
       nodesCtx.lineWidth = "2";
 
       const edges = Object.values(this.nodes).forEach(node => {
-        node.edges.forEach(([output, to, input]) => {
+        node.outputs.forEach(([output, to, input]) => {
           const fromNode = node;
           const toNode = this.nodes[to];
 
@@ -215,8 +242,8 @@ export default {
     mouseMove({ e }) {
       if (this.mouseState.includes(0)) {
         this.$store.commit("PAN_NODES", {
-          x: e.movementX,
-          y: e.movementY,
+          x: e.movementX / this.pxPerX,
+          y: e.movementY / this.pxPerY,
           nodeIds: this.selectedNodes
         });
       }

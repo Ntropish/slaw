@@ -41,20 +41,29 @@ export default () => {
         Vue.set(state.nodes, id, node)
       },
       ADD_NODE_EDGE(state, { from, to, input, output }) {
-        state.nodes[from].edges.push([output, to, input])
+        state.nodes[from].outputs.push([output, to, input])
+        state.nodes[to].inputs.push([input, from, output])
       },
       REMOVE_NODE_EDGE(state, { from, to, input, output }) {
-        const index = state.nodes[from].findIndex(([a, b, c]) => {
+        const index = state.nodes[from].outputs.findIndex(([a, b, c]) => {
           return a === output && b === to && c === input
         })
+
         if (index !== -1) {
-          state.nodes[from].edges.splice(index, 1)
+          state.nodes[from].outputs.splice(index, 1)
+        }
+
+        const inputIndex = state.nodes[to].inputs.findIndex(([a, b, c]) => {
+          return a === input && b === from && c === output
+        })
+        if (inputIndex !== -1) {
+          state.nodes[to].inputs.splice(inputIndex, 1)
         }
       },
       PAN_NODES(state, { x, y, nodeIds }) {
         for (const id of nodeIds) {
-          state.nodes[id].x = state.nodes[id].x + x
-          state.nodes[id].y = state.nodes[id].y + y
+          state.nodes[id].x += x
+          state.nodes[id].y += y
         }
       },
       SET_EVENTS(state, events) {
