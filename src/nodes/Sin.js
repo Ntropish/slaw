@@ -55,7 +55,7 @@ export default class Sin extends Brain {
 
     if (!onAtStart && !onAtEnd) {
       // If landed exactly on an off event delete it
-      if (onStateStart && onStateStart.time === time) {
+      if (onStateStart && Math.abs(onStateStart.time - time) < 0.1) {
         this.onMap.splice(this.onMap.indexOf(onStateStart), 1)
       }
       // Landed in empty space, fill it all in
@@ -73,7 +73,7 @@ export default class Sin extends Brain {
     // Keep the map sorted so the above logic works
     this.onMap = this.onMap.sort(timeSort)
 
-    // Frequency is more simple
+    // ====================================Frequency is more simple
     this.frequencyMap.push({ time, value: frequency })
     if (onAtStart && onAtEnd) {
       scanMap(this.frequencyMap, eventEnd).time = eventEnd
@@ -108,7 +108,7 @@ function scanMap(map, time) {
     // Accept anything also 0.03 above this time because times will not be exactly the same
     // and we wouldn't be able to detect state changes on top of each other, they
     // would end up on one side or the other
-    if (acc && event.time > acc.time && event.time <= time + 0.05) return event
+    if (acc && event.time > acc.time && event.time <= time + 0.01) return event
     return acc
   }, null)
   return result
