@@ -13,7 +13,7 @@
       @handle-drag="handleDrag(node.id, $event.type, $event.i)"
       @handle-drop="handleDrop(node.id, $event.type, $event.i)"
     />
-    <add-menu v-if="isAddingNode" type="node" :style="addMenuStyle"/>
+    <add-menu class="add-menu" type="node" :style="addMenuStyle"/>
     <!-- {{ keyboardState }} {{ mouseState }} -->
     {{ mousePosition }} {{ isAddingNode }}
   </div>
@@ -145,8 +145,8 @@ export default {
         backgroundCtx.stroke();
       }
 
-      nodesCtx.strokeStyle = "hsla(0, 0%, 100%, 0.6)";
-      nodesCtx.lineWidth = "3";
+      nodesCtx.strokeStyle = "hsla(0, 0%, 20%, 1)";
+      nodesCtx.lineWidth = "2";
 
       for (const [from, output, to, input] of Object.values(this.edges)) {
         const fromNode = this.nodes[from];
@@ -239,6 +239,12 @@ export default {
 }
 .node {
   z-index: 10;
+}
+.add-menu {
+  z-index: 11;
+  position: absolute;
+  right: 1em;
+  top: 1em;
 }
 </style>
 

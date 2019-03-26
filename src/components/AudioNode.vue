@@ -5,11 +5,13 @@
         <div
           v-for="(output, index) in brain.outputs"
           :key="index"
-          class="handle"
-          :style="handleStyle"
+          class="holster"
+          :style="holsterStyle"
           @mouseup="handleMouseUp('input', index)"
           @mousedown="handleMouseDown('input', index)"
-        >{{ output.type }}</div>
+        >
+          <div class="handle" :style="handleStyle(output.type)"/>
+        </div>
       </div>
 
       <div class="info">{{ node.type }}</div>
@@ -17,11 +19,13 @@
         <div
           v-for="(input, index) in brain.inputs"
           :key="index"
-          class="handle"
-          :style="handleStyle"
+          class="holster"
+          :style="holsterStyle"
           @mouseup="handleMouseUp('output', index)"
           @mousedown="handleMouseDown('output', index)"
-        >{{ input.type }}</div>
+        >
+          <div class="handle" :style="handleStyle(input.type)"/>
+        </div>
       </div>
     </div>
   </div>
@@ -45,7 +49,7 @@ export default {
       if (!this.brain) return 0;
       return Math.max(this.brain.outputs.length, this.brain.inputs.length);
     },
-    handleStyle() {
+    holsterStyle() {
       return {
         height: this.handleSpacing + "px"
       };
@@ -71,6 +75,17 @@ export default {
     },
     handleMouseDown(type, i) {
       this.$emit("handle-drag", { type, i });
+    },
+    handleStyle(type) {
+      const typeMap = {
+        buffer: "hsla(0, 40%, 30%, 1)",
+        event: "hsla(60, 40%, 30%, 1)"
+      };
+      return {
+        background: typeMap[type],
+        width: this.handleSpacing + "px",
+        height: this.handleSpacing + "px"
+      };
     }
   }
 };
@@ -78,24 +93,28 @@ export default {
 
 <style scoped>
 .root {
+  border-radius: 4px;
   box-sizing: border-box;
-  background: hsla(0, 0%, 70%, 0.2);
   user-select: none;
   position: absolute;
-  box-shadow: 0 0 3px hsla(0, 0%, 0%, 0.8);
+  background: hsla(0, 0%, 15%, 1);
+  box-shadow: 0 0 6px hsla(0, 0%, 0%, 0.3);
 }
 
 .io {
   margin-bottom: 1em;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+
   height: 100%;
 }
 
 .inputs,
 .outputs {
-  margin: 0.5em 0;
+  margin: 0.5em;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: center; */
 }
 
 .info {
@@ -106,12 +125,28 @@ export default {
   text-align: right;
 }
 
-.handle {
-  display: flex;
+.holster {
+  /* display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: space-between; */
   color: hsla(0, 0%, 100%, 0.35);
   overflow: hidden;
+}
+
+.handle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+}
+
+.inputs > .holster > .handle {
+  right: 99%;
+  border-radius: 50% 0 0 50%;
+}
+
+.outputs > .holster > .handle {
+  left: 99%;
+  border-radius: 0 50% 50% 0;
 }
 </style>
 
