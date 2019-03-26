@@ -76,6 +76,7 @@ const events = {
     y: 100,
     width: 100,
     height: 150,
+    edges: [],
   })
   const id2 = await store.dispatch('addNode', {
     type: 'sin',
@@ -84,6 +85,7 @@ const events = {
     y: 130,
     width: 100,
     height: 150,
+    edges: [],
   })
   const id3 = await store.dispatch('addNode', {
     type: 'destination',
@@ -92,10 +94,11 @@ const events = {
     y: 110,
     width: 100,
     height: 150,
+    edges: [],
   })
   // store.commit('SET_EDGES', edges)
-  store.dispatch('addEdge', [id1, '0', id2, '0'])
-  store.dispatch('addEdge', [id2, '0', id3, '0'])
+  store.dispatch('addEdge', { from: id1, output: '0', to: id2, input: '0' })
+  store.dispatch('addEdge', { from: id2, output: '0', to: id3, input: '0' })
   store.commit('SET_EVENTS', events)
   store.commit('SET_TRACKS', tracks)
   store.commit('SET_SELECTED_TRACK', '0')

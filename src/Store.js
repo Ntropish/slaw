@@ -40,17 +40,22 @@ export default () => {
       ADD_NODE(state, { node, id }) {
         Vue.set(state.nodes, id, node)
       },
+      ADD_NODE_EDGE(state, { from, to, input, output }) {
+        state.nodes[from].edges.push([output, to, input])
+      },
+      REMOVE_NODE_EDGE(state, { from, to, input, output }) {
+        const index = state.nodes[from].findIndex(([a, b, c]) => {
+          return a === output && b === to && c === input
+        })
+        if (index !== -1) {
+          state.nodes[from].edges.splice(index, 1)
+        }
+      },
       PAN_NODES(state, { x, y, nodeIds }) {
         for (const id of nodeIds) {
           state.nodes[id].x = state.nodes[id].x + x
           state.nodes[id].y = state.nodes[id].y + y
         }
-      },
-      ADD_EDGE(state, { id, edge }) {
-        Vue.set(state.edges, id, edge)
-      },
-      REMOVE_EDGE(state, { id }) {
-        Vue.delete(state.edges, id)
       },
       SET_EVENTS(state, events) {
         state.events = events
@@ -116,26 +121,30 @@ export default () => {
         // do async stuff
         // do more commits
       },
-      addEdge(context, edgeDescriptor) {
-        context.commit('ADD_EDGE', {
-          id: Object.keys(context.state.edges).length,
-          edge: edgeDescriptor,
+      addEdge(context, { from, to, input, output }) {
+        context.commit('ADD_NODE_EDGE', {
+          from,
+          to,
+          input,
+          output,
         })
-        const [fromId, output, toId, input] = edgeDescriptor
-        const fromBrainId = context.state.nodes[fromId].brain
-        const toBrainId = context.state.nodes[toId].brain
+        const fromBrainId = context.state.nodes[from].brain
+        const toBrainId = context.state.nodes[to].brain
         context.state.brains[fromBrainId].connect(
           context.state.brains[toBrainId],
           output,
           input,
         )
       },
-      removeEdge(context, id) {
-        const [fromId, output, toId, input] = context.state.edges[id]
-        context.commit('REMOVE_EDGE', { id })
-        const fromBrainId = context.state.nodes[fromId].brain
-        const toBrainId = context.state.nodes[toId].brain
-
+      removeEdge(context, { from, to, input, output }) {
+        context.commit('REMOVE_NODE_EDGE', {
+          from,
+          to,
+          input,
+          output,
+        })
+        const fromBrainId = context.state.nodes[from].brain
+        const toBrainId = context.state.nodes[to].brain
         context.state.brains[fromBrainId].disconnect(
           context.state.brains[toBrainId],
           output,

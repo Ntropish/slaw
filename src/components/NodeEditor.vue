@@ -71,8 +71,11 @@ export default {
     ])
   },
   watch: {
-    nodes(nodes) {
-      this.render();
+    nodes: {
+      handler() {
+        this.render();
+      },
+      deep: true
     },
     edges(edges) {
       this.render();
@@ -146,27 +149,28 @@ export default {
       nodesCtx.strokeStyle = "hsla(0, 0%, 20%, 1)";
       nodesCtx.lineWidth = "2";
 
-      for (const [from, output, to, input] of Object.values(this.edges)) {
-        const fromNode = this.nodes[from];
-        const toNode = this.nodes[to];
+      const edges = Object.values(this.nodes).forEach(node => {
+        node.edges.forEach(([output, to, input]) => {
+          const fromNode = node;
+          const toNode = this.nodes[to];
 
-        const inputLength = nodeMap[toNode.type].prototype.inputs.length;
+          const inputLength = nodeMap[toNode.type].prototype.inputs.length;
 
-        const handleSpace = 10;
-
-        this.drawEdge(
-          nodesCtx,
-          this.pxOfX(fromNode.x + fromNode.width),
-          this.pxOfY(fromNode.y + handleSpace + handleSpace * output),
-          this.pxOfX(toNode.x),
-          this.pxOfY(
-            toNode.y +
-              toNode.height -
-              handleSpace * inputLength +
-              handleSpace * input
-          )
-        );
-      }
+          const handleSpace = 10;
+          this.drawEdge(
+            nodesCtx,
+            this.pxOfX(fromNode.x + fromNode.width),
+            this.pxOfY(fromNode.y + handleSpace + handleSpace * output),
+            this.pxOfX(toNode.x),
+            this.pxOfY(
+              toNode.y +
+                toNode.height -
+                handleSpace * inputLength +
+                handleSpace * input
+            )
+          );
+        });
+      });
     },
     drawEdge(context, fromX, fromY, toX, toY) {
       const handleWidth = this.pxPerX * 50;
