@@ -10,7 +10,9 @@
           @mouseup="handleOutputMouseUp('input', index)"
           @mousedown="handleOutputMouseDown('input', index)"
         >
-          <div class="handle" :style="handleStyle(output.type)"/>
+          <div class="handle" :style="handleStyle(output.type)">
+            <div class="shade"/>
+          </div>
         </div>
       </div>
 
@@ -24,7 +26,9 @@
           @mouseup="handleInputMouseUp('output', index)"
           @mousedown="handleInputMouseDown('output', index)"
         >
-          <div class="handle" :style="handleStyle(input.type, true)"/>
+          <div class="handle" :style="handleStyle(input.type, true)">
+            <div class="shade"/>
+          </div>
         </div>
       </div>
     </div>
@@ -134,7 +138,6 @@ export default {
   margin: 0.5em;
   display: flex;
   flex-direction: column;
-  /* justify-content: center; */
 }
 
 .info {
@@ -146,19 +149,26 @@ export default {
 }
 
 .holster {
-  /* display: flex;
-  flex-direction: column;
-  justify-content: space-between; */
   color: hsla(0, 0%, 100%, 0.35);
   overflow: hidden;
 }
 
 .handle {
   position: absolute;
-  width: 12px;
-  height: 12px;
   z-index: 11;
   box-shadow: 0 0 1em hsla(0, 0%, 0%, 1);
+}
+.handle:hover {
+  box-shadow: 0 0 1.5em hsla(0, 0%, 0%, 1);
+}
+.handle > .shade {
+  width: 100%;
+  height: 100%;
+  background: hsla(0, 0%, 0%, 0.2);
+}
+.handle > .shade:hover {
+  transition: opacity 0.1s;
+  opacity: 0;
 }
 
 .inputs > .holster > .handle {

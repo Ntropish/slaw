@@ -49,7 +49,8 @@ export default {
     yStart: 0,
     xSnap: 25,
     ySnap: 25,
-    isDraggingHandle: false
+    isDraggingHandle: false,
+    handleSpace: 10
   }),
 
   computed: {
@@ -176,28 +177,61 @@ export default {
       nodesCtx.strokeStyle = "hsla(0, 0%, 20%, 1)";
       nodesCtx.lineWidth = "2";
 
-      const edges = Object.values(this.nodes).forEach(node => {
+      Object.values(this.nodes).forEach(node => {
         node.outputs.forEach(([output, to, input]) => {
           const fromNode = node;
           const toNode = this.nodes[to];
 
           const inputLength = nodeMap[toNode.type].prototype.inputs.length;
 
-          const handleSpace = 10;
           this.drawEdge(
             nodesCtx,
             this.pxOfX(fromNode.x + fromNode.width),
-            this.pxOfY(fromNode.y + handleSpace + handleSpace * output),
+            this.pxOfY(fromNode.y + this.handleSpace * (output + 1)),
             this.pxOfX(toNode.x),
             this.pxOfY(
               toNode.y +
                 toNode.height -
-                handleSpace * inputLength +
-                handleSpace * input
+                this.handleSpace * inputLength +
+                this.handleSpace * input
             )
           );
         });
       });
+
+      // Render temporary edges, these exist when dragging an edge
+      for (const port of this.temporaryEdges) {
+        const { x, y } = this.xyOfPort(...port);
+        const { x: mouseX, y: mouseY } = this.xyOfMouse();
+        if (port[0] === "output") {
+          this.drawEdge(nodesCtx, x, y, mouseX, mouseY);
+        } else {
+          this.drawEdge(nodesCtx, mouseX, mouseY, x, y);
+        }
+      }
+    },
+    xyOfMouse() {
+      return {
+        x: this.mousePosition.x - this.$el.offsetLeft,
+        y: this.mousePosition.y - this.$el.offsetTop
+      };
+    },
+    xyOfPort(type, nodeId, index) {
+      const node = this.nodes[nodeId];
+      if (type === "output") {
+        return {
+          x: this.pxOfX(node.x + node.width),
+          y: this.pxOfY(node.y + this.handleSpace * (index + 1))
+        };
+      } else {
+        const inputLength = nodeMap[node.type].prototype.inputs.length;
+        return {
+          x: this.pxOfX(node.x),
+          y: this.pxOfY(
+            node.y + node.height + this.handleSpace * (index - inputLength)
+          )
+        };
+      }
     },
     drawEdge(context, fromX, fromY, toX, toY) {
       const handleWidth = this.pxPerX * 50;
@@ -237,10 +271,10 @@ export default {
     },
     mouseDown(e) {},
     mouseUp(e) {
-      this.isDraggingHandle = false;
+      this.temporaryEdges = [];
     },
     mouseMove({ e }) {
-      if (this.mouseState.includes(0)) {
+      if (this.mouseState.includes(0) && this.temporaryEdges.length === 0) {
         this.$store.commit("PAN_NODES", {
           x: e.movementX / this.pxPerX,
           y: e.movementY / this.pxPerY,
