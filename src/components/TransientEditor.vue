@@ -275,7 +275,10 @@ export default {
         1 - spread,
         `hsla(0, 0%, ${lightness}%, ${opacity})`
       );
-      gradient.addColorStop("1.0", "hsla(0, 0%, 0%, 0)");
+      gradient.addColorStop(
+        "1.0",
+        `hsla(0, 0%, ${lightness}%, ${opacity / 10})`
+      );
       return gradient;
     },
     keyDown(e) {

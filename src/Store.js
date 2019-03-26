@@ -6,6 +6,7 @@ import Vue from 'vue'
 
 const lastIds = {
   event: 4,
+  track: 1,
 }
 function getId(type) {
   let id = lastIds[type] || 0
@@ -91,8 +92,11 @@ export default () => {
             Math.round(event.beats / state.beatSnap) * state.beatSnap
         }
       },
-      SET_TRACKS(state, tracks) {
-        state.tracks = tracks
+      ADD_TRACK(state, track) {
+        state.tracks[track.id] = track
+      },
+      SET_TRACK(state, { id, ...changes }) {
+        Object.assign(state.tracks[id], changes)
       },
       SET_SELECTED_TRACK(state, id) {
         state.selectedTrackId = id
@@ -161,6 +165,12 @@ export default () => {
         )
       },
       async addNode(context, node) {
+        if (node.type === 'track') {
+          const hue = Math.floor(Math.random() * 360)
+          const trackId = getId('track')
+          context.commit('ADD_TRACK', { id: trackId, events: [], hue })
+          node.data.trackId = trackId
+        }
         const brain = new nodeMap[node.type](
           context.state.transporter,
           node.data,

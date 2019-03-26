@@ -2,7 +2,12 @@
   <div class="node-editor" @mousedown="onMouseDown" @wheel="onWheel">
     <canvas ref="background" class="canvas background" oncontextmenu="return false"/>
     <canvas ref="nodes" class="canvas nodes" oncontextmenu="return false"/>
-    <canvas ref="edges" class="canvas edges" oncontextmenu="return false" @click="deselect"/>
+    <canvas
+      ref="edges"
+      class="canvas edges"
+      oncontextmenu="return false"
+      @mousedown="canvasMouseDown"
+    />
     <Audio-node
       v-for="(node, id) in nodes"
       :key="id"
@@ -256,6 +261,13 @@ export default {
       );
       context.stroke();
     },
+    canvasMouseDown() {
+      if (this.keyboardState.includes("control")) {
+        console.log("add node");
+      } else if (this.mouseState.includes(0)) {
+        this.deselect();
+      }
+    },
     deselect() {
       this.selectedNodes.splice(0);
     },
@@ -275,7 +287,11 @@ export default {
     },
     keyDown(e) {},
     nodeMouseDown(id) {
-      if (!this.keyboardState.includes("control")) this.deselect();
+      if (
+        !this.keyboardState.includes("control") &&
+        !this.selectedNodes.includes(id)
+      )
+        this.deselect();
       if (!this.selectedNodes.includes(id)) this.selectedNodes.push(id);
     },
     mouseDown(e) {},

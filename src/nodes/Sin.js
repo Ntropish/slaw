@@ -108,7 +108,7 @@ function scanMap(map, time) {
     // Accept anything also 0.03 above this time because times will not be exactly the same
     // and we wouldn't be able to detect state changes on top of each other, they
     // would end up on one side or the other
-    if (acc && event.time > acc.time && event.time <= time + 0.03) return event
+    if (acc && event.time > acc.time && event.time <= time + 0.05) return event
     return acc
   }, null)
   return result
