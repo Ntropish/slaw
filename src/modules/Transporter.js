@@ -15,7 +15,7 @@ export default class Transporter extends EventEmitter {
     this.bpms = this.bps / 1000
 
     this.lastSchedule = 0
-    this.scheduleAhead = 5000
+    this.scheduleAhead = 100
     this.scheduleSize = 10
     this.scheduleBeatsSize = this.scheduleSize * 60000 * this.bpm
     this.timerID = null

@@ -7,6 +7,7 @@ export default class EventTrack extends Brain {
     super(transporter)
     this.eventSender = new EventTarget()
     this.trackId = trackId
+    this.eventHandlers = {}
 
     transporter.on('schedule', data => {
       // Send events in this schedule chunk in order
@@ -36,13 +37,14 @@ EventTrack.prototype.outputs = [
   {
     type: 'event',
     connect: (n, node, index) => {
-      n.eventSender.addEventListener('event', ...node.inputs[index].args(node))
+      if (!n.eventHandlers[node]) n.eventHandlers[node] = {}
+      if (!n.eventHandlers[node][index]) n.eventHandlers[node][index] = {}
+      n.eventHandlers[node][index] = node.inputs[index].args(node)[0]
+      n.eventSender.addEventListener('event', n.eventHandlers[node][index])
     },
     disconnect: (n, node, index) => {
-      n.eventSender.removeEventListener(
-        'event',
-        ...node.inputs[index].args(node),
-      )
+      n.eventSender.removeEventListener('event', n.eventHandlers[node][index])
+      delete n.eventHandlers[node][index]
     },
   },
 ]
