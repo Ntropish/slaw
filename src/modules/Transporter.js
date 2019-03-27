@@ -15,8 +15,8 @@ export default class Transporter extends EventEmitter {
     this.bpms = this.bps / 1000
 
     this.lastSchedule = 0
-    this.scheduleAhead = 100
-    this.scheduleSize = 10
+    this.scheduleAhead = 200
+    this.scheduleSize = 50
     this.scheduleBeatsSize = this.scheduleSize * 60000 * this.bpm
     this.timerID = null
     this.positionUpdateID = null
@@ -66,7 +66,7 @@ export default class Transporter extends EventEmitter {
     // Number of ms needed to schedule to maintain scheduleAhead
     const schedulingNeeded = this.scheduleAhead - ahead / this.bpms
 
-    const nextSchedule = Math.max(0, ahead) / this.bpms
+    const nextSchedule = clamp(0, ahead, this.scheduleSize) / this.bpms
 
     // Number of beats going to be scheduled in this function call
     const beats = clamp(0, schedulingNeeded * this.bpms, this.scheduleBeatsSize)

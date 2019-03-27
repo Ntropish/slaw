@@ -37,56 +37,51 @@ export default class Sin extends Brain {
   // on/off and frequency change scheduling that
   // needs to be done based on all of the previous.
   // It maintains sorted arrays of state changes
-  onEvent({ detail: { beats, time, data } }) {
+  onEvent({ detail: { beats, time, data, id } }) {
     const frequency = pitchToFrequency(data.pitch)
     const now = this.context.getOutputTimestamp().contextTime
+
     const eventEnd = time + beats / this.bps
 
-    const onStateNow = scanMap(this.onMap, now)
     const onStateStart = scanMap(this.onMap, time)
     const onStateEnd = scanMap(this.onMap, eventEnd)
 
-    const onNow = onStateNow && onStateNow.value
     const onAtStart = onStateStart && onStateStart.value
     const onAtEnd = onStateEnd && onStateEnd.value
 
-    // Slice off old events but add a new on event if it was on
-    this.onMap = this.onMap.filter(event => event.time > now)
-    if (onNow) this.onMap.push({ time: now, value: true })
-
     if (!onAtStart && !onAtEnd) {
       // If landed exactly on an off event delete it
-      if (onStateStart && Math.abs(onStateStart.time - time) < 0.1) {
+      if (onStateStart && Math.abs(onStateStart.time - time) < 0.001) {
         this.onMap.splice(this.onMap.indexOf(onStateStart), 1)
+        this.onMap.push({ time: eventEnd, value: false })
+      } else {
+        // Landed in empty space, fill it all in
+        this.onMap.push({ time, value: true })
+        this.onMap.push({ time: eventEnd, value: false })
       }
-      // Landed in empty space, fill it all in
-      this.onMap.push({ time, value: true })
-      this.onMap.push({ time: eventEnd, value: false })
     }
     if (onAtStart && !onAtEnd) {
       // Landed half off an on state, extend it to include this event
-      const indexOfStop = this.onMap.indexOf(onStateEnd)
-      if (indexOfStop !== -1) {
-        this.onMap.splice(indexOfStop, 1)
-      }
+      this.onMap.splice(this.onMap.indexOf(onStateEnd), 1)
       this.onMap.push({ time: eventEnd, value: false })
     }
     // Keep the map sorted so the above logic works
     this.onMap = this.onMap.sort(timeSort)
 
-    // ====================================Frequency is more simple
+    this.gainNode.gain.cancelScheduledValues(now)
+    this.onMap.forEach(({ value, time }) => {
+      // Use setTargetAtTime to prevent clicking
+      this.gainNode.gain.setTargetAtTime(value ? 1 : 0, time, 0.005)
+    })
+
+    // Frequency is easier, no need to turn it off at the end
     this.frequencyMap.push({ time, value: frequency })
     if (onAtStart && onAtEnd) {
       scanMap(this.frequencyMap, eventEnd).time = eventEnd
     }
+
     // Again, the sort is vital for the above algorithm
     this.frequencyMap = this.frequencyMap.sort(timeSort)
-
-    this.gainNode.gain.cancelScheduledValues(now)
-    this.onMap.forEach(({ value, time }) => {
-      // Use setTargetAtTime to prevent clicking
-      this.gainNode.gain.setTargetAtTime(value ? 1 : 0, time, 0.01)
-    })
 
     this.osc.frequency.cancelScheduledValues(now)
     this.frequencyMap.forEach(({ value, time }) => {
@@ -98,7 +93,7 @@ export default class Sin extends Brain {
     const time =
       _time || this.transporter.context.getOutputTimestamp().contextTime
     this.gainNode.gain.cancelScheduledValues(time)
-    this.gainNode.gain.setTargetAtTime(0, time + 0.1)
+    this.gainNode.gain.setTargetAtTime(0, time + 0.01)
   }
 }
 
@@ -109,7 +104,7 @@ function scanMap(map, time) {
     // Accept anything also 0.03 above this time because times will not be exactly the same
     // and we wouldn't be able to detect state changes on top of each other, they
     // would end up on one side or the other
-    if (acc && event.time > acc.time && event.time <= time + 0.01) return event
+    if (acc && event.time > acc.time && event.time <= time + 0.001) return event
     return acc
   }, null)
   return result

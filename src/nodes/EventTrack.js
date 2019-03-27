@@ -17,6 +17,7 @@ export default class EventTrack extends Brain {
             event.beat >= data.beat && event.beat < data.beat + data.beats,
         )
         .map(event => {
+          const now = transporter.context.getOutputTimestamp().contextTime
           const time = data.at + (event.beat - data.beat) / transporter.bps
           return { ...event, time }
         })

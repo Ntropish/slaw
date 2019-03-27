@@ -43,36 +43,38 @@ new Vue({
     x: 330,
     y: 130,
   })
+  // store.dispatch('addEdge', { from: id1, output: 0, to: id2, input: 0 })
+  // store.dispatch('addEdge', { from: id2, output: 0, to: id4, input: 0 })
+  // store.dispatch('addEdge', { from: id1, output: 0, to: id4, input: 1 })
+  // store.dispatch('addEdge', { from: id4, output: 0, to: id3, input: 0 })
   store.dispatch('addEdge', { from: id1, output: 0, to: id2, input: 0 })
-  store.dispatch('addEdge', { from: id2, output: 0, to: id4, input: 0 })
-  store.dispatch('addEdge', { from: id1, output: 0, to: id4, input: 1 })
-  store.dispatch('addEdge', { from: id4, output: 0, to: id3, input: 0 })
+  store.dispatch('addEdge', { from: id2, output: 0, to: id3, input: 0 })
 
   store.dispatch('addEvent', {
     type: 'note',
     beat: 0,
-    beats: 0.25,
+    beats: 0.295,
     data: { pitch: -2500, velocity: 0.8 },
     trackId: store.state.nodes[id1].data.trackId,
   })
   store.dispatch('addEvent', {
     type: 'note',
-    beat: 0.2,
-    beats: 0.3,
+    beat: 0.3,
+    beats: 0.295,
     data: { pitch: -2600, velocity: 0.7 },
     trackId: store.state.nodes[id1].data.trackId,
   })
   store.dispatch('addEvent', {
     type: 'note',
-    beat: 1,
-    beats: 0.4,
+    beat: 0.6,
+    beats: 0.295,
     data: { pitch: -2550, velocity: 0.5 },
     trackId: store.state.nodes[id1].data.trackId,
   })
   store.dispatch('addEvent', {
     type: 'note',
-    beat: 1.5,
-    beats: 0.25,
+    beat: 0.9,
+    beats: 0.295,
     data: { pitch: -2520, velocity: 0.8 },
     trackId: store.state.nodes[id1].data.trackId,
   })

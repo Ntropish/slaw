@@ -190,8 +190,6 @@ export default () => {
       },
       addEvent(context, { type, beat, beats, data, trackId }) {
         const id = getId('event')
-        console.log('add event', { id, type, beat, beats, data, trackId })
-
         context.commit('ADD_EVENT', { id, type, beat, beats, data, trackId })
       },
     },

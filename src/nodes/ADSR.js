@@ -7,20 +7,21 @@ export default class ADSR extends Brain {
     const { context, bps } = transporter
     this.bps = bps
     this.gainNode = context.createGain()
-    this.adsr = [0.01, 0.1, 0.4, 0.1]
+    this.adsr = [0.1, 0.2, 0.4, 0.1]
 
     transporter.on('clear', () => {
       this.gainNode.gain.cancelScheduledValues(
         context.getOutputTimestamp().contextTime,
       )
-      this.gainNode.gain.setValueAtTime(
+      this.gainNode.gain.setTargetAtTime(
         0,
         context.getOutputTimestamp().contextTime,
+        0.01,
       )
     })
 
     this.onEvent = this.onEvent.bind(this)
-    this.stop = this.stop.bind(this)
+    // this.stop = this.stop.bind(this)
   }
 
   onEvent({
@@ -33,25 +34,24 @@ export default class ADSR extends Brain {
     const noteEnd = time + beats / this.bps
     const [a, d, s, r] = this.adsr
 
-    this.gainNode.gain.setValueAtTime(0, time)
+    this.gainNode.gain.cancelScheduledValues(time)
+
+    this.gainNode.gain.setTargetAtTime(0, Math.max(time - 0.01, 0), 0.005)
     // Math min to make sure gain doesn't come in after note should be stopping
+    this.gainNode.gain.linearRampToValueAtTime(1, Math.min(noteEnd, time + a))
     this.gainNode.gain.linearRampToValueAtTime(
-      velocity,
-      Math.min(noteEnd, time + a),
-    )
-    this.gainNode.gain.linearRampToValueAtTime(
-      s * velocity,
+      s,
       Math.min(noteEnd, time + a + d),
     )
-    this.gainNode.gain.setTargetAtTime(s * velocity, noteEnd, 0.1)
+    this.gainNode.gain.setTargetAtTime(s, noteEnd, 0.005)
     this.gainNode.gain.linearRampToValueAtTime(0, noteEnd + r)
   }
 
-  stop(_time) {
-    const time = _time || this.context.getOutputTimestamp().contextTime
-    this.gainNode.gain.cancelScheduledValues(time)
-    this.gainNode.gain.setTargetAtTime(0, time + 0.1)
-  }
+  // stop(_time) {
+  //   const time = _time || this.context.getOutputTimestamp().contextTime
+  //   this.gainNode.gain.cancelScheduledValues(time)
+  //   this.gainNode.gain.setTargetAtTime(0, time + 0.1)
+  // }
 }
 
 ADSR.prototype.inputs = [
