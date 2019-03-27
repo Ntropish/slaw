@@ -21,6 +21,11 @@ new Vue({
   const id1 = await store.dispatch('addNode', {
     type: 'track',
     x: 50,
+    y: 280,
+  })
+  const longNoteTrack = await store.dispatch('addNode', {
+    type: 'track',
+    x: 50,
     y: 100,
   })
   store.commit('SET_TRACK', {
@@ -28,7 +33,7 @@ new Vue({
     name: 'Track 1',
     hue: 90,
   })
-  const id2 = await store.dispatch('addNode', {
+  const sinNode = await store.dispatch('addNode', {
     type: 'sin',
     x: 200,
     y: 30,
@@ -43,12 +48,26 @@ new Vue({
     x: 330,
     y: 130,
   })
-  // store.dispatch('addEdge', { from: id1, output: 0, to: id2, input: 0 })
-  // store.dispatch('addEdge', { from: id2, output: 0, to: id4, input: 0 })
-  // store.dispatch('addEdge', { from: id1, output: 0, to: id4, input: 1 })
-  // store.dispatch('addEdge', { from: id4, output: 0, to: id3, input: 0 })
-  store.dispatch('addEdge', { from: id1, output: 0, to: id2, input: 0 })
-  store.dispatch('addEdge', { from: id2, output: 0, to: id3, input: 0 })
+  store.dispatch('addEdge', {
+    from: longNoteTrack,
+    output: 0,
+    to: sinNode,
+    input: 0,
+  })
+  store.dispatch('addEdge', { from: sinNode, output: 0, to: id4, input: 0 })
+  store.dispatch('addEdge', { from: id1, output: 0, to: id4, input: 1 })
+  store.dispatch('addEdge', { from: id4, output: 0, to: id3, input: 0 })
+
+  // store.dispatch('addEdge', { from: id1, output: 0, to: sinNode, input: 0 })
+  // store.dispatch('addEdge', { from: sinNode, output: 0, to: id3, input: 0 })
+
+  store.dispatch('addEvent', {
+    type: 'note',
+    beat: 0,
+    beats: 2,
+    data: { pitch: -2500, velocity: 0.8 },
+    trackId: store.state.nodes[longNoteTrack].data.trackId,
+  })
 
   store.dispatch('addEvent', {
     type: 'note',
@@ -61,7 +80,7 @@ new Vue({
     type: 'note',
     beat: 0.3,
     beats: 0.295,
-    data: { pitch: -2600, velocity: 0.7 },
+    data: { pitch: -2700, velocity: 0.7 },
     trackId: store.state.nodes[id1].data.trackId,
   })
   store.dispatch('addEvent', {

@@ -37,8 +37,8 @@ export default {
   },
   data: () => {
     return {
-      viewStart: 0,
-      viewEnd: 16,
+      viewStart: -1,
+      viewEnd: 2,
       mode: "split",
       split: 0.25
     };

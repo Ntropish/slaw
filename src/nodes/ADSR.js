@@ -36,7 +36,7 @@ export default class ADSR extends Brain {
 
     this.gainNode.gain.cancelScheduledValues(time)
 
-    this.gainNode.gain.setTargetAtTime(0, Math.max(time - 0.01, 0), 0.005)
+    this.gainNode.gain.setTargetAtTime(0, Math.max(time - 0.005, 0), 0.005)
     // Math min to make sure gain doesn't come in after note should be stopping
     this.gainNode.gain.linearRampToValueAtTime(1, Math.min(noteEnd, time + a))
     this.gainNode.gain.linearRampToValueAtTime(
@@ -72,6 +72,7 @@ ADSR.prototype.outputs = [
       n.gainNode.connect(...node.inputs[index].args(node))
     },
     disconnect: (n, node, index) => {
+      // A delay could be added here to prevent clicking
       n.gainNode.disconnect(...node.inputs[index].args(node))
     },
   },

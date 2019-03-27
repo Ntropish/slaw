@@ -76,7 +76,7 @@ export default {
     }
   },
   data: () => ({
-    yStart: 1000,
+    yStart: -1200,
     yEnd: -4000,
     canvasWidth: 300,
     canvasHeight: 150,
