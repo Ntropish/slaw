@@ -58,13 +58,8 @@ const events = {
 ;(async () => {
   const id1 = await store.dispatch('addNode', {
     type: 'track',
-    data: {},
     x: 100,
     y: 100,
-    width: 100,
-    height: 150,
-    outputs: [],
-    inputs: [],
   })
   const a = store.commit('SET_TRACK', {
     id: store.state.nodes[id1].data.trackId,
@@ -75,23 +70,13 @@ const events = {
 
   const id2 = await store.dispatch('addNode', {
     type: 'sin',
-    data: {},
     x: 300,
     y: 130,
-    width: 100,
-    height: 150,
-    outputs: [],
-    inputs: [],
   })
   const id3 = await store.dispatch('addNode', {
     type: 'destination',
-    data: {},
     x: 600,
     y: 110,
-    width: 100,
-    height: 150,
-    outputs: [],
-    inputs: [],
   })
   store.dispatch('addEdge', { from: id1, output: 0, to: id2, input: 0 })
   store.dispatch('addEdge', { from: id2, output: 0, to: id3, input: 0 })

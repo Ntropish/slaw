@@ -261,9 +261,13 @@ export default {
       );
       context.stroke();
     },
-    canvasMouseDown() {
+    canvasMouseDown(e) {
       if (this.keyboardState.includes("control")) {
-        console.log("add node");
+        this.$store.dispatch("addNode", {
+          type: "track",
+          x: this.pxToX(e.offsetX),
+          y: this.pxToY(e.offsetY)
+        });
       } else if (this.mouseState.includes(0)) {
         this.deselect();
       }
@@ -290,9 +294,13 @@ export default {
       if (
         !this.keyboardState.includes("control") &&
         !this.selectedNodes.includes(id)
-      )
+      ) {
         this.deselect();
-      if (!this.selectedNodes.includes(id)) this.selectedNodes.push(id);
+      }
+      if (!this.selectedNodes.includes(id)) {
+        this.selectedNodes.push(id);
+        this.$store.commit("SET_SELECTED_TRACK", this.nodes[id].data.trackId);
+      }
     },
     mouseDown(e) {},
     mouseUp(e) {

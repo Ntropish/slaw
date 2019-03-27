@@ -165,6 +165,14 @@ export default () => {
         )
       },
       async addNode(context, node) {
+        console.log('add', node)
+        Object.assign(node, {
+          data: {},
+          width: 100,
+          height: 150,
+          outputs: [],
+          inputs: [],
+        })
         if (node.type === 'track') {
           const hue = Math.floor(Math.random() * 360)
           const trackId = getId('track')
