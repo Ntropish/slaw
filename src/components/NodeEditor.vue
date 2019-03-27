@@ -264,7 +264,7 @@ export default {
     canvasMouseDown(e) {
       if (this.keyboardState.includes("control")) {
         this.$store.dispatch("addNode", {
-          type: "track",
+          type: this.selectedNodeType,
           x: this.pxToX(e.offsetX),
           y: this.pxToY(e.offsetY)
         });
@@ -299,7 +299,9 @@ export default {
       }
       if (!this.selectedNodes.includes(id)) {
         this.selectedNodes.push(id);
-        this.$store.commit("SET_SELECTED_TRACK", this.nodes[id].data.trackId);
+        if (this.nodes[id].type === "track") {
+          this.$store.commit("SET_SELECTED_TRACK", this.nodes[id].data.trackId);
+        }
       }
     },
     mouseDown(e) {},

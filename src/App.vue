@@ -7,7 +7,6 @@
       class="midi-editor app-item"
       :x-start="viewStart"
       :x-end="viewEnd"
-      @noteadd="onAddNote"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
       @pan="onMidiEditorPan"

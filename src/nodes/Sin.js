@@ -1,4 +1,4 @@
-import { timeSort } from './util'
+import { timeSort, pitchToFrequency } from './util'
 
 import Brain from './Brain'
 
@@ -37,7 +37,8 @@ export default class Sin extends Brain {
   // on/off and frequency change scheduling that
   // needs to be done based on all of the previous.
   // It maintains sorted arrays of state changes
-  onEvent({ detail: { beats, time, frequency } }) {
+  onEvent({ detail: { beats, time, data } }) {
+    const frequency = pitchToFrequency(data.pitch)
     const now = this.context.getOutputTimestamp().contextTime
     const eventEnd = time + beats / this.bps
 

@@ -67,20 +67,22 @@ export default () => {
           state.nodes[id].y += y
         }
       },
-      SET_EVENTS(state, events) {
-        Vue.set(state, 'events', events)
+      ADD_EVENT(state, event) {
+        Vue.set(state.events, event.id, event)
+        state.tracks[event.trackId].events.push(event.id)
       },
       SET_EVENT(state, event) {
-        state.events[event.id] = event
+        Vue.set(state.events, event.id, event)
       },
-      COPY_EVENTS(state, { eventIds, trackId }) {
+      COPY_EVENTS(state, { eventIds }) {
         for (const id of eventIds) {
           const newNoteId = getId('event')
           const copyFrom = state.events[id]
-          state.events[newNoteId] = {
+          const trackId = copyFrom.trackId
+          Vue.set(state.events, newNoteId, {
             ...copyFrom,
             id: newNoteId,
-          }
+          })
           state.tracks[trackId].events.push(newNoteId)
         }
       },
@@ -93,7 +95,7 @@ export default () => {
         }
       },
       ADD_TRACK(state, track) {
-        state.tracks[track.id] = track
+        Vue.set(state.tracks, track.id, track)
       },
       SET_TRACK(state, { id, ...changes }) {
         Object.assign(state.tracks[id], changes)
@@ -129,11 +131,6 @@ export default () => {
       },
     },
     actions: {
-      fetchSomething(context) {
-        // context.commit ('SET_NODES', [])
-        // do async stuff
-        // do more commits
-      },
       addEdge(context, { from, to, input, output }) {
         context.commit('ADD_NODE_EDGE', {
           from,
@@ -165,7 +162,6 @@ export default () => {
         )
       },
       async addNode(context, node) {
-        console.log('add', node)
         Object.assign(node, {
           data: {},
           width: 100,
@@ -192,13 +188,23 @@ export default () => {
         })
         return id
       },
+      addEvent(context, { type, beat, beats, data, trackId }) {
+        const id = getId('event')
+        console.log('add event', { id, type, beat, beats, data, trackId })
+
+        context.commit('ADD_EVENT', { id, type, beat, beats, data, trackId })
+      },
     },
     getters: {
       eventsOfTrack(state) {
         return id => {
           const track = state.tracks[id]
           if (!track) return []
-          return track.events.map(id => state.events[id])
+          const events = {}
+          track.events.forEach(
+            eventId => (events[eventId] = state.events[eventId]),
+          )
+          return events
         }
       },
     },

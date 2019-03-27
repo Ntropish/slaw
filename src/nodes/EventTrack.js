@@ -11,15 +11,14 @@ export default class EventTrack extends Brain {
 
     transporter.on('schedule', data => {
       // Send events in this schedule chunk in order
-      store.getters
-        .eventsOfTrack(trackId)
+      Object.values(store.getters.eventsOfTrack(trackId))
         .filter(
           event =>
             event.beat >= data.beat && event.beat < data.beat + data.beats,
         )
         .map(event => {
           const time = data.at + (event.beat - data.beat) / transporter.bps
-          return { ...event, time, frequency: pitchToFrequency(event.pitch) }
+          return { ...event, time }
         })
         .sort(timeSort)
         .forEach(event => {

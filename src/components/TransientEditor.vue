@@ -204,10 +204,12 @@ export default {
       const bufferedIds = Object.keys(this.noteBuffer);
 
       // Draw notes
-      this.events.forEach(note => {
+      Object.values(this.events).forEach(note => {
         // Detuned notes need some indication so shift their hue
         let hueMod =
-          (note.pitch - Math.round(note.pitch / this.ySnap) * this.ySnap) / 2;
+          (note.data.pitch -
+            Math.round(note.data.pitch / this.ySnap) * this.ySnap) /
+          2;
         if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
         if (bufferedIds.includes(note.id)) {
           notesCtx.fillStyle = `hsla(${this.track.hue -
@@ -222,7 +224,7 @@ export default {
         // notesCtx.fillRect
         notesCtx.fillRect(
           this.pxOfX(note.beat),
-          this.pxOfY(note.pitch - 50),
+          this.pxOfY(note.data.pitch - 50),
           this.pxPerX * note.beats,
           this.pxPerY * 100
         );
@@ -231,7 +233,9 @@ export default {
       (Object.values(this.noteBuffer) || []).forEach(note => {
         // Detuned notes need some indication
         let hueMod =
-          (note.pitch - Math.round(note.pitch / this.ySnap) * this.ySnap) / 2;
+          (note.data.pitch -
+            Math.round(note.data.pitch / this.ySnap) * this.ySnap) /
+          2;
         if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
         if (this.selectedNotes.includes(note.id)) {
           notesCtx.fillStyle = `hsla(${this.track.hue -
@@ -243,7 +247,7 @@ export default {
         // notesCtx.fillRect
         notesCtx.fillRect(
           this.pxOfX(note.beat),
-          this.pxOfY(note.pitch - 50),
+          this.pxOfY(note.data.pitch - 50),
           this.pxPerX * note.beats,
           this.pxPerY * 100
         );
@@ -302,8 +306,7 @@ export default {
         } else {
           // Trigger note copy
           this.$store.commit("COPY_EVENTS", {
-            eventIds: selectedNotes,
-            trackId: this.trackId
+            eventIds: selectedNotes
           });
         }
       }
@@ -315,7 +318,13 @@ export default {
         selectedNotes.splice(0);
         // Ctrl click to add note
         if (this.keyboardState.includes("control")) {
-          this.$emit("noteadd", { beat, pitch, trackId: this.track.id });
+          this.$store.dispatch("addEvent", {
+            type: "note",
+            beat,
+            beats: 0.25,
+            data: { pitch, velocity: 0.8 },
+            trackId: this.track.id
+          });
         } else if (
           this.mouseState.includes(0) &&
           !this.keyboardState.includes("shift")
@@ -329,17 +338,17 @@ export default {
         }
       }
 
-      if (this.keyboardState.includes("alt") && selectedNotes.length) {
-        selectedNotes.forEach(note => {
-          if (this.noteBuffer[note.id]) {
-            Vue.delete(this.noteBuffer, note.id);
-          }
-        });
-        this.$emit("noteremove", {
-          notes: selectedNotes,
-          trackId: this.track.id
-        });
-      }
+      // if (this.keyboardState.includes("alt") && selectedNotes.length) {
+      //   selectedNotes.forEach(note => {
+      //     if (this.noteBuffer[note.id]) {
+      //       Vue.delete(this.noteBuffer, note.id);
+      //     }
+      //   });
+      //   this.$emit("noteremove", {
+      //     notes: selectedNotes,
+      //     trackId: this.track.id
+      //   });
+      // }
 
       this.bufferNotes();
     },
@@ -389,14 +398,18 @@ export default {
     bufferNotes(e) {
       Vue.set(this, "noteBuffer", {});
       this.selectedNotes.forEach(noteId => {
-        this.noteBuffer[noteId] = { ...this.events[noteId] };
+        // Manual deep copy so original isn't affected
+        this.noteBuffer[noteId] = {
+          ...this.events[noteId],
+          data: { ...this.events[noteId].data }
+        };
       });
     },
     unbufferNotes(e) {
       // this.$emit("noteset", this.noteBuffer);
-      Object.values(this.noteBuffer).forEach(note =>
-        this.$store.commit("SET_EVENT", note)
-      );
+      Object.values(this.noteBuffer).forEach(note => {
+        return this.$store.commit("SET_EVENT", note);
+      });
 
       Vue.set(this, "noteBuffer", {});
     },
@@ -414,7 +427,7 @@ export default {
       Object.values(this.noteBuffer).forEach(note => {
         // if (!this.events[note.id]) return
         note.beat = this.events[note.id].beat + xMove;
-        note.pitch = this.events[note.id].pitch + yMove;
+        note.data.pitch = this.events[note.id].data.pitch + yMove;
       });
     },
     resizeTool(xMove, yMove) {
@@ -467,8 +480,8 @@ export default {
       const foundNotes = [];
       for (const noteId of this.track.events) {
         const note = this.events[noteId];
-        const a = note.pitch - 50 < pitch1;
-        const b = note.pitch + 50 > pitch2;
+        const a = note.data.pitch - 50 < pitch1;
+        const b = note.data.pitch + 50 > pitch2;
         const c = note.beat + note.beats > beat1;
         const d = note.beat < beat2;
         if (a && b && c && d) {
@@ -482,9 +495,9 @@ export default {
       let [beat, pitch] = this.pxToXY(x, y);
 
       const foundNotes = [];
-      for (const note of this.events) {
+      for (const note of Object.values(this.events)) {
         if (
-          Math.abs(note.pitch - pitch) < 50 &&
+          Math.abs(note.data.pitch - pitch) < 50 &&
           note.beat < beat &&
           beat < note.beat + note.beats
         ) {
