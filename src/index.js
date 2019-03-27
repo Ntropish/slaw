@@ -35,11 +35,18 @@ new Vue({
   })
   const id3 = await store.dispatch('addNode', {
     type: 'destination',
-    x: 600,
+    x: 450,
     y: 110,
   })
+  const id4 = await store.dispatch('addNode', {
+    type: 'adsr',
+    x: 300,
+    y: 330,
+  })
   store.dispatch('addEdge', { from: id1, output: 0, to: id2, input: 0 })
-  store.dispatch('addEdge', { from: id2, output: 0, to: id3, input: 0 })
+  store.dispatch('addEdge', { from: id2, output: 0, to: id4, input: 0 })
+  store.dispatch('addEdge', { from: id1, output: 0, to: id4, input: 1 })
+  store.dispatch('addEdge', { from: id4, output: 0, to: id3, input: 0 })
 
   store.dispatch('addEvent', {
     type: 'note',
