@@ -20,7 +20,7 @@ new Vue({
 ;(async () => {
   const id1 = await store.dispatch('addNode', {
     type: 'track',
-    x: 100,
+    x: 50,
     y: 100,
   })
   store.commit('SET_TRACK', {
@@ -30,18 +30,18 @@ new Vue({
   })
   const id2 = await store.dispatch('addNode', {
     type: 'sin',
-    x: 300,
-    y: 130,
+    x: 200,
+    y: 30,
   })
   const id3 = await store.dispatch('addNode', {
     type: 'destination',
-    x: 450,
-    y: 110,
+    x: 470,
+    y: 140,
   })
   const id4 = await store.dispatch('addNode', {
     type: 'adsr',
-    x: 300,
-    y: 330,
+    x: 330,
+    y: 130,
   })
   store.dispatch('addEdge', { from: id1, output: 0, to: id2, input: 0 })
   store.dispatch('addEdge', { from: id2, output: 0, to: id4, input: 0 })
@@ -53,6 +53,13 @@ new Vue({
     beat: 0,
     beats: 0.25,
     data: { pitch: -2500, velocity: 0.8 },
+    trackId: store.state.nodes[id1].data.trackId,
+  })
+  store.dispatch('addEvent', {
+    type: 'note',
+    beat: 0.2,
+    beats: 0.3,
+    data: { pitch: -2600, velocity: 0.7 },
     trackId: store.state.nodes[id1].data.trackId,
   })
   store.dispatch('addEvent', {
