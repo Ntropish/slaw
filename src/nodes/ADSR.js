@@ -23,7 +23,13 @@ export default class ADSR extends Brain {
     this.stop = this.stop.bind(this)
   }
 
-  onEvent({ detail: { beats, time, velocity } }) {
+  onEvent({
+    detail: {
+      beats,
+      time,
+      data: { velocity },
+    },
+  }) {
     const noteEnd = time + beats / this.bps
     const [a, d, s, r] = this.adsr
 
@@ -62,11 +68,11 @@ ADSR.prototype.inputs = [
 ADSR.prototype.outputs = [
   {
     type: 'buffer',
-    connect: (node, index) => {
-      this.gainNode.connect(...node.inputs[index].args(node))
+    connect: (n, node, index) => {
+      n.gainNode.connect(...node.inputs[index].args(node))
     },
-    disconnect: (node, index) => {
-      this.gainNode.disconnect(...node.inputs[index].args(node))
+    disconnect: (n, node, index) => {
+      n.gainNode.disconnect(...node.inputs[index].args(node))
     },
   },
 ]
