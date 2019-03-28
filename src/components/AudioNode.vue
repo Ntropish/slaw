@@ -166,6 +166,7 @@ export default {
   width: 100%;
   height: 100%;
   background: hsla(0, 0%, 0%, 0.2);
+  border-radius: 50%;
 }
 .handle > .shade:hover {
   transition: opacity 0.1s;

@@ -1,4 +1,4 @@
-import { timeSort, pitchToFrequency } from './util'
+import { pitchToFrequency, ValueScheduler } from './util'
 
 import Brain from './Brain'
 
@@ -16,8 +16,8 @@ export default class Sin extends Brain {
       context.getOutputTimestamp().contextTime,
     )
     this.osc.connect(this.gainNode)
-    this.onMap = []
-    this.frequencyMap = []
+    this.gainScheduler = ValueScheduler(0)
+    this.frequencyScheduler = ValueScheduler(440)
 
     transporter.on('clear', () => {
       this.onMap = []
@@ -33,58 +33,23 @@ export default class Sin extends Brain {
     })
   }
 
-  // This complicated function finds all of the
-  // on/off and frequency change scheduling that
-  // needs to be done based on all of the previous.
-  // It maintains sorted arrays of state changes
   onEvent({ detail: { beats, time, data, id } }) {
     const frequency = pitchToFrequency(data.pitch)
     const now = this.context.getOutputTimestamp().contextTime
-
     const eventEnd = time + beats / this.bps
-
-    const onStateStart = scanMap(this.onMap, time)
-    const onStateEnd = scanMap(this.onMap, eventEnd)
-
-    const onAtStart = onStateStart && onStateStart.value
-    const onAtEnd = onStateEnd && onStateEnd.value
-
-    if (!onAtStart && !onAtEnd) {
-      // If landed exactly on an off event delete it
-      if (onStateStart && Math.abs(onStateStart.time - time) < 0.001) {
-        this.onMap.splice(this.onMap.indexOf(onStateStart), 1)
-        this.onMap.push({ time: eventEnd, value: false })
-      } else {
-        // Landed in empty space, fill it all in
-        this.onMap.push({ time, value: true })
-        this.onMap.push({ time: eventEnd, value: false })
-      }
-    }
-    if (onAtStart && !onAtEnd) {
-      // Landed half off an on state, extend it to include this event
-      this.onMap.splice(this.onMap.indexOf(onStateEnd), 1)
-      this.onMap.push({ time: eventEnd, value: false })
-    }
-    // Keep the map sorted so the above logic works
-    this.onMap = this.onMap.sort(timeSort)
-
     this.gainNode.gain.cancelScheduledValues(now)
-    this.onMap.forEach(({ value, time }) => {
-      // Use setTargetAtTime to prevent clicking
-      this.gainNode.gain.setTargetAtTime(value ? 1 : 0, time, 0.005)
+    this.osc.frequency.cancelScheduledValues(now)
+
+    // This function uses fancy schedulers to determine
+    // when to turn the gain on and change the frequency
+
+    this.gainScheduler.addEvent(time, eventEnd, data.velocity)
+    this.gainScheduler.schedulings.forEach(({ value, time }) => {
+      this.gainNode.gain.setValueAtTime(value, time)
     })
 
-    // Frequency is easier, no need to turn it off at the end
-    this.frequencyMap.push({ time, value: frequency })
-    if (onAtStart && onAtEnd) {
-      scanMap(this.frequencyMap, eventEnd).time = eventEnd
-    }
-
-    // Again, the sort is vital for the above algorithm
-    this.frequencyMap = this.frequencyMap.sort(timeSort)
-
-    this.osc.frequency.cancelScheduledValues(now)
-    this.frequencyMap.forEach(({ value, time }) => {
+    this.frequencyScheduler.addEvent(time, eventEnd, frequency)
+    this.frequencyScheduler.schedulings.forEach(({ value, time }) => {
       this.osc.frequency.setValueAtTime(value, time)
     })
   }
@@ -95,19 +60,6 @@ export default class Sin extends Brain {
     this.gainNode.gain.cancelScheduledValues(time)
     this.gainNode.gain.setTargetAtTime(0, time + 0.01)
   }
-}
-
-// Find the highest timed event below or equal the time
-function scanMap(map, time) {
-  const result = map.reduce((acc, event) => {
-    if (!acc && event.time < time) return event
-    // Accept anything also 0.03 above this time because times will not be exactly the same
-    // and we wouldn't be able to detect state changes on top of each other, they
-    // would end up on one side or the other
-    if (acc && event.time > acc.time && event.time <= time + 0.001) return event
-    return acc
-  }, null)
-  return result
 }
 
 Sin.prototype.inputs = [

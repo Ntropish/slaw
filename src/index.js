@@ -65,7 +65,7 @@ new Vue({
     type: 'note',
     beat: 0,
     beats: 2,
-    data: { pitch: -2500, velocity: 0.8 },
+    data: { pitch: -1300, velocity: 0.8 },
     trackId: store.state.nodes[longNoteTrack].data.trackId,
   })
 
@@ -73,28 +73,28 @@ new Vue({
     type: 'note',
     beat: 0,
     beats: 0.295,
-    data: { pitch: -2500, velocity: 0.8 },
+    data: { pitch: -1300, velocity: 0.8 },
     trackId: store.state.nodes[id1].data.trackId,
   })
   store.dispatch('addEvent', {
     type: 'note',
     beat: 0.3,
     beats: 0.295,
-    data: { pitch: -2700, velocity: 0.7 },
+    data: { pitch: -1500, velocity: 0.7 },
     trackId: store.state.nodes[id1].data.trackId,
   })
   store.dispatch('addEvent', {
     type: 'note',
     beat: 0.6,
     beats: 0.295,
-    data: { pitch: -2550, velocity: 0.5 },
+    data: { pitch: -1350, velocity: 0.5 },
     trackId: store.state.nodes[id1].data.trackId,
   })
   store.dispatch('addEvent', {
     type: 'note',
     beat: 0.9,
     beats: 0.295,
-    data: { pitch: -2520, velocity: 0.8 },
+    data: { pitch: -1320, velocity: 0.8 },
     trackId: store.state.nodes[id1].data.trackId,
   })
 
