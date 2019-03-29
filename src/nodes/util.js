@@ -23,6 +23,7 @@ export function ValueScheduler(defaultValue = false) {
         scheduling.time - 0.001 > endTime,
     )
 
+    // Then just add the start and end schedulings at their respective positions
     const startState = scan(startTime)
     const originalValue = startState ? startState.value : defaultValue
     api.schedulings.push({ time: startTime, value })
