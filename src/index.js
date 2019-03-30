@@ -49,7 +49,7 @@ new Vue({
     y: 130,
   })
   store.dispatch('addEdge', {
-    from: id1,
+    from: longNoteTrack,
     output: 0,
     to: sinNode,
     input: 0,

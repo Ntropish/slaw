@@ -13,6 +13,7 @@ export function ValueScheduler(defaultValue = false) {
     addTrigger,
     scan,
     scanForward,
+    addState,
   }
 
   return api
@@ -49,6 +50,10 @@ export function ValueScheduler(defaultValue = false) {
       api.schedulings.push({ time: endTime, value: defaultValue })
     }
 
+    api.schedulings = api.schedulings.sort(timeSort)
+  }
+  function addState(time, value) {
+    api.schedulings.push({ time, value })
     api.schedulings = api.schedulings.sort(timeSort)
   }
 

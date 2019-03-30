@@ -5,9 +5,9 @@ export default class ADSR extends Brain {
   constructor(transporter) {
     super()
     this.transporter = transporter
-    const { context, bps } = transporter
+    const { context } = transporter
     this.gainNode = context.createGain()
-    this.adsr = [0.04, 0.02, 0.2, 0.2]
+    this.adsr = [0.02, 0.02, 0.2, 0.2]
     this.valueScheduler = ValueScheduler(null)
 
     transporter.on('clear', () => {
@@ -32,10 +32,9 @@ export default class ADSR extends Brain {
       data: { velocity },
     },
   }) {
-    const [a, d, s, r] = this.adsr
     const noteEnd = time + beats / this.transporter.bps
-
-    this.gainNode.gain.cancelScheduledValues()
+    const now = this.transporter.context.getOutputTimestamp().contextTime
+    this.gainNode.gain.cancelScheduledValues(now)
 
     // Schedule trigger/release times
     this.valueScheduler.addTrigger(time, noteEnd, this.adsr)
@@ -63,18 +62,18 @@ export default class ADSR extends Brain {
           // the attack line of this event can intersect in four places:
           // attack/decay/sustain/release phases
           // I just plugged line intersection formulas into wolfram alpha so
-          // these formulas aren't really understandable. Determining
-          // how to calculate what phase intersection will happen in
-          // was done on paper
+          // these formulas aren't really understandable
           const {
             time: t0,
             value: [a0, d0, s0, r0],
           } = lastTrigger
           const nextRelease = this.valueScheduler.scanForward(time)
-          const RP = lastRelease.time || nextRelease.time
+          const releasePoint =
+            (lastRelease && lastRelease.time) || nextRelease.time
 
           // Only the firt true here is valid, the former values exclude the latter
-          const willIntersectRelease = a > (RP - time) / s0
+          // Also, these were calculated on paper
+          const willIntersectRelease = a > (releasePoint - time) / s0
           const willIntersectSustain = a > (t0 + a0 + d0 - time) / s0
           const willIntersectDecay = a > t0 + a0 - time
 
@@ -87,21 +86,17 @@ export default class ADSR extends Brain {
           if (willIntersectRelease) {
             intersection = (a * s0 * (time - t0 + r0)) / (a * s0 + r0)
             intersectionValue = intersection / a
-            console.log('r', intersection, intersectionValue)
           } else if (willIntersectSustain) {
             intersection = s0 * a
             intersectionValue = s
             isSustain = true
-            console.log('s', intersection, intersectionValue)
           } else if (willIntersectDecay) {
             intersection = (d0 * (a0 - t0 + t)) / (-s0 * a + a + d0)
             intersectionValue = 1 - (s * (t - a)) / d
-            console.log('d', intersection, intersectionValue)
           } else {
             // Given willIntersect, intersection during attack is all that's left
             intersection = (a0 * t) / (a0 - a)
             intersectionValue = t / a
-            console.log('a', intersection, intersectionValue)
           }
 
           this.gainNode.gain.cancelScheduledValues(time + intersection)
@@ -127,7 +122,10 @@ export default class ADSR extends Brain {
         // Handle releasing
         const s0 = lastTrigger.value[2]
         this.gainNode.gain.linearRampToValueAtTime(s0, time)
-        this.gainNode.gain.linearRampToValueAtTime(0, time + r)
+        this.gainNode.gain.linearRampToValueAtTime(
+          0,
+          time + lastTrigger.value[3],
+        )
         lastRelease = scheduling
       }
     })

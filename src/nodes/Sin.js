@@ -18,9 +18,10 @@ export default class Sin extends Brain {
     this.osc.connect(this.gainNode)
     this.gainScheduler = ValueScheduler(0)
     this.frequencyScheduler = ValueScheduler(440)
+    // Extra time at the end for "release" phase
+    this.tail = 0.5
 
     transporter.on('clear', () => {
-      console.log('clear')
       this.gainScheduler.schedulings = []
       this.frequencyScheduler.schedulings = []
       this.gainNode.gain.cancelScheduledValues(
@@ -44,25 +45,23 @@ export default class Sin extends Brain {
     // This function uses fancy schedulers to determine
     // when to turn the gain on and change the frequency
 
-    this.gainScheduler.addEvent(time, eventEnd, data.velocity)
-    console.log(id, this.gainScheduler.schedulings)
+    this.gainScheduler.addEvent(time, eventEnd + this.tail, data.velocity)
     this.gainScheduler.schedulings.forEach(({ value, time }) => {
-      console.log(value, time)
       this.gainNode.gain.setValueAtTime(value, time)
     })
 
-    this.frequencyScheduler.addEvent(time, eventEnd, frequency)
+    this.frequencyScheduler.addState(time, frequency)
     this.frequencyScheduler.schedulings.forEach(({ value, time }) => {
-      this.osc.frequency.setTargetAtTime(value, time, 0.03)
+      this.osc.frequency.setTargetAtTime(value, time, 0.001)
     })
   }
 
-  stop(_time) {
-    const time =
-      _time || this.transporter.context.getOutputTimestamp().contextTime
-    this.gainNode.gain.cancelScheduledValues(time)
-    this.gainNode.gain.setTargetAtTime(0, time + 0.01)
-  }
+  // stop(_time) {
+  //   const time =
+  //     _time || this.transporter.context.getOutputTimestamp().contextTime
+  //   this.gainNode.gain.cancelScheduledValues(time)
+  //   this.gainNode.gain.setTargetAtTime(0, time + 0.01)
+  // }
 }
 
 Sin.prototype.inputs = [
