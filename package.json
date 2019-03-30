@@ -32,6 +32,24 @@
     "webpack-dev-server": "^3.2.1"
   },
   "scripts": {
-    "start": "webpack-dev-server --open --config ./webpack.config.js"
+    "start": "webpack-dev-server --open --config ./webpack.config.js",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.0",
+    "@babel/preset-env": "^7.4.2",
+    "babel-jest": "^24.5.0",
+    "jest": "^24.5.0"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest"
+    },
+    "moduleFileExtensions": [
+      "js"
+    ],
+    "moduleDirectories": [
+      "node_modules"
+    ]
   }
 }

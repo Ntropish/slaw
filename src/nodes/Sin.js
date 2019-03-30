@@ -20,8 +20,9 @@ export default class Sin extends Brain {
     this.frequencyScheduler = ValueScheduler(440)
 
     transporter.on('clear', () => {
-      this.onMap = []
-      this.frequencyMap = []
+      console.log('clear')
+      this.gainScheduler.schedulings = []
+      this.frequencyScheduler.schedulings = []
       this.gainNode.gain.cancelScheduledValues(
         context.getOutputTimestamp().contextTime,
       )
@@ -44,13 +45,15 @@ export default class Sin extends Brain {
     // when to turn the gain on and change the frequency
 
     this.gainScheduler.addEvent(time, eventEnd, data.velocity)
+    console.log(id, this.gainScheduler.schedulings)
     this.gainScheduler.schedulings.forEach(({ value, time }) => {
+      console.log(value, time)
       this.gainNode.gain.setValueAtTime(value, time)
     })
 
     this.frequencyScheduler.addEvent(time, eventEnd, frequency)
     this.frequencyScheduler.schedulings.forEach(({ value, time }) => {
-      this.osc.frequency.setValueAtTime(value, time)
+      this.osc.frequency.setTargetAtTime(value, time, 0.03)
     })
   }
 
