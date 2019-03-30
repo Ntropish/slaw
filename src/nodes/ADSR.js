@@ -11,8 +11,6 @@ export default class ADSR extends Brain {
     this.valueScheduler = ValueScheduler(null)
 
     transporter.on('clear', () => {
-      this.lastScheduling = null
-      this.lastValue = null
       this.gainNode.gain.cancelScheduledValues(
         context.getOutputTimestamp().contextTime,
       )
@@ -51,27 +49,11 @@ export default class ADSR extends Brain {
       if (value) {
         const [a, d, s, r] = value
 
-        // let willIntersect = false
-        // if (lastTrigger) {
-        //   if (!lastRelease) willIntersect = true
-        //   else if (lastRelease.time + lastTrigger.value[3] > time) willIntersect = true
-        // }
-
         const willIntersect =
           lastTrigger &&
           (!lastRelease || lastRelease.time + lastTrigger.value[3] > time)
 
-        const willIntersectAttack = time < lastTrigger.time + lastTrigger
-
-        const willIntersectTail =
-          lastRelease &&
-          lastRelease.time < time + a &&
-          lastRelease.time + lastTrigger[3] > time
-
-        if (
-          !this.lastScheduling ||
-          (!this.lastScheduling.value && !willIntersectTail)
-        ) {
+        if (!willIntersect) {
           // Basic envelope scheduling
           this.gainNode.gain.setValueAtTime(0, time)
           this.gainNode.gain.linearRampToValueAtTime(1, time + a)
@@ -81,37 +63,41 @@ export default class ADSR extends Brain {
           // the attack line of this event can intersect in four places:
           // attack/decay/sustain/release phases
           // I just plugged line intersection formulas into wolfram alpha so
-          // these formulas aren't really understandable
-          const [a0, d0, s0, r0] = this.lastTrigger
-          const t0 = this.lastScheduling.time
+          // these formulas aren't really understandable. Determining
+          // how to calculate what phase intersection will happen in
+          // was done on paper
+          const {
+            time: t0,
+            value: [a0, d0, s0, r0],
+          } = lastTrigger
+          const nextRelease = this.valueScheduler.scanForward(time)
+          const RP = lastRelease.time || nextRelease.time
+
+          // Only the firt true here is valid, the former values exclude the latter
+          const willIntersectRelease = a > (RP - time) / s0
+          const willIntersectSustain = a > (t0 + a0 + d0 - time) / s0
+          const willIntersectDecay = a > t0 + a0 - time
+
           const t = time - t0
           // Intersection is the time after the beginning of this event
           // that the two envelopes meet. This is where to begin scheduling
           let intersection
           let intersectionValue
           let isSustain = false
-          if (time - t0 < a0 - a) {
-            // Attack intersection
-            intersection = (a0 * t) / (a0 - a)
-            intersectionValue = t / a
-            console.log('attack:', time, intersection, intersectionValue)
-          } else if (time - t0 < a0 + d0 - a * s0) {
-            // Decay intersection
-            intersection = (d0 * (a0 - t0 + t)) / (-s0 * a + a + d0)
-            intersectionValue = 1 - (s * (t - a)) / d
-            console.log('decay:', time, intersection, intersectionValue)
-          } else if (!willIntersectTail) {
-            // Sustain intersection
+          if (willIntersectRelease) {
+            intersection = (a * s0 * (time - t0 + r0)) / (a * s0 + r0)
+            intersectionValue = intersection / a
+          } else if (willIntersectSustain) {
             intersection = s0 * a
             intersectionValue = s
             isSustain = true
-            console.log('sustain:', time, intersection, intersectionValue)
+          } else if (willIntersectDecay) {
+            intersection = (d0 * (a0 - t0 + t)) / (-s0 * a + a + d0)
+            intersectionValue = 1 - (s * (t - a)) / d
           } else {
-            if (this.lastScheduling.value !== null) debugger
-            // Release intersection
-            intersection = (a * s0 * (time - t0 + r0)) / (a * s0 + r0)
-            intersectionValue = intersection / a
-            console.log('release:', time, intersection, intersectionValue)
+            // Given willIntersect, intersection during attack is all that's left
+            intersection = (a0 * t) / (a0 - a)
+            intersectionValue = t / a
           }
 
           this.gainNode.gain.cancelScheduledValues(time + intersection)
@@ -131,11 +117,11 @@ export default class ADSR extends Brain {
           this.gainNode.gain.linearRampToValueAtTime(s, time + a + d)
         }
         lastTrigger = scheduling
-        // Delete the last release upon new trigger
+        // Delete the last release upon new trigger for logic above
         lastRelease = null
       } else {
         // Handle releasing
-        const s0 = this.lastScheduling.value[2]
+        const s0 = lastTrigger.value[2]
         this.gainNode.gain.linearRampToValueAtTime(s0, time)
         this.gainNode.gain.linearRampToValueAtTime(0, time + r)
         lastRelease = scheduling

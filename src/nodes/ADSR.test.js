@@ -86,7 +86,7 @@ test('schedules a retrigger envelope intersecting previous release', () => {
     ['ramp', 0.3, 1.5],
     ['ramp', 0, 2],
     ['cancel', 1.6],
-    ['set', 0.1, 1.6],
+    ['ramp', 0.905, 1.6],
     ['ramp', 1, 1.7],
     ['ramp', 0.3, 1.9],
     ['ramp', 0.3, 2.6],
