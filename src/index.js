@@ -58,9 +58,6 @@ new Vue({
   store.dispatch('addEdge', { from: id1, output: 0, to: id4, input: 1 })
   store.dispatch('addEdge', { from: id4, output: 0, to: id3, input: 0 })
 
-  // store.dispatch('addEdge', { from: id1, output: 0, to: sinNode, input: 0 })
-  // store.dispatch('addEdge', { from: sinNode, output: 0, to: id3, input: 0 })
-
   store.dispatch('addEvent', {
     type: 'note',
     beat: 0,

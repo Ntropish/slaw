@@ -18,6 +18,7 @@ export function ValueScheduler(defaultValue = false) {
 
   return api
 
+  // Always requires return to original state/default state
   function addEvent(startTime, endTime, value) {
     const endState = scan(endTime)
 
@@ -36,6 +37,8 @@ export function ValueScheduler(defaultValue = false) {
     api.schedulings = api.schedulings.sort(timeSort)
   }
 
+  // Doesn't require return to original state, but does require return
+  // to default state on event end if not during another event
   function addTrigger(startTime, endTime, value) {
     // Remove schedulings in the middle with 1ms of extra width
     api.schedulings = api.schedulings.filter(
@@ -52,6 +55,9 @@ export function ValueScheduler(defaultValue = false) {
 
     api.schedulings = api.schedulings.sort(timeSort)
   }
+
+  // This is used for frequency scheduling, no need to ever
+  // return to original state
   function addState(time, value) {
     api.schedulings.push({ time, value })
     api.schedulings = api.schedulings.sort(timeSort)

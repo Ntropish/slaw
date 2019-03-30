@@ -38,7 +38,7 @@ test('schedules an envelope correctly', () => {
 
   env.onEvent({ detail: { beats: 1, time: 0.5, data: {} } })
   expect(spy.mock.calls).toEqual([
-    ['cancel'],
+    ['cancel', 42], // 42 comes from "contextTime" in the mock
     ['set', 0, 0.5],
     ['ramp', 1, 0.6],
     ['ramp', 0.3, 0.8],
@@ -56,7 +56,7 @@ test('schedules a second envelope correctly', () => {
   env.onEvent({ detail: { beats: 1, time: 2.5, data: {} } })
 
   expect(spy.mock.calls).toMatchParamCallList([
-    ['cancel'],
+    ['cancel', 42],
     ['set', 0, 0.5],
     ['ramp', 1, 0.6],
     ['ramp', 0.3, 0.8],
@@ -79,7 +79,7 @@ test('schedules a retrigger envelope intersecting previous release', () => {
   env.onEvent({ detail: { beats: 1, time: 1.6, data: {} } })
 
   expect(spy.mock.calls).toMatchParamCallList([
-    ['cancel'],
+    ['cancel', 42],
     ['set', 0, 0.5],
     ['ramp', 1, 0.6],
     ['ramp', 0.3, 0.8],
@@ -107,6 +107,9 @@ function buildMocks() {
   const transporter = {
     context: {
       createGain: () => gainWatcher,
+      getOutputTimestamp: () => ({
+        contextTime: 42,
+      }),
     },
     on: () => {},
     bps: 1,
