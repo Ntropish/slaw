@@ -13,7 +13,7 @@ expect.extend({
         }
       }
       for (let num = 1; num < call.length; num++) {
-        if (Math.abs(recieved[i][num] - call[num]) > 0.1) {
+        if (Math.abs(recieved[i][num] - call[num]) > 0.001) {
           return {
             pass: false,
             message: () =>
@@ -85,8 +85,8 @@ test('schedules a retrigger envelope intersecting previous release', () => {
     ['ramp', 0.3, 0.8],
     ['ramp', 0.3, 1.5],
     ['ramp', 0, 2],
-    ['cancel', 1.6],
-    ['ramp', 0.905, 1.6],
+    ['cancel', 1.69],
+    ['ramp', 0.905, 1.69],
     ['ramp', 1, 1.7],
     ['ramp', 0.3, 1.9],
     ['ramp', 0.3, 2.6],

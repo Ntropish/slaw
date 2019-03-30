@@ -87,17 +87,21 @@ export default class ADSR extends Brain {
           if (willIntersectRelease) {
             intersection = (a * s0 * (time - t0 + r0)) / (a * s0 + r0)
             intersectionValue = intersection / a
+            console.log('r', intersection, intersectionValue)
           } else if (willIntersectSustain) {
             intersection = s0 * a
             intersectionValue = s
             isSustain = true
+            console.log('s', intersection, intersectionValue)
           } else if (willIntersectDecay) {
             intersection = (d0 * (a0 - t0 + t)) / (-s0 * a + a + d0)
             intersectionValue = 1 - (s * (t - a)) / d
+            console.log('d', intersection, intersectionValue)
           } else {
             // Given willIntersect, intersection during attack is all that's left
             intersection = (a0 * t) / (a0 - a)
             intersectionValue = t / a
+            console.log('a', intersection, intersectionValue)
           }
 
           this.gainNode.gain.cancelScheduledValues(time + intersection)
