@@ -4,13 +4,14 @@ module.exports = {
     commonjs: true,
     es6: true,
     node: true,
+    'jest/globals': true,
   },
   extends: ['eslint:recommended', 'plugin:vue/recommended'],
   globals: {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
-  plugins: ['vue'],
+  plugins: ['vue', 'jest'],
   parserOptions: {
     parser: 'babel-eslint',
 

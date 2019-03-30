@@ -2,10 +2,10 @@ import EventEmitter from 'events'
 import { clamp } from '../util'
 
 export default class Transporter extends EventEmitter {
-  constructor(position) {
+  constructor(position, context) {
     super()
 
-    this.context = new AudioContext()
+    this.context = context || new AudioContext()
     // Position is in beats, beats after this still need to be scheduled
     this.position = position || 0
     // Store this to make calculating stuff easier
