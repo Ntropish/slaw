@@ -9,8 +9,6 @@ export default class ADSR extends Brain {
     this.gainNode = context.createGain()
     this.adsr = [0.04, 0.02, 0.2, 0.2]
     this.valueScheduler = ValueScheduler(null)
-    this.lastScheduling = null
-    this.lastValue = null
 
     transporter.on('clear', () => {
       this.lastScheduling = null
@@ -44,17 +42,31 @@ export default class ADSR extends Brain {
     // Schedule trigger/release times
     this.valueScheduler.addTrigger(time, noteEnd, this.adsr)
 
+    let lastTrigger = null
+    let lastRelease = null
+
     this.valueScheduler.schedulings.forEach(scheduling => {
       const { time, value } = scheduling
 
       if (value) {
         const [a, d, s, r] = value
-        // const lastScheduling =
+
+        // let willIntersect = false
+        // if (lastTrigger) {
+        //   if (!lastRelease) willIntersect = true
+        //   else if (lastRelease.time + lastTrigger.value[3] > time) willIntersect = true
+        // }
+
+        const willIntersect =
+          lastTrigger &&
+          (!lastRelease || lastRelease.time + lastTrigger.value[3] > time)
+
+        const willIntersectAttack = time < lastTrigger.time + lastTrigger
 
         const willIntersectTail =
-          this.lastScheduling &&
-          this.lastScheduling.time < time + a &&
-          this.lastScheduling.time + this.lastValue[3] > time
+          lastRelease &&
+          lastRelease.time < time + a &&
+          lastRelease.time + lastTrigger[3] > time
 
         if (
           !this.lastScheduling ||
@@ -70,7 +82,7 @@ export default class ADSR extends Brain {
           // attack/decay/sustain/release phases
           // I just plugged line intersection formulas into wolfram alpha so
           // these formulas aren't really understandable
-          const [a0, d0, s0, r0] = this.lastValue
+          const [a0, d0, s0, r0] = this.lastTrigger
           const t0 = this.lastScheduling.time
           const t = time - t0
           // Intersection is the time after the beginning of this event
@@ -82,20 +94,24 @@ export default class ADSR extends Brain {
             // Attack intersection
             intersection = (a0 * t) / (a0 - a)
             intersectionValue = t / a
+            console.log('attack:', time, intersection, intersectionValue)
           } else if (time - t0 < a0 + d0 - a * s0) {
             // Decay intersection
             intersection = (d0 * (a0 - t0 + t)) / (-s0 * a + a + d0)
             intersectionValue = 1 - (s * (t - a)) / d
+            console.log('decay:', time, intersection, intersectionValue)
           } else if (!willIntersectTail) {
             // Sustain intersection
             intersection = s0 * a
             intersectionValue = s
             isSustain = true
+            console.log('sustain:', time, intersection, intersectionValue)
           } else {
             if (this.lastScheduling.value !== null) debugger
             // Release intersection
             intersection = (a * s0 * (time - t0 + r0)) / (a * s0 + r0)
             intersectionValue = intersection / a
+            console.log('release:', time, intersection, intersectionValue)
           }
 
           this.gainNode.gain.cancelScheduledValues(time + intersection)
@@ -114,16 +130,16 @@ export default class ADSR extends Brain {
           this.gainNode.gain.linearRampToValueAtTime(1, time + a)
           this.gainNode.gain.linearRampToValueAtTime(s, time + a + d)
         }
-        this.lastValue = value
+        lastTrigger = scheduling
+        // Delete the last release upon new trigger
+        lastRelease = null
       } else {
         // Handle releasing
         const s0 = this.lastScheduling.value[2]
-        console.log('release', s0, time, 0, time + r)
         this.gainNode.gain.linearRampToValueAtTime(s0, time)
         this.gainNode.gain.linearRampToValueAtTime(0, time + r)
+        lastRelease = scheduling
       }
-
-      this.lastScheduling = scheduling
     })
   }
 }

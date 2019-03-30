@@ -1,13 +1,36 @@
 import ADSR from './ADSR'
-// import Transporter from '../modules/Transporter'
 
-// // jest.mock('./ADSR')
-// jest.mock('./Transporter')
-
-// beforeEach(() => {
-//   // ADSR.mockClear()
-//   Transporter.mockClear()
-// })
+expect.extend({
+  // This is all for the fact that numbers can be off by 0.00001-ish
+  // Unlike toEqual this just makes sure numbers are close
+  toMatchParamCallList(recieved, list) {
+    for (const [i, call] of Object.entries(list)) {
+      if (recieved[i][0] !== call[0]) {
+        return {
+          pass: false,
+          message: () =>
+            `expected call ${i}, "${recieved[i][0]}", to be "${call[0]}"`,
+        }
+      }
+      for (let num = 1; num < call.length; num++) {
+        if (Math.abs(recieved[i][num] - call[num]) > 0.1) {
+          return {
+            pass: false,
+            message: () =>
+              `expected "${
+                call[0]
+              }" call numbers to match for call ${i} and argument ${num}\n\nRecieved: ${
+                recieved[i][num]
+              }\n\nExpected: ${call[num]} `,
+          }
+        }
+      }
+    }
+    return {
+      pass: true,
+    }
+  },
+})
 
 test('schedules an envelope correctly', () => {
   const [env, spy] = buildMocks()
@@ -32,9 +55,7 @@ test('schedules a second envelope correctly', () => {
   spy.mockClear()
   env.onEvent({ detail: { beats: 1, time: 2.5, data: {} } })
 
-  // Values can be 0.000000001 off, this checks that they're close
-  // and doesn't need them to be equal
-  ;[
+  expect(spy.mock.calls).toMatchParamCallList([
     ['cancel'],
     ['set', 0, 0.5],
     ['ramp', 1, 0.6],
@@ -46,12 +67,31 @@ test('schedules a second envelope correctly', () => {
     ['ramp', 0.3, 2.8],
     ['ramp', 0.3, 3.5],
     ['ramp', 0, 4],
-  ].forEach((call, i) => {
-    expect(spy.mock.calls[i][0]).toEqual(call[0])
-    for (let num = 1; num < call.length; num++) {
-      expect(Math.abs(spy.mock.calls[i][num] - call[num])).toBeLessThan(0.001)
-    }
-  })
+  ])
+})
+
+test('schedules a retrigger envelope intersecting previous release', () => {
+  const [env, spy] = buildMocks()
+  env.adsr = [0.1, 0.2, 0.3, 0.5]
+
+  env.onEvent({ detail: { beats: 1, time: 0.5, data: {} } })
+  spy.mockClear()
+  env.onEvent({ detail: { beats: 1, time: 1.6, data: {} } })
+
+  expect(spy.mock.calls).toMatchParamCallList([
+    ['cancel'],
+    ['set', 0, 0.5],
+    ['ramp', 1, 0.6],
+    ['ramp', 0.3, 0.8],
+    ['ramp', 0.3, 1.5],
+    ['ramp', 0, 2],
+    ['cancel', 1.6],
+    ['set', 0.1, 1.6],
+    ['ramp', 1, 1.7],
+    ['ramp', 0.3, 1.9],
+    ['ramp', 0.3, 2.6],
+    ['ramp', 0, 3.1],
+  ])
 })
 
 function buildMocks() {
