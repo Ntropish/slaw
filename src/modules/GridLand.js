@@ -1,4 +1,3 @@
-import { range } from 'lodash'
 import { mapState } from 'vuex'
 
 export default {
@@ -33,8 +32,6 @@ export default {
     window.addEventListener('resize', this.sizeCanvases)
     window.addEventListener('mouseup', this.onMouseUp)
     window.addEventListener('mousemove', this.onMouseMove)
-    // Keys won't be cleared if user changes focus before releasing a key so we need this
-    window.addEventListener('blur', this.clearKeysState)
   },
   beforeDestroy() {
     window.removeEventListener('keydown', this.onKeyDown)
@@ -42,7 +39,6 @@ export default {
     window.removeEventListener('resize', this.sizeCanvases)
     window.removeEventListener('mouseup', this.onMouseUp)
     window.removeEventListener('mousemove', this.onMouseMove)
-    window.removeEventListener('blur', this.clearKeysState)
   },
   methods: {
     pxOfX(x) {

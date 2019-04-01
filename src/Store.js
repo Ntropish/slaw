@@ -21,6 +21,8 @@ export default () => {
       transporter: new Transporter(),
       playbackStart: 0,
       playbackPosition: 0,
+      songStart: 0,
+      songEnd: 240,
       beatSnap: 1 / 4,
       centsSnap: 100,
       events: {},
