@@ -27,7 +27,8 @@ import { clearTimeout } from "timers";
 import { clamp } from "./util";
 import { mapState } from "vuex";
 
-const graph = {};
+// The app houses the major components and lays them
+// out with css grid
 export default {
   components: {
     TransportBar,
@@ -46,7 +47,8 @@ export default {
 
   computed: {
     appGridStyle() {
-      // For split mode
+      // Defines css grid lines dynamically so user
+      // can eventually change layout of app.
       return this.mode === "split"
         ? {
             gridTemplateColumns: `15em auto`,
