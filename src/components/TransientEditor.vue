@@ -1,8 +1,15 @@
 <template>
   <div class="root" ondragstart="return false" :style="{cursor: cursor}" @mousedown="onMouseDown">
-    <canvas ref="background" class="canvas background"/>
-    <canvas ref="notes" class="canvas notes"/>
-    <canvas ref="util" class="canvas util"/>
+    <canvas-graph
+      ref="canvases"
+      :layers="['events']"
+      :x-start="viewStart"
+      :x-end="viewEnd"
+      :y-start="yStart"
+      :y-end="yEnd"
+      @render="render"
+      @pan="pan"
+    />
   </div>
 </template>
 
@@ -12,6 +19,7 @@ import { range } from "lodash";
 import GridLand from "modules/GridLand";
 import { clamp } from "../util";
 import { mapState, mapGetters } from "vuex";
+import CanvasGraph from "components/CanvasGraph.vue";
 
 const dark = 0;
 const light = 1;
@@ -56,16 +64,8 @@ const tools = {
 };
 
 export default {
-  mixins: [GridLand],
+  components: { CanvasGraph },
   props: {
-    xStart: {
-      type: Number,
-      required: true
-    },
-    xEnd: {
-      type: Number,
-      required: true
-    },
     xSnap: {
       type: Number,
       default: () => 1 / 4
@@ -89,8 +89,14 @@ export default {
     pianoNoteHeight() {
       return (this.canvasHeight / this.yCount) * 100;
     },
+    c() {
+      return this.$refs.canvases;
+    },
     canvases() {
-      return [this.$refs.background, this.$refs.notes, this.$refs.util];
+      return this.$refs.canvases.canvases;
+    },
+    contexts() {
+      return this.$refs.canvases.contexts;
     },
     dragTool() {
       if (this.keyboardState.includes("a")) return "resize";
@@ -102,13 +108,13 @@ export default {
       return tools[this.dragTool][key2][key3];
     },
     gradients() {
-      const [backgroundCtx] = this.contexts;
+      const [ctx] = this.contexts;
       return [
-        this.buildBeatMark(backgroundCtx, 0.02, 0, 0.4),
-        this.buildBeatMark(backgroundCtx, 0.03, 100),
-        this.buildBeatMark(backgroundCtx, 0.06, 100),
-        this.buildBeatMark(backgroundCtx, 0.11, 100),
-        this.buildBeatMark(backgroundCtx, 0.3, 100, 0.1)
+        this.buildBeatMark(ctx, 0.02, 0, 0.4),
+        this.buildBeatMark(ctx, 0.03, 100),
+        this.buildBeatMark(ctx, 0.06, 100),
+        this.buildBeatMark(ctx, 0.11, 100),
+        this.buildBeatMark(ctx, 0.3, 100, 0.1)
       ];
     },
     events() {
@@ -124,7 +130,9 @@ export default {
       "mouseState",
       "keyboardState",
       "beatSnap",
-      "centsSnap"
+      "centsSnap",
+      "viewStart",
+      "viewEnd"
     ]),
     ...mapState({
       _transporter: "transporter",
@@ -157,9 +165,9 @@ export default {
     render() {
       // Prepare canvases
       this.contexts.forEach(ctx => {
-        return ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        return ctx.clearRect(0, 0, this.c.canvasWidth, this.c.canvasHeight);
       });
-      const [backgroundCtx, notesCtx, utilCtx] = this.contexts;
+      const [ctx] = this.contexts;
 
       // Draw piano keys, assume snap is 100, traditional keyboard layout
       const verticalStart =
@@ -168,37 +176,37 @@ export default {
         Math.floor(this.yEnd / this.centsSnap) * this.centsSnap - 50;
 
       const verticalLines = range(verticalStart, verticalEnd, -100);
-      backgroundCtx.fillStyle = `hsla(0, 0%, 0%, 0.2)`;
+      ctx.fillStyle = `hsla(0, 0%, 0%, 0.2)`;
 
       for (const line of verticalLines) {
         let modCents = Math.floor(line % 1200);
         if (modCents < 0) modCents += 1200;
         const noteNumber = modCents / 100;
-        backgroundCtx.fillStyle = this.gradients[pianoNoteColors[noteNumber]];
-        const y = this.pxOfY(line - 50);
+        ctx.fillStyle = this.gradients[pianoNoteColors[noteNumber]];
+        const y = this.c.pxOfY(line - 50);
 
-        backgroundCtx.fillRect(0, y, this.canvasWidth, 100 * this.pxPerY);
+        ctx.fillRect(0, y, this.c.canvasWidth, 100 * this.c.pxPerY);
       }
 
       // Draw beat marks
-      const lines = range(Math.floor(this.xStart), Math.ceil(this.xEnd));
+      const lines = range(Math.floor(this.viewStart), Math.ceil(this.viewEnd));
 
       for (const line of lines) {
-        const pxX = Math.round(this.pxOfX(line));
+        const pxX = Math.round(this.c.pxOfX(line));
 
-        if (pxX < 0 || line > this.xEnd) continue;
+        if (pxX < 0 || line > this.viewEnd) continue;
 
-        backgroundCtx.strokeStyle =
+        ctx.strokeStyle =
           line % 4 === 0
             ? this.gradients[3]
             : line % 2 === 0
             ? this.gradients[2]
             : this.gradients[1];
 
-        backgroundCtx.beginPath();
-        backgroundCtx.moveTo(pxX, 0);
-        backgroundCtx.lineTo(pxX, this.canvasHeight);
-        backgroundCtx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(pxX, 0);
+        ctx.lineTo(pxX, this.c.canvasHeight);
+        ctx.stroke();
       }
 
       const bufferedIds = Object.keys(this.noteBuffer);
@@ -212,21 +220,17 @@ export default {
           2;
         if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
         if (bufferedIds.includes(note.id)) {
-          notesCtx.fillStyle = `hsla(${this.track.hue -
-            hueMod}, 40%, 60%, 0.15)`;
+          ctx.fillStyle = `hsla(${this.track.hue - hueMod}, 40%, 60%, 0.15)`;
         } else if (this.selectedNotes.includes(note.id)) {
-          notesCtx.fillStyle = `hsla(${this.track.hue -
-            hueMod}, 40%, 90%, 0.8)`;
+          ctx.fillStyle = `hsla(${this.track.hue - hueMod}, 40%, 90%, 0.8)`;
         } else {
-          notesCtx.fillStyle = `hsla(${this.track.hue -
-            hueMod}, 30%, 60%, 0.7)`;
+          ctx.fillStyle = `hsla(${this.track.hue - hueMod}, 30%, 60%, 0.7)`;
         }
-        // notesCtx.fillRect
-        notesCtx.fillRect(
-          this.pxOfX(note.beat),
-          this.pxOfY(note.data.pitch - 50),
-          this.pxPerX * note.beats,
-          this.pxPerY * 100
+        ctx.fillRect(
+          this.c.pxOfX(note.beat),
+          this.c.pxOfY(note.data.pitch - 50),
+          this.c.pxPerX * note.beats,
+          this.c.pxPerY * 100
         );
       });
 
@@ -238,25 +242,22 @@ export default {
           2;
         if (hueMod) hueMod += hueMod > 0 ? 10 : -10;
         if (this.selectedNotes.includes(note.id)) {
-          notesCtx.fillStyle = `hsla(${this.track.hue -
-            hueMod}, 40%, 90%, 0.8)`;
+          ctx.fillStyle = `hsla(${this.track.hue - hueMod}, 40%, 90%, 0.8)`;
         } else {
-          notesCtx.fillStyle = `hsla(${this.track.hue -
-            hueMod}, 30%, 60%, 0.7)`;
+          ctx.fillStyle = `hsla(${this.track.hue - hueMod}, 30%, 60%, 0.7)`;
         }
-        // notesCtx.fillRect
-        notesCtx.fillRect(
-          this.pxOfX(note.beat),
-          this.pxOfY(note.data.pitch - 50),
-          this.pxPerX * note.beats,
-          this.pxPerY * 100
+        ctx.fillRect(
+          this.c.pxOfX(note.beat),
+          this.c.pxOfY(note.data.pitch - 50),
+          this.c.pxPerX * note.beats,
+          this.c.pxPerY * 100
         );
       });
 
       if (this.boxSelecting) {
-        utilCtx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
+        ctx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
         // Draw box selector
-        utilCtx.strokeRect(
+        ctx.strokeRect(
           this.dragStart.x,
           this.dragStart.y,
           this.dragEnd.x - this.dragStart.x,
@@ -264,15 +265,15 @@ export default {
         );
       }
 
-      const cursorX = Math.round(this.pxOfX(this.playbackPosition));
-      utilCtx.strokeStyle = this.gradients[4];
-      utilCtx.beginPath();
-      utilCtx.moveTo(cursorX, 0);
-      utilCtx.lineTo(cursorX, this.canvasHeight);
-      utilCtx.stroke();
+      const cursorX = Math.round(this.c.pxOfX(this.playbackPosition));
+      ctx.strokeStyle = this.gradients[4];
+      ctx.beginPath();
+      ctx.moveTo(cursorX, 0);
+      ctx.lineTo(cursorX, this.c.canvasHeight);
+      ctx.stroke();
     },
     buildBeatMark(ctx, opacity, lightness, spread = 0.15) {
-      var gradient = ctx.createLinearGradient(0, 0, 0, this.canvasHeight);
+      var gradient = ctx.createLinearGradient(0, 0, 0, this.c.canvasHeight);
       gradient.addColorStop("0", `hsla(0, 0%, ${lightness}%, ${opacity / 10})`);
       gradient.addColorStop(spread, `hsla(0, 0%, ${lightness}%, ${opacity})`);
       gradient.addColorStop(
@@ -288,7 +289,7 @@ export default {
     keyDown(e) {
       if (this.keyboardState.includes("q")) this.quantize();
     },
-    mouseDown({ offsetX: x, offsetY: y }) {
+    onMouseDown({ offsetX: x, offsetY: y }) {
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
@@ -312,7 +313,7 @@ export default {
       }
 
       if (!noteClicked) {
-        const [unsnappedBeat, unsnappedPitch] = this.pxToXY(x, y);
+        const [unsnappedBeat, unsnappedPitch] = this.c.pxToXY(x, y);
         const pitch = Math.round(unsnappedPitch / this.ySnap) * this.ySnap;
         const beat = Math.round(unsnappedBeat / this.xSnap) * this.xSnap;
         selectedNotes.splice(0);
@@ -352,13 +353,14 @@ export default {
 
       this.bufferNotes();
     },
-    // global mouseup called by gridland mixin
+
     mouseUp(e) {
       if (this.boxSelecting) {
         this.boxSelectFinish(e);
       }
       this.unbufferNotes();
     },
+
     mouseMove({ e }) {
       const notes = this.scanForNotes(e.offsetX, e.offsetY);
       this.hoveredNotes = notes;
@@ -385,7 +387,7 @@ export default {
           this.resizeTool(xMove, yMove);
         }
       } else if (this.mouseState.includes(0)) {
-        const x = this.pxToX(e.offsetX);
+        const x = this.c.pxToX(e.offsetX);
         const beat = !this.keyboardState.includes("control")
           ? Math.round(x / this.xSnap) * this.xSnap
           : x;
@@ -474,8 +476,8 @@ export default {
       this.render();
     },
     scanBoxForNotes(x1, y1, x2, y2) {
-      let [beat1, pitch1] = this.pxToXY(x1, y1);
-      let [beat2, pitch2] = this.pxToXY(x2, y2);
+      let [beat1, pitch1] = this.c.pxToXY(x1, y1);
+      let [beat2, pitch2] = this.c.pxToXY(x2, y2);
 
       const foundNotes = [];
       for (const noteId of this.track.events) {
@@ -492,7 +494,7 @@ export default {
       return foundNotes;
     },
     scanForNotes(x, y) {
-      let [beat, pitch] = this.pxToXY(x, y);
+      let [beat, pitch] = this.c.pxToXY(x, y);
 
       const foundNotes = [];
       for (const note of Object.values(this.events)) {
@@ -512,7 +514,8 @@ export default {
       if (data.y < 0 && this.yEnd < -1200 * 8) return;
       this.yStart += data.y;
       this.yEnd += data.y;
-      this.$emit("pan", data);
+      // this.$emit("pan", data);
+      this.$store.commit("PAN_TRACK_VIEW", { deltaX: data.x });
       this.render();
     },
     zoom2d(data) {
@@ -533,8 +536,6 @@ export default {
 .root {
   overflow: hidden;
   position: relative;
-  background: hsla(0, 0%, 20%, 1);
-  padding: 0.4em;
 }
 
 .canvas {

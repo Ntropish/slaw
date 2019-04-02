@@ -1,12 +1,11 @@
 <template>
-  <div class="node-editor" @mousedown="onMouseDown" @keydown="onKeyDown" @wheel="onWheel">
+  <div class="node-editor root" @mousedown="onMouseDown" @keydown="onKeyDown" @wheel="onWheel">
     <canvas
       v-for="layer in layers"
-      ref="edges"
+      ref="layers"
       :key="layer"
       class="canvas edges"
       oncontextmenu="return false"
-      @mousedown="canvasMouseDown"
     />
   </div>
 </template>
@@ -19,6 +18,22 @@ export default {
     layers: {
       type: Array,
       default: () => "canvas"
+    },
+    xStart: {
+      type: Number,
+      required: true
+    },
+    yStart: {
+      type: Number,
+      required: true
+    },
+    xEnd: {
+      type: Number,
+      required: true
+    },
+    yEnd: {
+      type: Number,
+      required: true
     }
   },
   data: () => ({
@@ -27,6 +42,13 @@ export default {
     dragStart: null,
     dragEnd: null
   }),
+  mounted() {
+    this.sizeCanvases();
+    window.addEventListener("mousemove", this.onGlobalMouseMove);
+  },
+  beforeDestroy() {
+    window.removeEventListener("mousemove", this.onGlobalMouseMove);
+  },
   computed: {
     xCount() {
       return this.xEnd - this.xStart;
@@ -40,10 +62,13 @@ export default {
     pxPerY() {
       return this.canvasHeight / this.yCount;
     },
+    canvases() {
+      return this.$refs.layers;
+    },
     contexts() {
       return this.canvases.map(c => c.getContext("2d"));
     },
-    ...mapState(["focus"])
+    ...mapState(["focus", "mouseState"])
   },
   methods: {
     pxOfX(x) {
@@ -67,26 +92,25 @@ export default {
       this.dragStart = { x, y };
       this.dragEnd = { x, y };
 
-      this.mouseDown(e);
-
-      this.render();
+      this.$emit("mousedown", e);
+      this.$emit("render");
     },
     onMouseUp(e) {
       e.preventDefault();
       if (e.button === 1) document.exitPointerLock();
       this.dragStart = null;
       this.dragEnd = null;
-      this.mouseUp(e);
-      this.render();
+      this.$emit("mouseup", e);
+      this.$emit("render");
     },
-    onMouseMove(e) {
+    onGlobalMouseMove(e) {
       if (!this.$el.contains(this.focus)) return;
       const { x, y } = this.getMousePosition(e);
 
       if (this.dragStart) this.dragEnd = { x, y };
 
       if (this.mouseState.includes(2) && this.mouseState.length <= 2) {
-        this.pan({
+        this.$emit("pan", {
           x: -e.movementX / this.pxPerX,
           y: -e.movementY / this.pxPerY
         });
@@ -103,9 +127,8 @@ export default {
       const snappedX = this.xSnap ? Math.round(x / this.xSnap) * this.xSnap : x;
       const snappedY = this.ySnap ? Math.round(y / this.ySnap) * this.ySnap : y;
 
-      this.mouseMove({ x: snappedX, y: snappedY, e });
-
-      this.render();
+      this.$emit("mousemove", e);
+      this.$emit("render");
     },
     getMousePosition(e) {
       var rect = this.canvases[0].getBoundingClientRect();
@@ -143,9 +166,25 @@ export default {
 
       this.canvasWidth = w;
       this.canvasHeight = h;
-
-      this.render();
+      this.$emit("render");
     }
   }
 };
 </script>
+
+<style scoped>
+.root {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+</style>

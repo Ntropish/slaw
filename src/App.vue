@@ -9,7 +9,6 @@
       :x-end="viewEnd"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
-      @pan="onMidiEditorPan"
       @zoom="onZoom"
     />
     <node-editor ref="nodeEditor" class="node-editor app-item"/>
@@ -120,10 +119,6 @@ export default {
           1 / 32
         );
       }
-    },
-    onMidiEditorPan({ x }) {
-      this.viewStart += x;
-      this.viewEnd += x;
     },
     onZoom({ x }) {
       const width = this.viewEnd - this.viewStart;

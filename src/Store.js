@@ -23,6 +23,8 @@ export default () => {
       playbackPosition: 0,
       songStart: 0,
       songEnd: 240,
+      viewStart: 0,
+      viewEnd: 24,
       beatSnap: 1 / 4,
       centsSnap: 100,
       events: {},
@@ -37,6 +39,10 @@ export default () => {
       focus: null,
     },
     mutations: {
+      PAN_TRACK_VIEW(state, { deltaX }) {
+        state.viewStart += deltaX
+        state.viewEnd += deltaX
+      },
       ADD_BRAIN(state, { brain }) {
         Vue.set(state.brains, brain.id, brain)
       },
