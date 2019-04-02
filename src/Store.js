@@ -25,7 +25,7 @@ export default () => {
       songStart: 0,
       songEnd: 240,
       viewStart: 0,
-      viewEnd: 24,
+      viewEnd: 4,
       beatSnap: 1 / 4,
       centsSnap: 100,
       events: {},
@@ -87,6 +87,12 @@ export default () => {
         Vue.set(state.events, event.id, event)
         state.tracks[event.trackId].events.push(event.id)
       },
+      REMOVE_EVENT(state, id) {
+        const trackId = state.events[id].trackId
+        const track = state.tracks[trackId]
+        Vue.set(track, 'events', track.events.filter(_id => id !== _id))
+        Vue.delete(state.events, id)
+      },
       SET_EVENT(state, event) {
         Vue.set(state.events, event.id, event)
       },
@@ -147,6 +153,9 @@ export default () => {
       },
     },
     actions: {
+      removeEvents(context, events) {
+        events.forEach(event => context.commit('REMOVE_EVENT', event))
+      },
       addEdge(context, { from, to, input, output }) {
         context.commit('ADD_NODE_EDGE', {
           from,

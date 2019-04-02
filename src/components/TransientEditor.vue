@@ -298,7 +298,6 @@ export default {
       if (this.keyboardState.includes("q")) this.quantize();
     },
     onMouseDown({ offsetX: x, offsetY: y }) {
-      console.log("down");
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
@@ -348,19 +347,17 @@ export default {
         }
       }
 
-      // if (this.keyboardState.includes("alt") && selectedNotes.length) {
-      //   selectedNotes.forEach(note => {
-      //     if (this.noteBuffer[note.id]) {
-      //       Vue.delete(this.noteBuffer, note.id);
-      //     }
-      //   });
-      //   this.$emit("noteremove", {
-      //     notes: selectedNotes,
-      //     trackId: this.track.id
-      //   });
-      // }
+      if (this.keyboardState.includes("alt") && selectedNotes.length) {
+        selectedNotes.forEach(note => {
+          if (this.noteBuffer[note.id]) {
+            Vue.delete(this.noteBuffer, note.id);
+          }
+        });
+        this.$store.dispatch("removeEvents", selectedNotes);
+      }
 
       this.bufferNotes();
+      this.render();
     },
 
     mouseUp(e) {
@@ -381,8 +378,8 @@ export default {
         // Hold control to move without snap
         const snap = !this.keyboardState.includes("control");
 
-        const xDelta = (this.c.dragEnd.x - this.c.dragStart.x) / this.pxPerX;
-        const yDelta = (this.c.dragEnd.y - this.c.dragStart.y) / this.pxPerY;
+        const xDelta = (this.c.dragEnd.x - this.c.dragStart.x) / this.c.pxPerX;
+        const yDelta = (this.c.dragEnd.y - this.c.dragStart.y) / this.c.pxPerY;
 
         const xMove = snap
           ? Math.round(xDelta / this.xSnap) * this.xSnap
@@ -409,13 +406,15 @@ export default {
     bufferNotes(e) {
       const buffer = {};
       this.selectedNotes.forEach(noteId => {
+        // This keeps us from trying to buffer a note that no longer exists
+        if (!Object.keys(this.$store.state.events).includes(noteId)) return;
         // Manual deep copy so original isn't affected
         buffer[noteId] = {
           ...this.events[noteId],
           data: { ...this.events[noteId].data }
         };
       });
-      Vue.set(this, "noteBuffer", {});
+      Vue.set(this, "noteBuffer", buffer);
     },
     unbufferNotes(e) {
       // this.$emit("noteset", this.noteBuffer);

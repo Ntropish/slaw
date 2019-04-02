@@ -138,7 +138,7 @@ export default {
       };
     },
     onWheel(e) {
-      this.zoom({
+      this.$emit("zoom", {
         x: e.deltaX / 100,
         y: e.deltaY / 100,
         xOrigin: e.offsetX / this.canvasWidth,
