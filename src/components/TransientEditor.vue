@@ -9,6 +9,8 @@
       :y-end="yEnd"
       @render="render"
       @pan="pan"
+      @mousemove="mouseMove"
+      @zoom2d="zoom2d"
     />
   </div>
 </template>
@@ -143,6 +145,12 @@ export default {
       }
     })
   },
+  mounted() {
+    window.addEventListener("mouseup", this.mouseUp);
+  },
+  beforeDestroy() {
+    window.removeEventListener("mouseup", this.mouseUp);
+  },
   watch: {
     beatCursor(val) {
       this.render();
@@ -258,10 +266,10 @@ export default {
         ctx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
         // Draw box selector
         ctx.strokeRect(
-          this.dragStart.x,
-          this.dragStart.y,
-          this.dragEnd.x - this.dragStart.x,
-          this.dragEnd.y - this.dragStart.y
+          this.c.dragStart.x,
+          this.c.dragStart.y,
+          this.c.dragEnd.x - this.c.dragStart.x,
+          this.c.dragEnd.y - this.c.dragStart.y
         );
       }
 
@@ -290,6 +298,7 @@ export default {
       if (this.keyboardState.includes("q")) this.quantize();
     },
     onMouseDown({ offsetX: x, offsetY: y }) {
+      console.log("down");
       const noteClicked = this.scanForNotes(x, y)[0];
       const { selectedNotes } = this;
 
@@ -372,8 +381,8 @@ export default {
         // Hold control to move without snap
         const snap = !this.keyboardState.includes("control");
 
-        const xDelta = (this.dragEnd.x - this.dragStart.x) / this.pxPerX;
-        const yDelta = (this.dragEnd.y - this.dragStart.y) / this.pxPerY;
+        const xDelta = (this.c.dragEnd.x - this.c.dragStart.x) / this.pxPerX;
+        const yDelta = (this.c.dragEnd.y - this.c.dragStart.y) / this.pxPerY;
 
         const xMove = snap
           ? Math.round(xDelta / this.xSnap) * this.xSnap
@@ -398,14 +407,15 @@ export default {
     // Note buffer sets aside notes into a bucket to operate on
     // This leaves the originals unchanged until ready to apply
     bufferNotes(e) {
-      Vue.set(this, "noteBuffer", {});
+      const buffer = {};
       this.selectedNotes.forEach(noteId => {
         // Manual deep copy so original isn't affected
-        this.noteBuffer[noteId] = {
+        buffer[noteId] = {
           ...this.events[noteId],
           data: { ...this.events[noteId].data }
         };
       });
+      Vue.set(this, "noteBuffer", {});
     },
     unbufferNotes(e) {
       // this.$emit("noteset", this.noteBuffer);
@@ -464,10 +474,10 @@ export default {
       this.boxSelectEnd = { x: e.offsetX, y: e.offsetY };
 
       const notes = this.scanBoxForNotes(
-        Math.min(this.dragStart.x, this.dragEnd.x),
-        Math.min(this.dragStart.y, this.dragEnd.y),
-        Math.max(this.dragStart.x, this.dragEnd.x),
-        Math.max(this.dragStart.y, this.dragEnd.y)
+        Math.min(this.c.dragStart.x, this.c.dragEnd.x),
+        Math.min(this.c.dragStart.y, this.c.dragEnd.y),
+        Math.max(this.c.dragStart.x, this.c.dragEnd.x),
+        Math.max(this.c.dragStart.y, this.c.dragEnd.y)
       );
 
       this.selectedNotes.splice(0);
@@ -525,7 +535,7 @@ export default {
       this.yStart += deltaY / 2;
       this.yEnd -= deltaY / 2;
 
-      this.$emit("zoom", data);
+      this.$store.commit("ZOOM_TRACK_VIEW", data);
       this.render();
     }
   }

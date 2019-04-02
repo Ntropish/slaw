@@ -3,6 +3,7 @@ import Transporter from 'modules/Transporter'
 import inputTracker from './inputTracker'
 import nodeMap from 'nodes'
 import Vue from 'vue'
+import { clamp } from './util'
 
 const lastIds = {
   event: 4,
@@ -42,6 +43,13 @@ export default () => {
       PAN_TRACK_VIEW(state, { deltaX }) {
         state.viewStart += deltaX
         state.viewEnd += deltaX
+      },
+      ZOOM_TRACK_VIEW(state, { x }) {
+        const width = state.viewEnd - state.viewStart
+        const newWidth = clamp(4, x + width, 160)
+        const deltaX = width - newWidth
+        state.viewStart += deltaX / 2
+        state.viewEnd -= deltaX / 2
       },
       ADD_BRAIN(state, { brain }) {
         Vue.set(state.brains, brain.id, brain)

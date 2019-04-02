@@ -118,7 +118,7 @@ export default {
 
       if (this.mouseState.includes(1) && this.mouseState.length === 1) {
         const growthFactor = 2.0;
-        this.zoom2d({
+        this.$emit("zoom2d", {
           x: (-e.movementX / this.pxPerX) * growthFactor,
           y: (-e.movementY / this.pxPerY) * growthFactor
         });
@@ -127,7 +127,7 @@ export default {
       const snappedX = this.xSnap ? Math.round(x / this.xSnap) * this.xSnap : x;
       const snappedY = this.ySnap ? Math.round(y / this.ySnap) * this.ySnap : y;
 
-      this.$emit("mousemove", e);
+      this.$emit("mousemove", { e });
       this.$emit("render");
     },
     getMousePosition(e) {
