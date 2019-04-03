@@ -33,7 +33,6 @@ export default {
             this.$refs.graph.container.addChild(eventGraphic);
             this.eventGraphics[eventId] = eventGraphic;
           }
-          console.log(event.beat);
           eventGraphic.x = event.beat;
           eventGraphic.y = event.data.pitch;
         }

@@ -23,7 +23,7 @@ export default () => {
       playbackStart: 0,
       playbackPosition: 0,
       songStart: 0,
-      songEnd: 60,
+      songEnd: 24,
       viewStart: 0,
       viewEnd: 4,
       beatSnap: 1 / 4,
@@ -153,6 +153,37 @@ export default () => {
       },
     },
     actions: {
+      setState(context, oldState) {
+        Object.values(oldState.nodes).forEach(
+          async ({ type, x, y, data, outputs }) => {
+            const newNodeId = await context.dispatch('addNode', { type, x, y })
+            if (type === 'track') {
+              const oldTrack = oldState.tracks[data.trackId]
+              const trackId = context.state.nodes[newNodeId].data.trackId
+              if (oldTrack.hue) {
+                context.commit('SET_TRACK', { id: trackId, hue: oldTrack.hue })
+              }
+              oldTrack.events.forEach(eventId => {
+                const oldEvent = oldState.events[eventId]
+                store.dispatch('addEvent', { ...oldEvent })
+              })
+            }
+
+            for (const [output, to, input] of outputs) {
+              context.dispatch('addEdge', {
+                from: newNodeId,
+                output,
+                to,
+                input,
+              })
+            }
+          },
+        )
+
+        if (oldState.selectedTrackId) {
+          store.commit('SET_SELECTED_TRACK', oldState.selectedTrackId)
+        }
+      },
       removeEvents(context, events) {
         events.forEach(event => context.commit('REMOVE_EVENT', event))
       },
@@ -235,6 +266,9 @@ export default () => {
   inputTracker(store)
   store.state.transporter.on('positionUpdate', position => {
     store.commit('SET_PLAYBACK_POSITION', position)
+  })
+  store.subscribe((mutation, state) => {
+    localStorage.setItem('store', JSON.stringify(state))
   })
   return store
 }

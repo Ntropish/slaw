@@ -55,13 +55,6 @@ export default class Sin extends Brain {
       this.osc.frequency.setTargetAtTime(value, time, 0.001)
     })
   }
-
-  // stop(_time) {
-  //   const time =
-  //     _time || this.transporter.context.getOutputTimestamp().contextTime
-  //   this.gainNode.gain.cancelScheduledValues(time)
-  //   this.gainNode.gain.setTargetAtTime(0, time + 0.01)
-  // }
 }
 
 Sin.prototype.inputs = [

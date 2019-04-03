@@ -45,9 +45,10 @@ export default {
   mounted() {
     this.sizeCanvases();
     window.addEventListener("mousemove", this.onGlobalMouseMove);
+    window.addEventListener("resize", this.sizeCanvases);
   },
   beforeDestroy() {
-    window.removeEventListener("mousemove", this.onGlobalMouseMove);
+    window.removeEventListener("resize", this.sizeCanvases);
   },
   computed: {
     xCount() {

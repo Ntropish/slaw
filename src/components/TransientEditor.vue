@@ -78,8 +78,8 @@ export default {
     }
   },
   data: () => ({
-    yStart: -1200,
-    yEnd: -4000,
+    yStart: 1200,
+    yEnd: -2400,
     canvasWidth: 300,
     canvasHeight: 150,
     selectedNotes: [],

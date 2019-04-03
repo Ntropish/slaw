@@ -2,6 +2,8 @@
   <div class="app" :class="mode" :style="appGridStyle" @keydown="onKeyDown">
     <menu-panel/>
     <transport-bar class="transport-bar app-item"/>
+    <node-editor ref="nodeEditor" class="node-editor app-item"/>
+
     <transient-editor
       ref="transientEditor"
       class="midi-editor app-item"
@@ -11,7 +13,6 @@
       @noteresize="onResizeNote"
       @zoom="onZoom"
     />
-    <node-editor ref="nodeEditor" class="node-editor app-item"/>
   </div>
 </template>
 
@@ -164,7 +165,7 @@ export default {
   display: none;
 }
 .node-editor {
-  flex: 1 1 0;
+  flex: 2 1 0;
 }
 
 .app-item {
