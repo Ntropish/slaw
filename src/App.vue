@@ -1,6 +1,6 @@
 <template>
   <div class="app" :class="mode" :style="appGridStyle" @keydown="onKeyDown">
-    <menu-panel class="menu-panel app-item"/>
+    <menu-panel/>
     <transport-bar class="transport-bar app-item"/>
     <transient-editor
       ref="transientEditor"
@@ -9,7 +9,6 @@
       :x-end="viewEnd"
       @noteremove="onRemoveNote"
       @noteresize="onResizeNote"
-      @pan="onMidiEditorPan"
       @zoom="onZoom"
     />
     <node-editor ref="nodeEditor" class="node-editor app-item"/>
@@ -33,8 +32,8 @@ export default {
   components: {
     TransportBar,
     TransientEditor,
-    MenuPanel,
-    NodeEditor
+    NodeEditor,
+    MenuPanel
   },
   data: () => {
     return {
@@ -51,7 +50,7 @@ export default {
       // can eventually change layout of app.
       return this.mode === "split"
         ? {
-            gridTemplateColumns: `15em auto`,
+            gridTemplateColumns: `1`,
             gridTemplateRows: `6em ${this.split}fr ${1 - this.split}fr`
           }
         : {};
@@ -61,7 +60,7 @@ export default {
   watch: {
     mode(val) {
       requestAnimationFrame(() => {
-        this.$refs.transientEditor.sizeCanvases();
+        this.$refs.transientEditor.c.sizeCanvases();
         this.$refs.nodeEditor.sizeCanvases();
       });
     }
@@ -123,10 +122,6 @@ export default {
         );
       }
     },
-    onMidiEditorPan({ x }) {
-      this.viewStart += x;
-      this.viewEnd += x;
-    },
     onZoom({ x }) {
       const width = this.viewEnd - this.viewStart;
       const newWidth = clamp(4, x + width, 160);
@@ -146,57 +141,35 @@ export default {
 
 .app {
   height: 100%;
-  display: grid;
-
+  display: flex;
+  flex-direction: column;
   font-family: VarelaRound;
-}
-
-.app.node {
-  grid-template-columns: 15em auto;
-  grid-template-rows: 6em auto;
-}
-.app.midi {
-  grid-template-columns: 15em auto;
-  grid-template-rows: 6em auto;
 }
 
 .app.node > .midi-editor {
   display: none;
 }
-.app.split > .midi-editor {
-  grid-row-end: 3;
-}
 .midi-editor {
-  grid-column-start: 1;
-  grid-row-start: 2;
-  grid-column-end: 3;
+  flex: 1 1 0;
 }
 
 .transport-bar {
-  grid-column-start: 2;
-  grid-row-start: 1;
+  flex: 0 0 30px;
 }
 
 .menu-panel {
-  grid-column-start: 1;
-  grid-row-start: 1;
-}
-.app.node > .node-editor {
-  grid-column-start: 1;
-  grid-row-start: 2;
-  grid-column-end: 3;
-}
-.app.split > .node-editor {
-  grid-column-start: 1;
-  grid-row-start: 3;
-  grid-column-end: 3;
+  flex: 0 0 30px;
 }
 .app.midi > .node-editor {
   display: none;
 }
+.node-editor {
+  flex: 1 1 0;
+}
 
 .app-item {
-  background: hsla(0, 0%, 7%, 1);
+  /* background: hsla(0, 0%, 7%, 1); */
+
   color: hsla(0, 0%, 80%, 0.8);
   min-width: 0;
   min-height: 0;

@@ -5,6 +5,9 @@ export default store => {
   window.addEventListener('keydown', keydown, true)
   window.addEventListener('keyup', keyup, true)
   window.addEventListener('mousemove', mousemove, true)
+  // Keys won't be cleared if user changes focus before releasing a key so we need this
+  //TODO
+  // window.addEventListener('blur', clearKeysState)
 
   function mouseup(e) {
     store.commit('REMOVE_MOUSE_BUTTON', e.button)

@@ -3,6 +3,7 @@ import Transporter from 'modules/Transporter'
 import inputTracker from './inputTracker'
 import nodeMap from 'nodes'
 import Vue from 'vue'
+import { clamp } from './util'
 
 const lastIds = {
   event: 4,
@@ -21,6 +22,10 @@ export default () => {
       transporter: new Transporter(),
       playbackStart: 0,
       playbackPosition: 0,
+      songStart: 0,
+      songEnd: 60,
+      viewStart: 0,
+      viewEnd: 4,
       beatSnap: 1 / 4,
       centsSnap: 100,
       events: {},
@@ -35,6 +40,17 @@ export default () => {
       focus: null,
     },
     mutations: {
+      PAN_TRACK_VIEW(state, { deltaX }) {
+        state.viewStart += deltaX
+        state.viewEnd += deltaX
+      },
+      ZOOM_TRACK_VIEW(state, { x }) {
+        const width = state.viewEnd - state.viewStart
+        const newWidth = clamp(4, x + width, 160)
+        const deltaX = width - newWidth
+        state.viewStart += deltaX / 2
+        state.viewEnd -= deltaX / 2
+      },
       ADD_BRAIN(state, { brain }) {
         Vue.set(state.brains, brain.id, brain)
       },
@@ -70,6 +86,12 @@ export default () => {
       ADD_EVENT(state, event) {
         Vue.set(state.events, event.id, event)
         state.tracks[event.trackId].events.push(event.id)
+      },
+      REMOVE_EVENT(state, id) {
+        const trackId = state.events[id].trackId
+        const track = state.tracks[trackId]
+        Vue.set(track, 'events', track.events.filter(_id => id !== _id))
+        Vue.delete(state.events, id)
       },
       SET_EVENT(state, event) {
         Vue.set(state.events, event.id, event)
@@ -131,6 +153,9 @@ export default () => {
       },
     },
     actions: {
+      removeEvents(context, events) {
+        events.forEach(event => context.commit('REMOVE_EVENT', event))
+      },
       addEdge(context, { from, to, input, output }) {
         context.commit('ADD_NODE_EDGE', {
           from,
