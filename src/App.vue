@@ -1,5 +1,6 @@
 <template>
   <div class="app" :class="mode" :style="appGridStyle" @keydown="onKeyDown">
+    <menu-panel/>
     <transport-bar class="transport-bar app-item"/>
     <transient-editor
       ref="transientEditor"
@@ -30,7 +31,8 @@ export default {
   components: {
     TransportBar,
     TransientEditor,
-    NodeEditor
+    NodeEditor,
+    MenuPanel
   },
   data: () => {
     return {
@@ -137,50 +139,30 @@ export default {
 
 .app {
   height: 100%;
-  display: grid;
-
+  display: flex;
+  flex-direction: column;
   font-family: VarelaRound;
-}
-
-.app.node {
-  /* grid-template-columns: 15em auto; */
-  grid-template-rows: 6em auto;
-}
-.app.midi {
-  /* grid-template-columns: 15em auto; */
-  grid-template-rows: 6em auto;
 }
 
 .app.node > .midi-editor {
   display: none;
 }
-.app.split > .midi-editor {
-  grid-row-end: 3;
-}
 .midi-editor {
-  grid-row-start: 2;
+  flex: 1 1 0;
 }
 
 .transport-bar {
-  grid-row-start: 1;
+  flex: 0 0 30px;
 }
 
 .menu-panel {
-  grid-column-start: 1;
-  grid-row-start: 1;
-}
-.app.node > .node-editor {
-  grid-column-start: 1;
-  grid-row-start: 2;
-  grid-column-end: 2;
-}
-.app.split > .node-editor {
-  grid-column-start: 1;
-  grid-row-start: 3;
-  grid-column-end: 2;
+  flex: 0 0 30px;
 }
 .app.midi > .node-editor {
   display: none;
+}
+.node-editor {
+  flex: 1 1 0;
 }
 
 .app-item {

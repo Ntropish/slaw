@@ -14,7 +14,10 @@ export default {
     }
   },
   data: () => {
-    let app = new window.PIXI.Application({ transparent: true });
+    let app = new window.PIXI.Application({
+      transparent: true,
+      antialias: true
+    });
     app.renderer.autoResize = true;
     const container = new window.PIXI.Container();
     app.stage.addChild(container);

@@ -15,7 +15,7 @@ export default {
   }),
   computed: {
     bounds() {
-      return [this.songStart, 5000, this.songEnd, -5000];
+      return [this.songStart, 3000, this.songEnd, -5000];
     },
     ...mapState(["songStart", "songEnd", "viewStart", "viewEnd", "events"])
   },
@@ -33,6 +33,7 @@ export default {
             this.$refs.graph.container.addChild(eventGraphic);
             this.eventGraphics[eventId] = eventGraphic;
           }
+          console.log(event.beat);
           eventGraphic.x = event.beat;
           eventGraphic.y = event.data.pitch;
         }
