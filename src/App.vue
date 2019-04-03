@@ -1,6 +1,5 @@
 <template>
   <div class="app" :class="mode" :style="appGridStyle" @keydown="onKeyDown">
-    <menu-panel class="menu-panel app-item"/>
     <transport-bar class="transport-bar app-item"/>
     <transient-editor
       ref="transientEditor"
@@ -31,7 +30,6 @@ export default {
   components: {
     TransportBar,
     TransientEditor,
-    MenuPanel,
     NodeEditor
   },
   data: () => {
@@ -48,7 +46,7 @@ export default {
       // For split mode
       return this.mode === "split"
         ? {
-            gridTemplateColumns: `15em auto`,
+            gridTemplateColumns: `1`,
             gridTemplateRows: `6em ${this.split}fr ${1 - this.split}fr`
           }
         : {};
@@ -58,7 +56,7 @@ export default {
   watch: {
     mode(val) {
       requestAnimationFrame(() => {
-        this.$refs.transientEditor.sizeCanvases();
+        this.$refs.transientEditor.c.sizeCanvases();
         this.$refs.nodeEditor.sizeCanvases();
       });
     }
@@ -145,11 +143,11 @@ export default {
 }
 
 .app.node {
-  grid-template-columns: 15em auto;
+  /* grid-template-columns: 15em auto; */
   grid-template-rows: 6em auto;
 }
 .app.midi {
-  grid-template-columns: 15em auto;
+  /* grid-template-columns: 15em auto; */
   grid-template-rows: 6em auto;
 }
 
@@ -160,13 +158,10 @@ export default {
   grid-row-end: 3;
 }
 .midi-editor {
-  grid-column-start: 1;
   grid-row-start: 2;
-  grid-column-end: 3;
 }
 
 .transport-bar {
-  grid-column-start: 2;
   grid-row-start: 1;
 }
 
@@ -177,19 +172,20 @@ export default {
 .app.node > .node-editor {
   grid-column-start: 1;
   grid-row-start: 2;
-  grid-column-end: 3;
+  grid-column-end: 2;
 }
 .app.split > .node-editor {
   grid-column-start: 1;
   grid-row-start: 3;
-  grid-column-end: 3;
+  grid-column-end: 2;
 }
 .app.midi > .node-editor {
   display: none;
 }
 
 .app-item {
-  background: hsla(0, 0%, 7%, 1);
+  /* background: hsla(0, 0%, 7%, 1); */
+
   color: hsla(0, 0%, 80%, 0.8);
   min-width: 0;
   min-height: 0;

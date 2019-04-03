@@ -23,7 +23,7 @@ export default () => {
       playbackStart: 0,
       playbackPosition: 0,
       songStart: 0,
-      songEnd: 240,
+      songEnd: 60,
       viewStart: 0,
       viewEnd: 4,
       beatSnap: 1 / 4,
