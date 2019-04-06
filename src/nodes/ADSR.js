@@ -25,6 +25,27 @@ export default class ADSR extends Brain {
     this.onEvent = this.onEvent.bind(this)
   }
 
+  static get parameterDescriptors() {
+    return [
+      {
+        name: 'attack',
+        defaultValue: 0.01,
+      },
+      {
+        name: 'decay',
+        defaultValue: 0.02,
+      },
+      {
+        name: 'sustain',
+        defaultValue: 0.5,
+      },
+      {
+        name: 'release',
+        defaultValue: 0.03,
+      },
+    ]
+  }
+
   onEvent({
     detail: {
       beats,

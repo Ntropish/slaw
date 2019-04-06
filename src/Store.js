@@ -11,7 +11,7 @@ const lastIds = {
 }
 function getId(type) {
   let id = lastIds[type] || 0
-  lastIds[type] += 1
+  lastIds[type] = id + 1
   return (id + 1).toString()
 }
 
@@ -53,6 +53,13 @@ export default () => {
       },
       ADD_BRAIN(state, { brain }) {
         Vue.set(state.brains, brain.id, brain)
+      },
+      SET_NODE_DATA(state, { data, id }) {
+        Vue.set(
+          state.nodes[id] || {},
+          'data',
+          Object.assign(state.nodes[id].data, data),
+        )
       },
       ADD_NODE(state, { node, id }) {
         Vue.set(state.nodes, id, node)
@@ -153,32 +160,57 @@ export default () => {
       },
     },
     actions: {
-      setState(context, oldState) {
-        Object.values(oldState.nodes).forEach(
-          async ({ type, x, y, data, outputs }) => {
-            const newNodeId = await context.dispatch('addNode', { type, x, y })
-            if (type === 'track') {
-              const oldTrack = oldState.tracks[data.trackId]
-              const trackId = context.state.nodes[newNodeId].data.trackId
-              if (oldTrack.hue) {
-                context.commit('SET_TRACK', { id: trackId, hue: oldTrack.hue })
-              }
-              oldTrack.events.forEach(eventId => {
-                const oldEvent = oldState.events[eventId]
-                store.dispatch('addEvent', { ...oldEvent })
-              })
-            }
+      async setState(context, oldState) {
+        const nodeIdMap = {}
+        const connections = []
 
-            for (const [output, to, input] of outputs) {
-              context.dispatch('addEdge', {
-                from: newNodeId,
-                output,
-                to,
-                input,
-              })
+        // Remake each node, but save connections/outputs until later
+        // when the node id map is completely full
+        for (const oldNode of Object.values(oldState.nodes)) {
+          const { type, x, y, data, outputs, id: oldId } = oldNode
+
+          const newNodeId = await context.dispatch('addNode', { type, x, y })
+          nodeIdMap[oldId] = newNodeId
+          if (type === 'track') {
+            const oldTrack = oldState.tracks[data.trackId]
+            const trackId = context.state.nodes[newNodeId].data.trackId
+            if (oldTrack.hue) {
+              context.commit('SET_TRACK', { id: trackId, hue: oldTrack.hue })
             }
-          },
-        )
+            oldTrack.events.forEach(eventId => {
+              const oldEvent = oldState.events[eventId]
+              store.dispatch('addEvent', { ...oldEvent })
+            })
+          }
+
+          connections.push(
+            ...outputs.map(([output, to, input]) => ({
+              from: newNodeId,
+              output,
+              to,
+              input,
+            })),
+          )
+        }
+
+        console.log(connections)
+
+        // Build connections here now that new node ids are known
+        for (const { from, to: oldTo, input, output } of connections) {
+          for (const num of [from, oldTo, input, output]) {
+            if (typeof num !== 'number' && typeof num !== 'string') {
+              console.log(typeof num)
+              return
+            }
+            console.log('valid connection', from, oldTo, input, output)
+          }
+          context.dispatch('addEdge', {
+            from,
+            output,
+            to: nodeIdMap[oldTo],
+            input,
+          })
+        }
 
         if (oldState.selectedTrackId) {
           store.commit('SET_SELECTED_TRACK', oldState.selectedTrackId)
@@ -218,12 +250,14 @@ export default () => {
         )
       },
       async addNode(context, node) {
+        const newId = getId('node')
         Object.assign(node, {
           data: {},
           width: 100,
           height: 150,
           outputs: [],
           inputs: [],
+          id: newId,
         })
         if (node.type === 'track') {
           const hue = Math.floor(Math.random() * 360)
@@ -231,18 +265,14 @@ export default () => {
           context.commit('ADD_TRACK', { id: trackId, events: [], hue })
           node.data.trackId = trackId
         }
-        const brain = new nodeMap[node.type](
-          context.state.transporter,
-          node.data,
-        )
+        const brain = new nodeMap[node.type](context.state.transporter, node)
         context.commit('ADD_BRAIN', { brain })
 
-        const id = Object.keys(context.state.nodes).length
         context.commit('ADD_NODE', {
-          id,
-          node: { id, ...node, brain: brain.id },
+          id: newId,
+          node: { ...node, brain: brain.id },
         })
-        return id
+        return newId
       },
       addEvent(context, { type, beat, beats, data, trackId }) {
         const id = getId('event')

@@ -16,7 +16,10 @@
         </div>
       </div>
 
-      <div class="info">{{ node.type }}</div>
+      <div class="info">
+        {{ node.type }}
+        <component :is="gui" :brain="brain"/>
+      </div>
       <div :style="inputStyle" class="inputs">
         <div
           v-for="(input, index) in brain.inputs"
@@ -36,6 +39,7 @@
 </template>
 
 <script>
+import nodeMap from "nodes";
 export default {
   props: {
     node: {
@@ -75,6 +79,9 @@ export default {
     brain() {
       const brains = this.$store.state.brains;
       return brains[this.node.brain];
+    },
+    gui() {
+      return nodeMap[this.node.type].interface;
     }
   },
   methods: {
