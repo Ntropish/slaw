@@ -75,6 +75,10 @@ export default {
     ySnap: {
       type: Number,
       default: () => 1
+    },
+    trackId: {
+      type: String,
+      required: true
     }
   },
   data: () => ({
@@ -122,10 +126,9 @@ export default {
     events() {
       return this.$store.getters.eventsOfTrack(this.trackId);
     },
-    ...mapState({
-      trackId: "selectedTrackId",
-      track: state => state.tracks[state.selectedTrackId]
-    }),
+    track() {
+      return this.$store.state.tracks[this.trackId];
+    },
     ...mapState([
       "playbackPosition",
       "playbackStart",
