@@ -1,6 +1,8 @@
 <template>
   <div class="root" :class="{selected: selected}">
-    <div class="info" @mousedown="mouseDown">{{ node.type }}</div>
+    <svg viewBox="0 0 100 100" :style="infoStyle" class="info" @mousedown="mouseDown">
+      <text x="50" y="50" alignment-baseline="middle" text-anchor="middle">{{ node.type }}</text>
+    </svg>
     <div class="ports">
       <div class="inputs">
         <div
@@ -31,7 +33,6 @@
 </template>
 
 <script>
-import nodeMap from "nodes";
 import { mapState } from "vuex";
 export default {
   props: {
@@ -54,8 +55,10 @@ export default {
       const brains = this.$store.state.brains;
       return brains[this.node.brain];
     },
-    gui() {
-      return nodeMap[this.node.type].interface;
+    infoStyle() {
+      return {
+        height: this.handleSpacing + "px"
+      };
     }
   },
   methods: {
@@ -70,23 +73,6 @@ export default {
     },
     handleOutputMouseDown(type, i) {
       this.$emit("handle-output-drag", { i });
-    },
-    handleStyle(type, isLeft) {
-      const typeMap = {
-        buffer: "hsla(0, 40%, 30%, 1)",
-        event: "hsla(60, 40%, 30%, 1)"
-      };
-      const style = {
-        background: typeMap[type],
-        width: this.handleSpacing + "px",
-        height: this.handleSpacing + "px"
-      };
-      if (isLeft) {
-        style.right = `calc(100% - ${this.handleSpacing / 2}px)`;
-      } else {
-        style.left = `calc(100% - ${this.handleSpacing / 2}px)`;
-      }
-      return style;
     },
     mouseDown(e) {
       this.$store.dispatch("selectNode", {
@@ -127,22 +113,29 @@ export default {
 }
 
 .info {
-  flex-grow: 1;
-  padding: 0.2em;
-  background: hsla(0, 0%, 100%, 0.3);
-  font-size: 2vw;
+  flex-grow: 0;
+  flex-shrink: 0;
+  fill: hsla(0, 0%, 100%, 0.3);
+  font-size: 70px;
 }
 
+.inputs {
+  margin-right: 1.5px;
+}
 .outputs {
   text-align: right;
+  margin-left: 1.5px;
 }
 
 .handle {
   overflow: hidden;
   flex: 1 1 0;
-  margin: 2px;
   position: relative;
   border-radius: 2.5px;
+}
+
+.handle {
+  margin-top: 3px;
 }
 
 .handle.buffer {
@@ -155,8 +148,8 @@ export default {
   opacity: 1;
 }
 .handleShader {
-  border: 5px solid hsla(20, 20%, 100%, 0.2);
-  box-shadow: inset 0 0 0.5em hsla(210, 20%, 10%, 0.2);
+  border: 5px solid hsla(20, 20%, 100%, 0.1);
+  box-shadow: inset 0 0 0.5em hsla(210, 20%, 10%, 0.4);
   top: 0;
   bottom: 0;
   left: 0;

@@ -14,7 +14,7 @@
       class="node"
       :node="node"
       :style="computeNodeStyle(node)"
-      :handle-spacing="10 * pxPerY"
+      :handle-spacing="handleSpace * pxPerY"
       :selected="selectedNodes.includes(node.id)"
       @handle-input-drag="handleInputDrag(node.id, $event.i)"
       @handle-output-drag="handleOutputDrag(node.id, $event.i)"
@@ -55,7 +55,7 @@ export default {
     xSnap: 25,
     ySnap: 25,
     isDraggingHandle: false,
-    handleSpace: 10,
+    handleSpace: 25,
     selectedNodeType: "track"
   }),
 
@@ -77,7 +77,8 @@ export default {
       "tracks",
       "mouseState",
       "keyboardState",
-      "mousePosition"
+      "mousePosition",
+      "brains"
     ])
   },
   watch: {
@@ -96,11 +97,16 @@ export default {
   },
   methods: {
     computeNodeStyle(node) {
+      const maxPorts = Math.max(
+        this.brains[node.brain].inputs.length,
+        this.brains[node.brain].outputs.length
+      );
+
       return {
         left: this.pxOfX(node.x) + "px",
         top: this.pxOfY(node.y) + "px",
         width: node.width * this.pxPerX + "px",
-        height: node.height * this.pxPerY + "px"
+        height: this.handleSpace * (1 + maxPorts) * this.pxPerY + "px"
       };
     },
     handleInputDrag(to, input) {
@@ -186,7 +192,7 @@ export default {
         backgroundCtx.stroke();
       }
 
-      nodesCtx.strokeStyle = "hsla(0, 0%, 20%, 1)";
+      nodesCtx.strokeStyle = "hsla(0, 0%, 30%, 1)";
       nodesCtx.lineWidth = "2";
 
       Object.values(this.nodes).forEach(node => {
@@ -196,19 +202,13 @@ export default {
 
           const inputLength = nodeMap[toNode.type].prototype.inputs.length;
 
-          // TODO: Use utility functions xyOfMouse, xyOfPort instead
-          this.drawEdge(
-            nodesCtx,
-            this.pxOfX(fromNode.x + fromNode.width),
-            this.pxOfY(fromNode.y + this.handleSpace * (output + 1)),
-            this.pxOfX(toNode.x),
-            this.pxOfY(
-              toNode.y +
-                toNode.height -
-                this.handleSpace * inputLength +
-                this.handleSpace * input
-            )
+          const { x: fromX, y: fromY } = this.xyOfPort(
+            "output",
+            fromNode.id,
+            output
           );
+          const { x: toX, y: toY } = this.xyOfPort("input", toNode.id, input);
+          this.drawEdge(nodesCtx, fromX, fromY, toX, toY);
         });
       });
 
@@ -231,18 +231,23 @@ export default {
     },
     xyOfPort(type, nodeId, index) {
       const node = this.nodes[nodeId];
+      const inputCount = nodeMap[node.type].prototype.inputs.length;
+      const outputCount = nodeMap[node.type].prototype.outputs.length;
+      const maxPorts = Math.max(inputCount, outputCount);
+      const headerSpace = this.handleSpace;
       if (type === "output") {
+        const handleSpace = (this.handleSpace * maxPorts) / outputCount;
+
         return {
           x: this.pxOfX(node.x + node.width),
-          y: this.pxOfY(node.y + this.handleSpace * (index + 1))
+          y: this.pxOfY(node.y + headerSpace + handleSpace * (index + 0.5))
         };
       } else {
-        const inputLength = nodeMap[node.type].prototype.inputs.length;
+        const handleSpace = (this.handleSpace * maxPorts) / inputCount;
+
         return {
           x: this.pxOfX(node.x),
-          y: this.pxOfY(
-            node.y + node.height + this.handleSpace * (index - inputLength)
-          )
+          y: this.pxOfY(node.y + headerSpace + handleSpace * (index + 0.5))
         };
       }
     },
@@ -303,14 +308,6 @@ export default {
           nodeIds: this.selectedNodes
         });
       }
-    },
-    loadModule: async function(moduleSpecifier) {
-      // const moduleToLoad = import("src/" + moduleSpecifier);
-      // for (const processor of moduleToLoad.processors) {
-      //   if (this.processors.includes(processor)) continue;
-      //   await this.transporter.context.audioWorklet.addModule(processor);
-      //   this.processors.push(processor);
-      // }
     },
     selectNodeType(nodeType) {
       this.selectedNodeType = nodeType;
