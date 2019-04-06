@@ -2,6 +2,8 @@ import { store } from '../index'
 import { pitchToFrequency, timeSort } from './util'
 import Brain from './Brain'
 
+import Interface from 'components/nodeInterfaces/EventTrack.vue'
+
 export default class EventTrack extends Brain {
   constructor(
     transporter,
@@ -50,3 +52,5 @@ EventTrack.prototype.outputs = [
     },
   },
 ]
+
+EventTrack.interface = Interface

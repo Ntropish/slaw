@@ -3,16 +3,14 @@
     <menu-panel/>
     <transport-bar class="transport-bar app-item"/>
     <node-editor ref="nodeEditor" class="node-editor app-item"/>
-
-    <transient-editor
-      ref="transientEditor"
-      class="midi-editor app-item"
-      :x-start="viewStart"
-      :x-end="viewEnd"
-      @noteremove="onRemoveNote"
-      @noteresize="onResizeNote"
-      @zoom="onZoom"
-    />
+    <div class="interfaces" :style="displayBlocksStyle">
+      <component
+        :is="block.interface"
+        v-for="block in displayBlocks"
+        :key="block.node.id"
+        :brain="block.brain"
+      />
+    </div>
   </div>
 </template>
 
@@ -26,13 +24,13 @@ import Transporter from "modules/Transporter.js";
 import { clearTimeout } from "timers";
 import { clamp } from "./util";
 import { mapState } from "vuex";
+import nodeMap from "nodes";
 
 // The app houses the major components and lays them
 // out with css grid
 export default {
   components: {
     TransportBar,
-    TransientEditor,
     NodeEditor,
     MenuPanel
   },
@@ -41,7 +39,7 @@ export default {
       viewStart: -1,
       viewEnd: 2,
       mode: "split",
-      split: 0.25
+      displayBlockHeight: 200
     };
   },
 
@@ -56,7 +54,28 @@ export default {
           }
         : {};
     },
-    ...mapState(["transporter", "playbackStart"])
+    displayBlocks() {
+      return this.selectedNodes.map(nodeId => {
+        const node = this.nodes[nodeId];
+        return {
+          node,
+          brain: this.brains[node.brain],
+          interface: nodeMap[node.type].interface
+        };
+      });
+    },
+    displayBlocksStyle() {
+      return {
+        height: this.displayBlockHeight + "px"
+      };
+    },
+    ...mapState([
+      "transporter",
+      "playbackStart",
+      "selectedNodes",
+      "nodes",
+      "brains"
+    ])
   },
   watch: {
     mode(val) {
@@ -166,6 +185,14 @@ export default {
 }
 .node-editor {
   flex: 2 1 0;
+}
+
+.interfaces {
+  display: flex;
+  color: hsla(0, 0%, 100%, 0.9);
+}
+.interfaces > div {
+  flex: 1 1 0;
 }
 
 .app-item {

@@ -16,7 +16,6 @@
       :style="computeNodeStyle(node)"
       :handle-spacing="10 * pxPerY"
       :selected="selectedNodes.includes(node.id)"
-      @mousedown.native="nodeMouseDown(node.id)"
       @handle-input-drag="handleInputDrag(node.id, $event.i)"
       @handle-output-drag="handleOutputDrag(node.id, $event.i)"
       @handle-input-drop="handleInputDrop(node.id, $event.i)"
@@ -48,7 +47,6 @@ export default {
   props: {},
   data: () => ({
     gridSize: 25,
-    selectedNodes: [],
     nodeBuffer: [],
     temporaryEdges: [],
     xStart: 0,
@@ -74,6 +72,7 @@ export default {
     },
     ...mapState([
       "nodes",
+      "selectedNodes",
       "edges",
       "tracks",
       "mouseState",
@@ -271,9 +270,10 @@ export default {
       } else if (this.mouseState.includes(0)) {
         this.deselect();
       }
+      this.render();
     },
     deselect() {
-      this.selectedNodes.splice(0);
+      this.$store.commit("SET_SELECTED_NODES", []);
     },
     pan({ x, y }) {
       this.xStart = this.xStart + x;
@@ -290,20 +290,7 @@ export default {
       this.render();
     },
     keyDown(e) {},
-    nodeMouseDown(id) {
-      if (
-        !this.keyboardState.includes("control") &&
-        !this.selectedNodes.includes(id)
-      ) {
-        this.deselect();
-      }
-      if (!this.selectedNodes.includes(id)) {
-        this.selectedNodes.push(id);
-        if (this.nodes[id].type === "track") {
-          this.$store.commit("SET_SELECTED_TRACK", this.nodes[id].data.trackId);
-        }
-      }
-    },
+
     mouseDown(e) {},
     mouseUp(e) {
       this.temporaryEdges = [];

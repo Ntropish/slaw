@@ -31,6 +31,7 @@ export default () => {
       events: {},
       tracks: {},
       nodes: {},
+      selectedNodes: [],
       brains: {},
       edges: {},
       keyboardState: [],
@@ -40,6 +41,12 @@ export default () => {
       focus: null,
     },
     mutations: {
+      SET_SELECTED_NODES(state, nodes) {
+        Vue.set(state, 'selectedNodes', nodes)
+      },
+      SELECT_NODE(state, id) {
+        state.selectedNodes.push(id)
+      },
       PAN_TRACK_VIEW(state, { deltaX }) {
         state.viewStart += deltaX
         state.viewEnd += deltaX
@@ -278,6 +285,15 @@ export default () => {
         const id = getId('event')
         context.commit('ADD_EVENT', { id, type, beat, beats, data, trackId })
       },
+      selectNode(context, { id, preserveSelection }) {
+        if (preserveSelection) {
+          const selected = context.state.selectedNodes
+          if (selected.includes(id)) return
+          context.commit('SET_SELECTED_NODES', selected.concat(id))
+        } else {
+          context.commit('SET_SELECTED_NODES', [id])
+        }
+      },
     },
     getters: {
       eventsOfTrack(state) {
@@ -298,7 +314,11 @@ export default () => {
     store.commit('SET_PLAYBACK_POSITION', position)
   })
   store.subscribe((mutation, state) => {
-    localStorage.setItem('store', JSON.stringify(state))
+    if (mutation.type === 'FOCUS_ELEMENT') return
+    window.requestAnimationFrame(() => {
+      const { focus, ...stateToStore } = state
+      localStorage.setItem('store', JSON.stringify(stateToStore))
+    })
   })
   return store
 }

@@ -1,37 +1,29 @@
 <template>
   <div class="root" :class="{selected: selected}">
-    <div class="io">
-      <div :style="outputStyle" class="outputs">
-        <div
-          v-for="(output, index) in brain.outputs"
-          :key="index"
-          class="holster"
-          :style="holsterStyle"
-          @mouseup="handleOutputMouseUp('input', index)"
-          @mousedown="handleOutputMouseDown('input', index)"
-        >
-          <div class="handle" :style="handleStyle(output.type)">
-            <div class="shade"/>
-          </div>
-        </div>
-      </div>
-
-      <div class="info">
-        {{ node.type }}
-        <component :is="gui" :brain="brain"/>
-      </div>
-      <div :style="inputStyle" class="inputs">
+    <div class="info" @mousedown="mouseDown">{{ node.type }}</div>
+    <div class="ports">
+      <div class="inputs">
         <div
           v-for="(input, index) in brain.inputs"
           :key="index"
-          class="holster"
-          :style="holsterStyle"
+          class="handle"
+          :class="{[input.type]: true }"
           @mouseup="handleInputMouseUp('output', index)"
           @mousedown="handleInputMouseDown('output', index)"
         >
-          <div class="handle" :style="handleStyle(input.type, true)">
-            <div class="shade"/>
-          </div>
+          <div class="handleShader"/>
+        </div>
+      </div>
+      <div class="outputs">
+        <div
+          v-for="(output, index) in brain.outputs"
+          :key="index"
+          class="handle"
+          :class="{[output.type]: true }"
+          @mouseup="handleOutputMouseUp('input', index)"
+          @mousedown="handleOutputMouseDown('input', index)"
+        >
+          <div class="handleShader"/>
         </div>
       </div>
     </div>
@@ -40,6 +32,7 @@
 
 <script>
 import nodeMap from "nodes";
+import { mapState } from "vuex";
 export default {
   props: {
     node: {
@@ -57,25 +50,6 @@ export default {
   },
   data: () => ({}),
   computed: {
-    rows() {
-      if (!this.brain) return 0;
-      return Math.max(this.brain.outputs.length, this.brain.inputs.length);
-    },
-    holsterStyle() {
-      return {
-        height: this.handleSpacing + "px"
-      };
-    },
-    outputStyle() {
-      return {
-        marginTop: 0.5 * this.handleSpacing + "px"
-      };
-    },
-    inputStyle() {
-      return {
-        marginBottom: 0.5 * this.handleSpacing + "px"
-      };
-    },
     brain() {
       const brains = this.$store.state.brains;
       return brains[this.node.brain];
@@ -113,6 +87,12 @@ export default {
         style.left = `calc(100% - ${this.handleSpacing / 2}px)`;
       }
       return style;
+    },
+    mouseDown(e) {
+      this.$store.dispatch("selectNode", {
+        id: this.node.id,
+        preserveSelection: e.ctrlKey
+      });
     }
   }
 };
@@ -126,48 +106,64 @@ export default {
   position: absolute;
   background: hsla(0, 0%, 15%, 1);
   box-shadow: 0 0 6px hsla(0, 0%, 0%, 0.3);
+  display: flex;
+  flex-direction: column;
 }
 
 .root.selected {
   box-shadow: 0 0 2px hsla(0, 0%, 100%, 0.9);
 }
 
-.io {
-  margin-bottom: 1em;
+.ports {
   display: flex;
-  flex-direction: column;
-
   height: 100%;
 }
 
 .inputs,
 .outputs {
-  margin: 0.5em;
+  flex: 1 1 0;
   display: flex;
   flex-direction: column;
 }
 
 .info {
   flex-grow: 1;
-  padding: 1em;
+  padding: 0.2em;
+  background: hsla(0, 0%, 100%, 0.3);
+  font-size: 2vw;
 }
 
 .outputs {
   text-align: right;
 }
 
-.holster {
-  color: hsla(0, 0%, 100%, 0.35);
+.handle {
   overflow: hidden;
+  flex: 1 1 0;
+  margin: 2px;
+  position: relative;
+  border-radius: 2.5px;
 }
 
-.handle {
-  position: absolute;
-  z-index: 11;
-  box-shadow: 0 0 1em hsla(0, 0%, 0%, 1);
+.handle.buffer {
+  background: hsla(0, 50%, 65%, 0.5);
 }
-.handle:hover {
-  box-shadow: 0 0 1.5em hsla(0, 0%, 0%, 1);
+.handle.event {
+  background: hsla(60, 50%, 65%, 0.7);
+}
+.handleShader:hover {
+  opacity: 1;
+}
+.handleShader {
+  border: 5px solid hsla(20, 20%, 100%, 0.2);
+  box-shadow: inset 0 0 0.5em hsla(210, 20%, 10%, 0.2);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  position: absolute;
+  opacity: 0;
+  transition: opacity 0.1s;
 }
 .handle > .shade {
   width: 100%;
