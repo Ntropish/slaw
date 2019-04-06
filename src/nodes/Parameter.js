@@ -11,9 +11,18 @@ export default class Parameter extends Brain {
     this.nodeId = nodeId
   }
 
-  setValue(value) {
-    store.commit('SET_NODE_DATA', { id: this.nodeId, data: { value } })
-    this.constantSource.offset.value = value
+  set value(value) {
+    const parsedValue = parseFloat(value)
+    if (isNaN(parsedValue)) return
+    store.commit('SET_NODE_DATA', {
+      id: this.nodeId,
+      data: { value: parsedValue },
+    })
+    this.constantSource.offset.value = parsedValue
+  }
+
+  get value() {
+    return store.state.nodes[this.nodeId].data.value
   }
 }
 

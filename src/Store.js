@@ -169,7 +169,12 @@ export default () => {
         for (const oldNode of Object.values(oldState.nodes)) {
           const { type, x, y, data, outputs, id: oldId } = oldNode
 
-          const newNodeId = await context.dispatch('addNode', { type, x, y })
+          const newNodeId = await context.dispatch('addNode', {
+            type,
+            data: data || {},
+            x,
+            y,
+          })
           nodeIdMap[oldId] = newNodeId
           if (type === 'track') {
             const oldTrack = oldState.tracks[data.trackId]
@@ -193,16 +198,12 @@ export default () => {
           )
         }
 
-        console.log(connections)
-
         // Build connections here now that new node ids are known
         for (const { from, to: oldTo, input, output } of connections) {
           for (const num of [from, oldTo, input, output]) {
             if (typeof num !== 'number' && typeof num !== 'string') {
-              console.log(typeof num)
               return
             }
-            console.log('valid connection', from, oldTo, input, output)
           }
           context.dispatch('addEdge', {
             from,
@@ -252,7 +253,6 @@ export default () => {
       async addNode(context, node) {
         const newId = getId('node')
         Object.assign(node, {
-          data: {},
           width: 100,
           height: 150,
           outputs: [],

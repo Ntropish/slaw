@@ -1,6 +1,6 @@
 <template>
   <div>
-    <input type="number" @keyup="onChange" @change="onChange" @paste="onChange" @click="onChange">
+    <input ref="input" v-model="brain.value" type="number">
   </div>
 </template>
 <script>
@@ -9,19 +9,6 @@ export default {
     brain: {
       type: Object,
       required: true
-    }
-  },
-  data: () => ({
-    value: 1
-  }),
-  methods: {
-    onChange(e) {
-      const value = parseFloat(e.target.value);
-      if (isNaN(value)) {
-        return;
-      } else {
-        this.brain.setValue(value);
-      }
     }
   }
 };
