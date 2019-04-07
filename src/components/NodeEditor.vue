@@ -244,13 +244,13 @@ export default {
       }
     },
     drawEdge(context, fromX, fromY, toX, toY) {
-      const handleWidth = this.pxPerX * 50;
+      const widthApart = toX - fromX;
       context.beginPath();
       context.moveTo(fromX, fromY);
       context.bezierCurveTo(
-        fromX + handleWidth,
+        fromX + widthApart / 2,
         fromY,
-        toX - handleWidth,
+        toX - widthApart / 2,
         toY,
         toX,
         toY
