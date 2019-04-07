@@ -266,6 +266,7 @@ export default () => {
           inputs: [],
           id: newId,
         })
+        if (!node.data) node.data = {}
         if (node.type === 'track') {
           const hue = Math.floor(Math.random() * 360)
           const trackId = getId('track')

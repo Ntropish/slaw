@@ -55,7 +55,7 @@ export default {
     xSnap: 25,
     ySnap: 25,
     isDraggingHandle: false,
-    handleSpace: 25,
+    handleSpace: 28,
     selectedNodeType: "track"
   }),
 
@@ -119,15 +119,10 @@ export default {
         this.temporaryEdges.push(["input", to, input]);
       }
     },
+    // Dragging an output can only create a new edge
     handleOutputDrag(from, output) {
       const ports = this.nodes[from].outputs.filter(edge => edge[0] === output);
-      ports.forEach(([_ouput, to, input]) => {
-        this.$store.dispatch("removeEdge", { from, to, input, output });
-        this.temporaryEdges.push(["input", to, input]);
-      });
-      if (!ports.length) {
-        this.temporaryEdges.push(["output", from, output]);
-      }
+      this.temporaryEdges.push(["output", from, output]);
     },
     handleInputDrop(to, input) {
       this.temporaryEdges.forEach(([type, from, output]) => {
@@ -138,7 +133,7 @@ export default {
     },
     handleOutputDrop(from, output) {
       this.temporaryEdges.forEach(([type, to, input]) => {
-        // Can't drag an input to an input so just abort
+        // Can't drag an output to an output so just abort
         if (type === "output") return;
         this.$store.dispatch("addEdge", { from, to, input, output });
       });
@@ -235,16 +230,13 @@ export default {
       const outputCount = nodeMap[node.type].prototype.outputs.length;
       const maxPorts = Math.max(inputCount, outputCount);
       const headerSpace = this.handleSpace;
+      const handleSpace = this.handleSpace;
       if (type === "output") {
-        const handleSpace = (this.handleSpace * maxPorts) / outputCount;
-
         return {
           x: this.pxOfX(node.x + node.width),
           y: this.pxOfY(node.y + headerSpace + handleSpace * (index + 0.5))
         };
       } else {
-        const handleSpace = (this.handleSpace * maxPorts) / inputCount;
-
         return {
           x: this.pxOfX(node.x),
           y: this.pxOfY(node.y + headerSpace + handleSpace * (index + 0.5))
