@@ -24,13 +24,20 @@ export default () => {
       playbackPosition: 0,
       songStart: 0,
       songEnd: 24,
+      pianoRollTop: 3000,
+      pianoRollBottom: -5000,
       viewStart: 0,
       viewEnd: 4,
+      // Node editor
+      nodeX: 0,
+      nodeY: 0,
+      nodeWidth: 800,
       beatSnap: 1 / 4,
       centsSnap: 100,
       events: {},
       tracks: {},
       nodes: {},
+      curves: {},
       selectedNodes: [],
       brains: {},
       edges: {},
@@ -41,11 +48,23 @@ export default () => {
       focus: null,
     },
     mutations: {
+      ZOOM_NODE_EDITOR(state, { amount, xOrigin, yOrigin }) {
+        // Orthographic viewport, so zoom both axis the same
+        const zoom = amount
+        state.nodeWidth += amount
+      },
+      PAN_NODE_EDITOR(state, { x, y }) {
+        state.nodeX -= x
+        state.nodeY -= y
+      },
       SET_SELECTED_NODES(state, nodes) {
         Vue.set(state, 'selectedNodes', nodes)
       },
       SELECT_NODE(state, id) {
         state.selectedNodes.push(id)
+      },
+      REMOVE_NODE(state, id) {
+        Vue.delete(state.nodes, id)
       },
       PAN_TRACK_VIEW(state, { deltaX }) {
         state.viewStart += deltaX
@@ -133,8 +152,20 @@ export default () => {
       ADD_TRACK(state, track) {
         Vue.set(state.tracks, track.id, track)
       },
+      ADD_CURVE(state, curve) {
+        Vue.set(state.curves, curve.id, curve)
+      },
       SET_TRACK(state, { id, ...changes }) {
         Object.assign(state.tracks[id], changes)
+      },
+      SET_CURVE(state, { id, ...changes }) {
+        Object.assign(state.curves[id], changes)
+      },
+      REMOVE_TRACK(state, id) {
+        Vue.delete(state.tracks, id)
+      },
+      REMOVE_CURVE(state, id) {
+        Vue.delete(state.curves, id)
       },
       SET_SELECTED_TRACK(state, id) {
         state.selectedTrackId = id
@@ -167,6 +198,7 @@ export default () => {
       },
     },
     actions: {
+      // Action for loading a saved state
       async setState(context, oldState) {
         const nodeIdMap = {}
         const connections = []
@@ -194,6 +226,15 @@ export default () => {
               store.dispatch('addEvent', { ...oldEvent })
             })
           }
+          if (type === 'curve') {
+            const oldCurve = oldState.curves[data.curveId]
+            const newCurveId = context.state.nodes[newNodeId].data.curveId
+            context.commit('ADD_CURVE', {
+              id: newCurveId,
+              points: oldCurve.points,
+              global: oldCurve.global,
+            })
+          }
 
           connections.push(
             ...outputs.map(([output, to, input]) => ({
@@ -203,6 +244,17 @@ export default () => {
               input,
             })),
           )
+        }
+
+        if (oldState.selectedNodes) {
+          store.commit(
+            'SET_SELECTED_NODES',
+            oldState.selectedNodes.map(oldId => nodeIdMap[oldId]),
+          )
+        }
+
+        if (oldState.selectedTrackId) {
+          store.commit('SET_SELECTED_TRACK', oldState.selectedTrackId)
         }
 
         // Build connections here now that new node ids are known
@@ -218,10 +270,6 @@ export default () => {
             to: nodeIdMap[oldTo],
             input,
           })
-        }
-
-        if (oldState.selectedTrackId) {
-          store.commit('SET_SELECTED_TRACK', oldState.selectedTrackId)
         }
       },
       removeEvents(context, events) {
@@ -273,6 +321,22 @@ export default () => {
           context.commit('ADD_TRACK', { id: trackId, events: [], hue })
           node.data.trackId = trackId
         }
+        if (node.type === 'curve') {
+          const hue = Math.floor(Math.random() * 360)
+
+          const curveId = getId('curve')
+          context.commit('ADD_CURVE', {
+            id: curveId,
+            global: true,
+            points: [
+              { beat: -Infinity, value: 0, type: 'flat' },
+              { beat: Infinity, value: 0, type: 'flat' },
+            ],
+          })
+          node.data.curveId = curveId
+          node.data.hue = hue
+          node.data.name = 'Curve ' + curveId
+        }
         const brain = new nodeMap[node.type](context.state.transporter, node)
         context.commit('ADD_BRAIN', { brain })
 
@@ -281,6 +345,30 @@ export default () => {
           node: { ...node, brain: brain.id },
         })
         return newId
+      },
+      async removeNode(context, id) {
+        const node = context.state.nodes[id]
+        for (const [input, from, output] of node.inputs) {
+          await context.dispatch('removeEdge', {
+            from,
+            to: id,
+            input,
+            output,
+          })
+        }
+        for (const [output, to, input] of node.outputs) {
+          await context.dispatch('removeEdge', {
+            from: id,
+            to,
+            input,
+            output,
+          })
+        }
+        const trackId = node.data.trackId
+        const curveId = node.data.curveId
+        if (trackId) context.commit('REMOVE_TRACK', trackId)
+        if (curveId) context.commit('REMOVE_CURVE', trackId)
+        context.commit('REMOVE_NODE', id)
       },
       addEvent(context, { type, beat, beats, data, trackId }) {
         const id = getId('event')
@@ -293,6 +381,13 @@ export default () => {
           context.commit('SET_SELECTED_NODES', selected.concat(id))
         } else {
           context.commit('SET_SELECTED_NODES', [id])
+        }
+      },
+      async removeSelectedNodes(context) {
+        const ids = context.state.selectedNodes
+        context.commit('SET_SELECTED_NODES', [])
+        for (const id of ids) {
+          context.dispatch('removeNode', id)
         }
       },
     },

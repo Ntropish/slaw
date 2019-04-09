@@ -103,6 +103,9 @@ export default {
         id: this.node.id,
         preserveSelection: e.ctrlKey
       });
+      if (e.altKey) {
+        this.$store.dispatch("removeSelectedNodes");
+      }
     }
   }
 };

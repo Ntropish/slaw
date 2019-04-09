@@ -21,8 +21,17 @@ export default {
     app.renderer.autoResize = true;
     const container = new window.PIXI.Container();
     app.stage.addChild(container);
-
     return { app, container, height: 1, width: 1 };
+  },
+  computed: {
+    pxPerX() {
+      const [x1, y1, x2, y2] = this.bounds;
+      return (x2 - x1) / this.width;
+    },
+    pxPerY() {
+      const [x1, y1, x2, y2] = this.bounds;
+      return (y2 - y1) / this.height;
+    }
   },
   watch: {
     bounds: {
@@ -50,13 +59,12 @@ export default {
       this.height = parseInt(styles.getPropertyValue("height"), 10);
       this.app.renderer.resize(this.width, this.height);
       this.setContainerTransform();
+      this.$emit("resize");
     },
     setContainerTransform() {
       const [x1, y1, x2, y2] = this.bounds;
-      const pxPerX = (x2 - x1) / this.width;
-      const pxPerY = (y2 - y1) / this.height;
-      this.container.scale.set(1 / pxPerX, 1 / pxPerY);
-      this.container.position.set(-x1 / pxPerX, -y1 / pxPerY);
+      this.container.scale.set(1 / this.pxPerX, 1 / this.pxPerY);
+      this.container.position.set(-x1 / this.pxPerX, -y1 / this.pxPerY);
     }
   }
 };

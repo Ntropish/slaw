@@ -2,11 +2,11 @@
   <div class="root">
     <div
       v-for="nodeType in nodeTypes"
+      :key="nodeType"
       class="node-type"
       :class="{selected: nodeType === selectedNodeType}"
-      :key="nodeType"
       @mousedown="onNodeTypeMouseDown(nodeType)"
-    >{{nodeType}}</div>
+    >{{ nodeType }}</div>
   </div>
 </template>
 
@@ -37,19 +37,18 @@ export default {
 
 <style scoped>
 .root {
-  border-radius: 4px;
-  background: hsla(0, 0%, 15%, 1);
+  border-radius: 2.5px;
+  background: hsla(0, 0%, 15%, 0.8);
   box-shadow: 0 0 6px hsla(0, 0%, 0%, 0.3);
-  padding: 1em;
-
+  padding: 0.4em;
   position: fixed;
-  width: 200px;
-  height: 400px;
+  width: 180px;
+  height: 100%;
 }
 
 .node-type {
   cursor: pointer;
-  padding: 1em;
+  padding: 0.4em;
   border-radius: 2.5px;
 }
 

@@ -148,12 +148,6 @@ export default {
       }
     })
   },
-  mounted() {
-    window.addEventListener("mouseup", this.mouseUp);
-  },
-  beforeDestroy() {
-    window.removeEventListener("mouseup", this.mouseUp);
-  },
   watch: {
     beatCursor(val) {
       this.render();
@@ -171,6 +165,12 @@ export default {
     events(val) {
       this.render();
     }
+  },
+  mounted() {
+    window.addEventListener("mouseup", this.mouseUp);
+  },
+  beforeDestroy() {
+    window.removeEventListener("mouseup", this.mouseUp);
   },
   methods: {
     render() {
