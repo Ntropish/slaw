@@ -1,8 +1,6 @@
 <template>
-  <div class="root" :class="{selected: selected}" @mousedown="mouseDown">
-    <svg viewBox="0 0 100 100" :style="infoStyle" class="info">
-      <text x="50" y="50" alignment-baseline="middle" text-anchor="middle">{{ node.type }}</text>
-    </svg>
+  <div class="root" :class="{selected: selected}" @pointerdown="onPointerDown">
+    <div class="label">{{ node.type }}</div>
     <div class="ports">
       <div class="inputs">
         <div
@@ -11,8 +9,8 @@
           class="handle"
           :style="inputHandleStyle"
           :class="{[input.type]: true }"
-          @mouseup="handleInputMouseUp('output', index)"
-          @mousedown="handleInputMouseDown('output', index)"
+          @pointerup="handleInputMouseUp('output', index)"
+          @pointerdown="handleInputMouseDown('output', index)"
         >
           <div class="handleShader"/>
         </div>
@@ -24,8 +22,8 @@
           class="handle"
           :style="outputHandleStyle"
           :class="{[output.type]: true }"
-          @mouseup="handleOutputMouseUp('input', index)"
-          @mousedown="handleOutputMouseDown('input', index)"
+          @pointerup="handleOutputMouseUp('input', index)"
+          @pointerdown="handleOutputMouseDown('input', index)"
         >
           <div class="handleShader"/>
         </div>
@@ -47,6 +45,10 @@ export default {
       required: true
     },
     handleSpacing: {
+      type: Number,
+      required: true
+    },
+    pxPerUnit: {
       type: Number,
       required: true
     }
@@ -98,14 +100,29 @@ export default {
     handleOutputMouseDown(type, i) {
       this.$emit("handle-output-drag", { i });
     },
-    mouseDown(e) {
+    onPointerDown(e) {
+      this.$el.setPointerCapture(e.pointerId);
       this.$store.dispatch("selectNode", {
         id: this.node.id,
         preserveSelection: e.ctrlKey
       });
       if (e.altKey) {
         this.$store.dispatch("removeSelectedNodes");
+      } else {
+        window.addEventListener("mousemove", this.mouseMove);
+        const remover = () => {
+          this.$el.releasePointerCapture(e.pointerId);
+
+          window.removeEventListener("mousemove", this.mouseMove);
+          window.removeEventListener("mouseup", remover);
+          window.removeEventListener("blur", remover);
+        };
+        window.addEventListener("mouseup", remover, { once: true });
+        window.addEventListener("blur", remover, { once: true });
       }
+    },
+    mouseMove(e) {
+      this.$emit("drag", e);
     }
   }
 };
@@ -125,6 +142,13 @@ export default {
 
 .root.selected {
   box-shadow: 0 0 2px hsla(0, 0%, 100%, 0.9);
+}
+
+.label {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  width: 100%;
+  text-align: center;
 }
 
 .ports {

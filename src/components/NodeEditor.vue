@@ -1,14 +1,22 @@
 <template>
-  <div class="node-editor" @mousedown="onMouseDown" @wheel="onWheel">
-    <pixi-graph ref="graph" class="root node-graph" :bounds="bounds" @resize="resize"/>
+  <div class="node-editor" @wheel="onWheel">
+    <pixi-graph
+      ref="graph"
+      class="root graph"
+      :bounds="bounds"
+      @resize="resize"
+      @pointerdown="onPointerDown"
+    />
     <Audio-node
       v-for="(node, id) in nodes"
       :key="id"
       class="node"
       :node="node"
       :style="computeNodeStyle(node)"
-      :handle-spacing="handleSpace * $refs.graph ? $refs.graph.pxPerY : 1"
+      :handle-spacing="handleSpacing"
+      :px-per-unit="pxPerUnit"
       :selected="selectedNodes.includes(node.id)"
+      @drag="dragNode"
       @handle-input-drag="handleInputDrag(node.id, $event.i)"
       @handle-output-drag="handleOutputDrag(node.id, $event.i)"
       @handle-input-drop="handleInputDrop(node.id, $event.i)"
@@ -65,6 +73,14 @@ export default {
     nodeHeight() {
       return (this.nodeWidth * this.height) / this.width;
     },
+    handleSpacing() {
+      return (
+        this.handleSpace * (this.$refs.graph ? this.$refs.graph.pxPerY : 1)
+      );
+    },
+    pxPerUnit() {
+      return this.$refs.graph ? this.$refs.graph.pxPerY : 1;
+    },
     ...mapState([
       "nodes",
       "selectedNodes",
@@ -81,10 +97,10 @@ export default {
   },
   mounted() {
     this.render();
-    window.addEventListener("mousemove", this.onMouseMove);
+    window.addEventListener("pointermove", this.onPointerMove);
   },
   beforeDestroy() {
-    window.removeEventListener("mousemove", this.onMouseMove);
+    window.removeEventListener("pointermove", this.onPointerMove);
   },
   methods: {
     resize() {
@@ -92,10 +108,10 @@ export default {
       this.height = this.$refs.graph.height;
     },
     onWheel(e) {
-      const amount = e.deltaY / 10;
+      const amount = (e.deltaY / 1000) * this.nodeWidth;
       const viewportBounds = this.$refs.graph.$root.$el.getBoundingClientRect();
-      const xOrigin = e.clientX - viewportBounds.left;
-      const yOrigin = e.clientY - viewportBounds.top;
+      const xOrigin = (e.clientX - viewportBounds.left) / viewportBounds.width;
+      const yOrigin = (e.clientY - viewportBounds.top) / viewportBounds.height;
       this.$store.commit("ZOOM_NODE_EDITOR", { amount, xOrigin, yOrigin });
     },
     computeNodeStyle(node) {
@@ -103,12 +119,11 @@ export default {
         this.brains[node.brain].inputs.length,
         this.brains[node.brain].outputs.length
       );
-
       return {
-        // left: this.pxOfX(node.x) + "px",
-        // top: this.pxOfY(node.y) + "px",
-        // width: node.width * this.pxPerX + "px",
-        // height: this.handleSpace * (1 + maxPorts) * this.pxPerY + "px"
+        left: this.$refs.graph.pxOfX(node.x) + "px",
+        top: this.$refs.graph.pxOfY(node.y) + "px",
+        width: node.width * this.$refs.graph.pxPerX + "px",
+        height: this.handleSpace * maxPorts * this.$refs.graph.pxPerY + "px"
       };
     },
     handleInputDrag(to, input) {
@@ -150,7 +165,7 @@ export default {
       const backgroundGraphic = this.backgroundGraphic;
 
       const lines = range(-5000, 5000, 100);
-      backgroundGraphic.lineStyle(1, 0x353535, 1);
+      backgroundGraphic.lineStyle(2, 0x222222, 1);
 
       for (const length of lines) {
         backgroundGraphic.moveTo(length, -5000);
@@ -160,106 +175,6 @@ export default {
       }
 
       container.addChild(backgroundGraphic);
-
-      // graphic.moveTo(this.bounds[0], this.points[0].value);
-
-      // for (let i = 1; i < this.points.length - 1; i++) {
-      //   previousPoint = thisPoint;
-      // }
-
-      // let lastPoint = this.points[this.points.length - 1];
-      // console.log(this.points);
-      // this.drawSegment(
-      //   previousPoint,
-      //   { ...lastPoint, beat: this.bounds[2] },
-      //   graphic
-      // );
-      // for (let i = 0; i < this.points.length; i++) {
-      //   const thisPoint = this.points[i];
-      //   const circle = new window.PIXI.Graphics();
-
-      //   circle.beginFill(0x555555);
-      //   circle.drawCircle(thisPoint.beat, thisPoint.value, 10);
-      //   circle.endFill();
-
-      //   circle.scale.set(this.$refs.graph.pxPerX, this.$refs.graph.pxPerY);
-      //   this.container.addChild(circle);
-      // }
-
-      // this.container.addChild(graphic);
-      // // Prepare canvases
-      // this.contexts.forEach(ctx =>
-      //   ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
-      // );
-      // const [backgroundCtx, nodesCtx, edgesCtx] = this.contexts;
-
-      // // Draw beat marks
-      // const horizontalStart =
-      //   Math.floor(this.nodeX / this.gridSize) * this.gridSize;
-      // const horizontalEnd =
-      //   Math.ceil(this.nodeX + this.nodeWidth / this.gridSize) * this.gridSize;
-
-      // const verticalStart =
-      //   Math.floor(this.nodeY / this.gridSize) * this.gridSize;
-      // const verticalEnd =
-      //   Math.ceil(this.nodeY + this.nodeHeight / this.gridSize) * this.gridSize;
-
-      // const horizontalLines = range(
-      //   horizontalStart,
-      //   horizontalEnd,
-      //   this.gridSize
-      // );
-      // const verticallLines = range(verticalStart, verticalEnd, this.gridSize);
-      // backgroundCtx.strokeStyle = `hsla(0, 0%, 0%, 0.2)`;
-
-      // for (const line of horizontalLines) {
-      //   const x = this.pxOfX(line);
-
-      //   backgroundCtx.beginPath();
-      //   backgroundCtx.moveTo(x, 0);
-      //   backgroundCtx.lineTo(x, this.canvasHeight);
-      //   backgroundCtx.stroke();
-      // }
-
-      // for (const line of verticallLines) {
-      //   const y = this.pxOfY(line);
-
-      //   backgroundCtx.beginPath();
-      //   backgroundCtx.moveTo(0, y);
-      //   backgroundCtx.lineTo(this.canvasWidth, y);
-      //   backgroundCtx.stroke();
-      // }
-
-      // nodesCtx.strokeStyle = "hsla(0, 0%, 30%, 1)";
-      // nodesCtx.lineWidth = "2";
-
-      // Object.values(this.nodes).forEach(node => {
-      //   node.outputs.forEach(([output, to, input]) => {
-      //     const fromNode = node;
-      //     const toNode = this.nodes[to];
-
-      //     const inputLength = nodeMap[toNode.type].prototype.inputs.length;
-
-      //     const { x: fromX, y: fromY } = this.xyOfPort(
-      //       "output",
-      //       fromNode.id,
-      //       output
-      //     );
-      //     const { x: toX, y: toY } = this.xyOfPort("input", toNode.id, input);
-      //     this.drawEdge(nodesCtx, fromX, fromY, toX, toY);
-      //   });
-      // });
-
-      // // Render temporary edges, these exist when dragging an edge
-      // for (const port of this.temporaryEdges) {
-      //   const { x, y } = this.xyOfPort(...port);
-      //   const { x: mouseX, y: mouseY } = this.xyOfMouse();
-      //   if (port[0] === "output") {
-      //     this.drawEdge(nodesCtx, x, y, mouseX, mouseY);
-      //   } else {
-      //     this.drawEdge(nodesCtx, mouseX, mouseY, x, y);
-      //   }
-      // }
     },
     xyOfMouse() {
       return {
@@ -300,12 +215,12 @@ export default {
       );
       context.stroke();
     },
-    onMouseDown(e) {
+    onPointerDown(e) {
       if (this.keyboardState.includes("control")) {
         this.$store.dispatch("addNode", {
           type: this.selectedNodeType,
-          x: this.pxToX(e.offsetX),
-          y: this.pxToY(e.offsetY)
+          x: this.$refs.graph.pxToX(e.offsetX),
+          y: this.$refs.graph.pxToY(e.offsetY)
         });
       } else if (this.mouseState.includes(0)) {
         this.deselect();
@@ -327,23 +242,23 @@ export default {
     mouseUp(e) {
       this.temporaryEdges = [];
     },
-    mouseMove({ e }) {
-      if (this.mouseState.includes(0) && this.temporaryEdges.length === 0) {
-        this.$store.commit("PAN_NODES", {
-          x: e.movementX / this.$refs.graph.pxPerX,
-          y: e.movementY / this.$refs.graph.pxPerY,
-          nodeIds: this.selectedNodes
-        });
-      }
+    dragNode(e) {
+      this.$store.commit("PAN_NODES", {
+        x: e.movementX / this.pxPerUnit,
+        y: e.movementY / this.pxPerUnit,
+        nodeIds: this.selectedNodes
+      });
     },
-    onMouseMove(e) {
+
+    onPointerMove(e) {
       if (
         this.mouseState.includes(0) &&
-        this.$store.state.focus.closest(".node-graph")
+        this.$store.state.focus &&
+        this.$store.state.focus.closest(".graph")
       ) {
         this.$store.commit("PAN_NODE_EDITOR", {
-          x: e.movementX * this.$refs.graph.pxPerX,
-          y: e.movementY * this.$refs.graph.pxPerY
+          x: e.movementX / this.$refs.graph.pxPerX,
+          y: e.movementY / this.$refs.graph.pxPerY
         });
       }
     },

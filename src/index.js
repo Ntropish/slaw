@@ -7,9 +7,13 @@ import { library } from '@fortawesome/fontawesome-svg-core'
 import { faBars } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
+import { VTooltip } from 'v-tooltip'
+
 library.add(faBars)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 Vue.config.productionTip = false
+
+Vue.directive('tooltip', VTooltip)
 
 Vue.use(Vuex)
 

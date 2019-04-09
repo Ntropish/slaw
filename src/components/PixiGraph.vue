@@ -26,11 +26,11 @@ export default {
   computed: {
     pxPerX() {
       const [x1, y1, x2, y2] = this.bounds;
-      return (x2 - x1) / this.width;
+      return this.width / (x2 - x1);
     },
     pxPerY() {
       const [x1, y1, x2, y2] = this.bounds;
-      return (y2 - y1) / this.height;
+      return this.height / (y2 - y1);
     }
   },
   watch: {
@@ -53,6 +53,16 @@ export default {
     window.addEventListener("resize", this.resize);
   },
   methods: {
+    pxOfX(x) {
+      return (
+        (this.width * (x - this.bounds[0])) / (this.bounds[2] - this.bounds[0])
+      );
+    },
+    pxOfY(y) {
+      return (
+        (this.height * (y - this.bounds[1])) / (this.bounds[3] - this.bounds[1])
+      );
+    },
     resize() {
       const styles = getComputedStyle(this.$refs.root);
       this.width = parseInt(styles.getPropertyValue("width"), 10);
@@ -63,8 +73,8 @@ export default {
     },
     setContainerTransform() {
       const [x1, y1, x2, y2] = this.bounds;
-      this.container.scale.set(1 / this.pxPerX, 1 / this.pxPerY);
-      this.container.position.set(-x1 / this.pxPerX, -y1 / this.pxPerY);
+      this.container.scale.set(this.pxPerX, this.pxPerY);
+      this.container.position.set(-x1 * this.pxPerX, -y1 * this.pxPerY);
     }
   }
 };
