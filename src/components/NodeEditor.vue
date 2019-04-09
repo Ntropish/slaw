@@ -51,6 +51,7 @@ export default {
     gridSize: 25,
     nodeBuffer: [],
     temporaryEdges: [],
+    edgeGraphics: {},
     xSnap: 25,
     ySnap: 25,
     width: 1,
@@ -101,6 +102,14 @@ export default {
   },
   beforeDestroy() {
     window.removeEventListener("pointermove", this.onPointerMove);
+  },
+  watch: {
+    nodes: {
+      handler() {
+        this.render();
+      },
+      deep: true
+    }
   },
   methods: {
     resize() {
@@ -173,8 +182,36 @@ export default {
         backgroundGraphic.moveTo(-5000, length);
         backgroundGraphic.lineTo(5000, length);
       }
-
       container.addChild(backgroundGraphic);
+
+      for (const node of Object.values(this.nodes)) {
+        if (typeof node.outputs[Symbol.iterator] === "function") {
+          node.outputs.forEach(([output, to, input]) => {
+            container.addChild(
+              this.makeEdgeGraphic([node.id, output, to, input])
+            );
+          });
+        }
+      }
+    },
+    makeEdgeGraphic([from, output, to, input]) {
+      const key = from + output + to + input;
+      let edgeGraphic;
+
+      if (this.edgeGraphics[key]) {
+        edgeGraphic = this.edgeGraphics[key];
+        edgeGraphic.clear();
+      } else {
+        edgeGraphic = new window.PIXI.Graphics();
+      }
+      edgeGraphic.lineStyle(2, 0x444444, 1);
+
+      this.edgeGraphics[key] = edgeGraphic;
+      const { x: fromX, y: fromY } = this.xyOfPort("output", from, output);
+      const { x: toX, y: toY } = this.xyOfPort("input", to, input);
+      edgeGraphic.moveTo(fromX, fromY);
+      edgeGraphic.lineTo(toX, toY);
+      return edgeGraphic;
     },
     xyOfMouse() {
       return {
@@ -191,13 +228,13 @@ export default {
       const handleSpace = this.handleSpace;
       if (type === "output") {
         return {
-          x: this.pxOfX(node.x + node.width),
-          y: this.pxOfY(node.y + headerSpace + handleSpace * (index + 0.5))
+          x: node.x + node.width,
+          y: node.y + handleSpace * (index + 0.5)
         };
       } else {
         return {
-          x: this.pxOfX(node.x),
-          y: this.pxOfY(node.y + headerSpace + handleSpace * (index + 0.5))
+          x: node.x,
+          y: node.y + handleSpace * (index + 0.5)
         };
       }
     },

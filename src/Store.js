@@ -58,6 +58,11 @@ export default () => {
         state.nodeX -= x
         state.nodeY -= y
       },
+      SET_NODE_EDITOR(state, { nodeX, nodeY, nodeWidth }) {
+        state.nodeX = nodeX
+        state.nodeY = nodeY
+        state.nodeWidth = nodeWidth
+      },
       SET_SELECTED_NODES(state, nodes) {
         Vue.set(state, 'selectedNodes', nodes)
       },
@@ -257,6 +262,12 @@ export default () => {
         if (oldState.selectedTrackId) {
           store.commit('SET_SELECTED_TRACK', oldState.selectedTrackId)
         }
+
+        store.commit('SET_NODE_EDITOR', {
+          nodeX: oldState.nodeX,
+          nodeY: oldState.nodeY,
+          nodeWidth: oldState.nodeWidth,
+        })
 
         // Build connections here now that new node ids are known
         for (const { from, to: oldTo, input, output } of connections) {
