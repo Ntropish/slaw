@@ -46,9 +46,11 @@ export default {
     this.sizeCanvases();
     window.addEventListener("mousemove", this.onGlobalMouseMove);
     window.addEventListener("resize", this.sizeCanvases);
+    window.addEventListener("mouseup", this.onMouseUp);
   },
   beforeDestroy() {
     window.removeEventListener("resize", this.sizeCanvases);
+    window.removeEventListener("mouseup", this.onMouseUp);
   },
   computed: {
     xCount() {
@@ -98,7 +100,12 @@ export default {
     },
     onMouseUp(e) {
       e.preventDefault();
-      if (e.button === 1) document.exitPointerLock();
+      if (e.button === 1) {
+        console.log("exit");
+        document.exitPointerLock();
+      } else {
+        console.log("stay:", e.button);
+      }
       this.dragStart = null;
       this.dragEnd = null;
       this.$emit("mouseup", e);

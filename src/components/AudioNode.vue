@@ -101,7 +101,8 @@ export default {
       this.$emit("handle-output-drag", { i });
     },
     onPointerDown(e) {
-      this.$el.setPointerCapture(e.pointerId);
+      const id = e.pointerId;
+      this.$el.setPointerCapture(id);
       this.$store.dispatch("selectNode", {
         id: this.node.id,
         preserveSelection: e.ctrlKey
@@ -111,7 +112,7 @@ export default {
       } else {
         window.addEventListener("mousemove", this.mouseMove);
         const remover = () => {
-          this.$el.releasePointerCapture(e.pointerId);
+          this.$el.releasePointerCapture(id);
 
           window.removeEventListener("mousemove", this.mouseMove);
           window.removeEventListener("mouseup", remover);
