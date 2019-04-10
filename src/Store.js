@@ -289,7 +289,6 @@ export default () => {
         events.forEach(event => context.commit('REMOVE_EVENT', event))
       },
       addEdge(context, { from, to, input, output }) {
-        console.log(from, to, input, output)
         context.commit('ADD_NODE_EDGE', {
           from,
           to,
@@ -389,7 +388,7 @@ export default () => {
         context.commit('ADD_EVENT', { id, type, beat, beats, data, trackId })
       },
       selectNode(context, { id, preserveSelection }) {
-        if (preserveSelection) {
+        if (preserveSelection || context.state.selectedNodes.includes(id)) {
           const selected = context.state.selectedNodes
           if (selected.includes(id)) return
           context.commit('SET_SELECTED_NODES', selected.concat(id))

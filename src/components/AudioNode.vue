@@ -89,11 +89,9 @@ export default {
   },
   methods: {
     handleInputMouseUp(type, i) {
-      console.log("up");
       this.$emit("handle-input-drop", { i });
     },
     handleInputMouseDown(type, i) {
-      console.log("down");
       this.$emit("handle-input-drag", { i });
     },
     handleOutputMouseUp(type, i) {

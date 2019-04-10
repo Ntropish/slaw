@@ -169,10 +169,8 @@ export default {
       this.temporaryEdges.push(["output", from, output]);
     },
     handleInputDrop(to, input) {
-      console.log(this.temporaryEdges);
       this.temporaryEdges.forEach(([type, from, output]) => {
         // Can't drag an input to an input so just abort
-        console.log(type, from, to, input, output);
         if (type === "input") return;
         this.$store.dispatch("addEdge", { from, to, input, output });
       });
@@ -194,7 +192,6 @@ export default {
       if (!container) {
         return requestAnimationFrame(() => this.render());
       }
-      console.log("remove");
       container.removeChildren();
 
       const backgroundGraphic = this.backgroundGraphic;
@@ -215,10 +212,12 @@ export default {
       const container = this.$refs.graph ? this.$refs.graph.container : null;
       if (!container) return;
 
+      const touchedEdgeKeys = [];
       for (const node of Object.values(this.nodes)) {
         if (typeof node.outputs[Symbol.iterator] === "function") {
           node.outputs.forEach(([output, to, input]) => {
             const key = node.id + output + to + input;
+            touchedEdgeKeys.push(key);
             let graphic = this.edgeGraphics[key];
             if (graphic) {
               this.edgeGraphics[key].clear();
@@ -237,10 +236,17 @@ export default {
         }
       }
 
-      const touchedKeys = [];
+      for (const key of Object.keys(this.edgeGraphics)) {
+        if (!touchedEdgeKeys.includes(key)) {
+          container.removeChild(this.edgeGraphics[key]);
+          Vue.delete(this.edgeGraphics, key);
+        }
+      }
+
+      const touchedTempEdgeKeys = [];
       for (const [type, node, port] of this.temporaryEdges) {
         const key = type + node + port;
-        touchedKeys.push(key);
+        touchedTempEdgeKeys.push(key);
         let graphic = this.temporaryEdgeGraphics[key];
         if (graphic) {
           graphic.clear();
@@ -273,7 +279,7 @@ export default {
       }
 
       for (const key of Object.keys(this.temporaryEdgeGraphics)) {
-        if (!touchedKeys.includes(key)) {
+        if (!touchedTempEdgeKeys.includes(key)) {
           container.removeChild(this.temporaryEdgeGraphics[key]);
           Vue.delete(this.temporaryEdgeGraphics, key);
         }
@@ -335,6 +341,7 @@ export default {
     //   context.stroke();
     // },
     onPointerDown(e) {
+      console.log(e.target);
       if (this.keyboardState.includes("control")) {
         this.$store.dispatch("addNode", {
           type: this.selectedNodeType,
