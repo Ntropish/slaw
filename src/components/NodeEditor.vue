@@ -118,10 +118,15 @@ export default {
     },
     onWheel(e) {
       const amount = (e.deltaY / 1000) * this.nodeWidth;
-      const viewportBounds = this.$refs.graph.$root.$el.getBoundingClientRect();
+      const viewportBounds = this.$refs.graph.$refs.root.getBoundingClientRect();
       const xOrigin = (e.clientX - viewportBounds.left) / viewportBounds.width;
       const yOrigin = (e.clientY - viewportBounds.top) / viewportBounds.height;
-      this.$store.commit("ZOOM_NODE_EDITOR", { amount, xOrigin, yOrigin });
+      this.$store.commit("ZOOM_NODE_EDITOR", {
+        amount,
+        xOrigin,
+        yOrigin,
+        yRatio: viewportBounds.height / viewportBounds.width
+      });
     },
     computeNodeStyle(node) {
       const maxPorts = Math.max(
@@ -269,9 +274,6 @@ export default {
     },
     pan(amounts) {
       this.$store.commit("PAN_NODE_EDITOR", amounts);
-    },
-    zoom({ x, y, xOrigin, yOrigin }) {
-      this.$store.commit("ZOOM_NODE_EDITOR", { amount: x, xOrigin, yOrigin });
     },
     keyDown(e) {},
 

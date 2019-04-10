@@ -48,11 +48,12 @@ export default () => {
       focus: null,
     },
     mutations: {
-      ZOOM_NODE_EDITOR(state, { amount, xOrigin, yOrigin }) {
+      ZOOM_NODE_EDITOR(state, { amount, xOrigin, yOrigin, yRatio }) {
         // Orthographic viewport, so zoom both axis the same
         state.nodeWidth += amount
         state.nodeX -= amount * xOrigin
-        state.nodeY -= amount * yOrigin
+        // amount is for x increase, multiply by yRatio to get y increase
+        state.nodeY -= amount * yOrigin * yRatio
       },
       PAN_NODE_EDITOR(state, { x, y }) {
         state.nodeX -= x
