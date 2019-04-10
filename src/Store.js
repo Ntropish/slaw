@@ -289,6 +289,7 @@ export default () => {
         events.forEach(event => context.commit('REMOVE_EVENT', event))
       },
       addEdge(context, { from, to, input, output }) {
+        console.log(from, to, input, output)
         context.commit('ADD_NODE_EDGE', {
           from,
           to,

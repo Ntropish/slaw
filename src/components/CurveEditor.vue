@@ -41,7 +41,6 @@ export default {
   watch: {
     points: {
       handler(points) {
-        console.log(points);
         // for (let eventId of Object.keys(events)) {
         //   let eventGraphic = this.eventGraphics[eventId];
         //   let event = this.events[eventId];
@@ -107,7 +106,6 @@ export default {
       }
 
       let lastPoint = this.points[this.points.length - 1];
-      console.log(this.points);
       this.drawSegment(
         previousPoint,
         { ...lastPoint, beat: this.bounds[2] },
@@ -128,7 +126,6 @@ export default {
       this.container.addChild(graphic);
     },
     drawSegment(from, to, graphic) {
-      console.log(from, to);
       if (to.type === "flat") {
         graphic.lineTo(from.beat, from.value);
         graphic.lineTo(from.beat, to.value);

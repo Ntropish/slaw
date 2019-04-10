@@ -31,6 +31,7 @@
 </template>
 
 <script>
+import Vue from "vue";
 import { range } from "lodash";
 import GridLand from "modules/GridLand";
 import AudioNode from "components/AudioNode.vue";
@@ -51,6 +52,7 @@ export default {
     gridSize: 25,
     nodeBuffer: [],
     temporaryEdges: [],
+    temporaryEdgeGraphics: [],
     edgeGraphics: {},
     xSnap: 25,
     ySnap: 25,
@@ -82,6 +84,13 @@ export default {
     pxPerUnit() {
       return this.$refs.graph ? this.$refs.graph.pxPerY : 1;
     },
+    isDraggingEditor() {
+      return (
+        this.mouseState.includes(0) &&
+        this.$store.state.focus &&
+        this.$store.state.focus.closest(".graph")
+      );
+    },
     ...mapState([
       "nodes",
       "selectedNodes",
@@ -99,14 +108,16 @@ export default {
   mounted() {
     this.render();
     window.addEventListener("pointermove", this.onPointerMove);
+    window.addEventListener("mouseup", this.handleRelease);
   },
   beforeDestroy() {
     window.removeEventListener("pointermove", this.onPointerMove);
+    window.removeEventListener("mouseup", this.handleRelease);
   },
   watch: {
     nodes: {
       handler() {
-        this.render();
+        this.update();
       },
       deep: true
     }
@@ -141,6 +152,7 @@ export default {
       };
     },
     handleInputDrag(to, input) {
+      this.isDraggingHandle = true;
       const ports = this.nodes[to].inputs.filter(edge => edge[0] === input);
       ports.forEach(([_input, from, output]) => {
         this.$store.dispatch("removeEdge", { from, to, input, output });
@@ -152,12 +164,15 @@ export default {
     },
     // Dragging an output can only create a new edge
     handleOutputDrag(from, output) {
+      this.isDraggingHandle = true;
       const ports = this.nodes[from].outputs.filter(edge => edge[0] === output);
       this.temporaryEdges.push(["output", from, output]);
     },
     handleInputDrop(to, input) {
+      console.log(this.temporaryEdges);
       this.temporaryEdges.forEach(([type, from, output]) => {
         // Can't drag an input to an input so just abort
+        console.log(type, from, to, input, output);
         if (type === "input") return;
         this.$store.dispatch("addEdge", { from, to, input, output });
       });
@@ -169,11 +184,17 @@ export default {
         this.$store.dispatch("addEdge", { from, to, input, output });
       });
     },
+    handleRelease() {
+      this.temporaryEdges.splice(0);
+      this.isDraggingHandle = false;
+      this.update();
+    },
     render() {
       const container = this.$refs.graph ? this.$refs.graph.container : null;
       if (!container) {
         return requestAnimationFrame(() => this.render());
       }
+      console.log("remove");
       container.removeChildren();
 
       const backgroundGraphic = this.backgroundGraphic;
@@ -188,40 +209,96 @@ export default {
         backgroundGraphic.lineTo(5000, length);
       }
       container.addChild(backgroundGraphic);
+      this.update();
+    },
+    update() {
+      const container = this.$refs.graph ? this.$refs.graph.container : null;
+      if (!container) return;
 
       for (const node of Object.values(this.nodes)) {
         if (typeof node.outputs[Symbol.iterator] === "function") {
           node.outputs.forEach(([output, to, input]) => {
-            container.addChild(
-              this.makeEdgeGraphic([node.id, output, to, input])
-            );
+            const key = node.id + output + to + input;
+            let graphic = this.edgeGraphics[key];
+            if (graphic) {
+              this.edgeGraphics[key].clear();
+            } else {
+              graphic = new window.PIXI.Graphics();
+              Vue.set(this.edgeGraphics, key, graphic);
+              container.addChild(graphic);
+            }
+            this.drawEdgeGraphicFromPorts(graphic, [
+              node.id,
+              output,
+              to,
+              input
+            ]);
           });
         }
       }
-    },
-    makeEdgeGraphic([from, output, to, input]) {
-      const key = from + output + to + input;
-      let edgeGraphic;
 
-      if (this.edgeGraphics[key]) {
-        edgeGraphic = this.edgeGraphics[key];
-        edgeGraphic.clear();
-      } else {
-        edgeGraphic = new window.PIXI.Graphics();
+      const touchedKeys = [];
+      for (const [type, node, port] of this.temporaryEdges) {
+        const key = type + node + port;
+        touchedKeys.push(key);
+        let graphic = this.temporaryEdgeGraphics[key];
+        if (graphic) {
+          graphic.clear();
+        } else {
+          graphic = new window.PIXI.Graphics();
+          Vue.set(this.temporaryEdgeGraphics, key, graphic);
+          container.addChild(this.temporaryEdgeGraphics[key]);
+        }
+
+        const portXy = this.xyOfPort(type, node, port);
+        const mouseXy = this.xyOfMouse();
+
+        if (type === "output") {
+          this.drawEdgeGraphic(
+            graphic,
+            portXy.x,
+            portXy.y,
+            mouseXy.x,
+            mouseXy.y
+          );
+        } else {
+          this.drawEdgeGraphic(
+            graphic,
+            mouseXy.x,
+            mouseXy.y,
+            portXy.x,
+            portXy.y
+          );
+        }
       }
-      edgeGraphic.lineStyle(2, 0x444444, 1);
 
-      this.edgeGraphics[key] = edgeGraphic;
+      for (const key of Object.keys(this.temporaryEdgeGraphics)) {
+        if (!touchedKeys.includes(key)) {
+          container.removeChild(this.temporaryEdgeGraphics[key]);
+          Vue.delete(this.temporaryEdgeGraphics, key);
+        }
+      }
+    },
+    drawEdgeGraphic(graphic, x1, y1, x2, y2) {
+      graphic.lineStyle(2, 0x444444, 1);
+      graphic.moveTo(x1, y1);
+      graphic.lineTo(x2, y2);
+      return graphic;
+    },
+    drawEdgeGraphicFromPorts(graphic, [from, output, to, input]) {
       const { x: fromX, y: fromY } = this.xyOfPort("output", from, output);
       const { x: toX, y: toY } = this.xyOfPort("input", to, input);
-      edgeGraphic.moveTo(fromX, fromY);
-      edgeGraphic.lineTo(toX, toY);
-      return edgeGraphic;
+      return this.drawEdgeGraphic(graphic, fromX, fromY, toX, toY);
     },
     xyOfMouse() {
       return {
-        x: this.mousePosition.x - this.$el.offsetLeft,
-        y: this.mousePosition.y - this.$el.offsetTop
+        x:
+          this.bounds[0] +
+          (this.mousePosition.x - this.$el.offsetLeft) /
+            this.$refs.graph.pxPerX,
+        y:
+          this.bounds[1] +
+          (this.mousePosition.y - this.$el.offsetTop) / this.$refs.graph.pxPerY
       };
     },
     xyOfPort(type, nodeId, index) {
@@ -243,20 +320,20 @@ export default {
         };
       }
     },
-    drawEdge(context, fromX, fromY, toX, toY) {
-      const widthApart = toX - fromX;
-      context.beginPath();
-      context.moveTo(fromX, fromY);
-      context.bezierCurveTo(
-        fromX + widthApart / 2,
-        fromY,
-        toX - widthApart / 2,
-        toY,
-        toX,
-        toY
-      );
-      context.stroke();
-    },
+    // drawEdge(context, fromX, fromY, toX, toY) {
+    //   const widthApart = toX - fromX;
+    //   context.beginPath();
+    //   context.moveTo(fromX, fromY);
+    //   context.bezierCurveTo(
+    //     fromX + widthApart / 2,
+    //     fromY,
+    //     toX - widthApart / 2,
+    //     toY,
+    //     toX,
+    //     toY
+    //   );
+    //   context.stroke();
+    // },
     onPointerDown(e) {
       if (this.keyboardState.includes("control")) {
         this.$store.dispatch("addNode", {
@@ -272,12 +349,6 @@ export default {
     deselect() {
       this.$store.commit("SET_SELECTED_NODES", []);
     },
-    pan(amounts) {
-      this.$store.commit("PAN_NODE_EDITOR", amounts);
-    },
-    keyDown(e) {},
-
-    mouseDown(e) {},
     mouseUp(e) {
       this.temporaryEdges = [];
     },
@@ -290,15 +361,14 @@ export default {
     },
 
     onPointerMove(e) {
-      if (
-        this.mouseState.includes(0) &&
-        this.$store.state.focus &&
-        this.$store.state.focus.closest(".graph")
-      ) {
+      if (this.isDraggingEditor) {
         this.$store.commit("PAN_NODE_EDITOR", {
           x: e.movementX / this.$refs.graph.pxPerX,
           y: e.movementY / this.$refs.graph.pxPerY
         });
+      }
+      if (this.isDraggingHandle) {
+        this.update();
       }
     },
     selectNodeType(nodeType) {

@@ -89,9 +89,11 @@ export default {
   },
   methods: {
     handleInputMouseUp(type, i) {
+      console.log("up");
       this.$emit("handle-input-drop", { i });
     },
     handleInputMouseDown(type, i) {
+      console.log("down");
       this.$emit("handle-input-drag", { i });
     },
     handleOutputMouseUp(type, i) {
@@ -101,6 +103,10 @@ export default {
       this.$emit("handle-output-drag", { i });
     },
     onPointerDown(e) {
+      // handle clicks are not handled here
+      if (e.target.closest(".handle")) return;
+
+      // Select/drag/removal of nodes are
       const id = e.pointerId;
       this.$el.setPointerCapture(id);
       this.$store.dispatch("selectNode", {
@@ -109,7 +115,7 @@ export default {
       });
       if (e.altKey) {
         this.$store.dispatch("removeSelectedNodes");
-      } else {
+      } else if (!e.target.closest(".handle")) {
         window.addEventListener("mousemove", this.mouseMove);
         const remover = () => {
           this.$el.releasePointerCapture(id);
