@@ -65,13 +65,13 @@ export default {
       };
     },
     handleStyle() {
-      const halfSpace = this.handleSpacing / 2;
+      const eighthSpace = this.handleSpacing / 8;
       return {
-        height: halfSpace + "px",
-        width: halfSpace + "px",
-        borderRadius: this.handleSpacing + "px",
-        flexBasis: halfSpace + "px",
-        margin: halfSpace / 2 + "px"
+        height: eighthSpace * 6 + "px",
+        width: eighthSpace * 6 + "px",
+        borderRadius: eighthSpace * 6 + "px",
+        flexBasis: eighthSpace * 6 + "px",
+        margin: eighthSpace + "px"
       };
     },
     inputHandleStyle() {

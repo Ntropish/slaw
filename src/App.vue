@@ -196,8 +196,6 @@ export default {
 }
 
 .app-item {
-  /* background: hsla(0, 0%, 7%, 1); */
-
   color: hsla(0, 0%, 80%, 0.8);
   min-width: 0;
   min-height: 0;
@@ -210,7 +208,7 @@ body {
   height: 100%;
   width: 100%;
   margin: 0;
-  background: hsla(0, 0%, 7%, 1);
+  background: hsla(0, 0%, 10%, 1);
 }
 
 /* Below is for tooltips */

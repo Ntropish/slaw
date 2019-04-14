@@ -24,8 +24,6 @@ export default () => {
       playbackPosition: 0,
       songStart: 0,
       songEnd: 24,
-      pianoRollTop: 3000,
-      pianoRollBottom: -5000,
       viewStart: 0,
       viewEnd: 4,
       // Node editor
@@ -83,6 +81,10 @@ export default () => {
         const deltaX = width - newWidth
         state.viewStart += deltaX / 2
         state.viewEnd -= deltaX / 2
+      },
+      SET_TRACK_VIEW(state, { viewStart, viewEnd }) {
+        state.viewStart = viewStart
+        state.viewEnd = viewEnd
       },
       ADD_BRAIN(state, { brain }) {
         Vue.set(state.brains, brain.id, brain)
@@ -159,7 +161,16 @@ export default () => {
       ADD_TRACK(state, track) {
         Vue.set(state.tracks, track.id, track)
       },
-      ADD_CURVE(state, curve) {
+      ADD_CURVE(state, { id, points, global, view }) {
+        const curve = {
+          id,
+          points: points || [
+            { beat: -Infinity, value: 0, type: 'flat' },
+            { beat: Infinity, value: 0, type: 'flat' },
+          ],
+          global: typeof global === 'boolean' ? global : true,
+          view: view || [-1, 2, 6, -1],
+        }
         Vue.set(state.curves, curve.id, curve)
       },
       SET_TRACK(state, { id, ...changes }) {
@@ -240,6 +251,7 @@ export default () => {
               id: newCurveId,
               points: oldCurve.points,
               global: oldCurve.global,
+              view: oldCurve.view,
             })
           }
 
@@ -338,14 +350,7 @@ export default () => {
           const hue = Math.floor(Math.random() * 360)
 
           const curveId = getId('curve')
-          context.commit('ADD_CURVE', {
-            id: curveId,
-            global: true,
-            points: [
-              { beat: -Infinity, value: 0, type: 'flat' },
-              { beat: Infinity, value: 0, type: 'flat' },
-            ],
-          })
+          context.commit('ADD_CURVE', { id: curveId })
           node.data.curveId = curveId
           node.data.hue = hue
           node.data.name = 'Curve ' + curveId

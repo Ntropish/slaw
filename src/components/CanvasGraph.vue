@@ -70,6 +70,7 @@ export default {
     window.addEventListener("mouseup", this.onMouseUp);
   },
   beforeDestroy() {
+    window.removeEventListener("mousemove", this.onGlobalMouseMove);
     window.removeEventListener("resize", this.sizeCanvases);
     window.removeEventListener("mouseup", this.onMouseUp);
   },

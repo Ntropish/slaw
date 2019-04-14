@@ -1,6 +1,5 @@
 <template>
   <div class="root">
-    Curve
     <curve-editor :curve-id="curveId" class="curve-editor"/>
   </div>
 </template>

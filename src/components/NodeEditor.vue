@@ -5,7 +5,7 @@
       class="root graph"
       :bounds="bounds"
       @resize="resize"
-      @pointerdown="onPointerDown"
+      @pointerdown.native="onPointerDown"
     />
     <Audio-node
       v-for="(node, id) in nodes"
@@ -286,7 +286,7 @@ export default {
       }
     },
     drawEdgeGraphic(graphic, x1, y1, x2, y2) {
-      graphic.lineStyle(2, 0x444444, 1);
+      graphic.lineStyle(4, 0x595959, 1);
       graphic.moveTo(x1, y1);
       graphic.lineTo(x2, y2);
       return graphic;
@@ -312,7 +312,6 @@ export default {
       const inputCount = nodeMap[node.type].prototype.inputs.length;
       const outputCount = nodeMap[node.type].prototype.outputs.length;
       const maxPorts = Math.max(inputCount, outputCount);
-      const headerSpace = this.handleSpace;
       const handleSpace = this.handleSpace;
       if (type === "output") {
         return {
@@ -341,17 +340,16 @@ export default {
     //   context.stroke();
     // },
     onPointerDown(e) {
-      console.log(e.target);
       if (this.keyboardState.includes("control")) {
         this.$store.dispatch("addNode", {
           type: this.selectedNodeType,
-          x: this.$refs.graph.pxToX(e.offsetX),
-          y: this.$refs.graph.pxToY(e.offsetY)
+          x: this.bounds[0] + e.offsetX / this.$refs.graph.pxPerX,
+          y: this.bounds[1] + e.offsetY / this.$refs.graph.pxPerY
         });
       } else if (this.mouseState.includes(0)) {
         this.deselect();
       }
-      this.render();
+      this.update();
     },
     deselect() {
       this.$store.commit("SET_SELECTED_NODES", []);

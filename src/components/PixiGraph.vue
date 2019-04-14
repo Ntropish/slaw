@@ -1,5 +1,5 @@
 <template>
-  <div v-once ref="root" class="root"/>
+  <div v-once ref="root" class="root" @mousedown="dragStart"/>
 </template>
 
 <script>
@@ -20,8 +20,9 @@ export default {
     });
     app.renderer.autoResize = true;
     const container = new window.PIXI.Container();
+
     app.stage.addChild(container);
-    return { app, container, height: 1, width: 1 };
+    return { app, container, height: 1, width: 1, dragging: false };
   },
   computed: {
     pxPerX() {
@@ -50,7 +51,12 @@ export default {
   mounted() {
     this.resize();
     this.$refs.root.appendChild(this.app.view);
-    window.addEventListener("resize", this.resize);
+    document.addEventListener("resize", this.resize);
+    document.addEventListener("mouseup", this.dragStop);
+  },
+  beforeDestroy() {
+    document.removeEventListener("resize", this.resize);
+    document.removeEventListener("mouseup", this.dragStop);
   },
   methods: {
     pxOfX(x) {
@@ -75,6 +81,18 @@ export default {
       const [x1, y1, x2, y2] = this.bounds;
       this.container.scale.set(this.pxPerX, this.pxPerY);
       this.container.position.set(-x1 * this.pxPerX, -y1 * this.pxPerY);
+    },
+    dragStart(e) {
+      document.addEventListener("mousemove", this.dragMove);
+    },
+    dragStop(e) {
+      document.removeEventListener("mousemove", this.dragMove);
+    },
+    dragMove(e) {
+      this.$emit("pan", {
+        x: -e.movementX / this.pxPerX,
+        y: -e.movementY / this.pxPerY
+      });
     }
   }
 };
