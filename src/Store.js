@@ -165,8 +165,8 @@ export default () => {
         const curve = {
           id,
           points: points || [
-            { beat: -Infinity, value: 0, type: 'flat' },
-            { beat: Infinity, value: 0, type: 'flat' },
+            { beat: -Infinity, value: 0, type: 0 },
+            { beat: Infinity, value: 0, type: 0 },
           ],
           global: typeof global === 'boolean' ? global : true,
           view: view || [-1, 2, 6, -1],

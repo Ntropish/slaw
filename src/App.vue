@@ -1,9 +1,7 @@
 <template>
   <div class="app" :class="mode" :style="appGridStyle" @keydown="onKeyDown">
-    <menu-panel/>
-    <transport-bar class="transport-bar app-item"/>
     <node-editor ref="nodeEditor" class="node-editor app-item"/>
-    <div class="interfaces" :style="displayBlocksStyle">
+    <div class="interfaces app-item" :style="displayBlocksStyle">
       <component
         :is="block.interface"
         v-for="block in displayBlocks"
@@ -11,6 +9,7 @@
         :brain="block.brain"
       />
     </div>
+    <transport-bar class="transport-bar app-item"/>
   </div>
 </template>
 
@@ -66,7 +65,7 @@ export default {
     },
     displayBlocksStyle() {
       return {
-        height: this.displayBlockHeight + "px"
+        flex: "0 0 " + this.displayBlockHeight + "px"
       };
     },
     ...mapState([
@@ -199,6 +198,7 @@ export default {
   color: hsla(0, 0%, 80%, 0.8);
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 </style>
 

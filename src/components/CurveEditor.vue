@@ -1,6 +1,5 @@
 <template>
   <div>
-    {{ bounds }}
     <pixi-graph
       ref="graph"
       class="root"
@@ -15,7 +14,7 @@
 <script>
 import PixiGraph from "./PixiGraph.vue";
 import { mapState, mapGetters } from "vuex";
-import { range } from "lodash";
+import { range, clamp } from "lodash";
 
 export default {
   components: { PixiGraph },
@@ -30,7 +29,10 @@ export default {
     pointHandles: [],
     curveHandles: [],
     dragging: false,
-    draggingIndex: -1
+    draggingIndex: -1,
+    curveDraggingIndex: -1,
+    curveProgressX: 0,
+    curveProgressY: 0
   }),
   computed: {
     curve() {
@@ -68,7 +70,6 @@ export default {
       deep: true
     },
     bounds(bounds) {
-      console.log("bounds:", bounds);
       if (isNaN(bounds[0])) {
         this.$store.commit("SET_TRACK_VIEW", {
           viewStart: -1,
@@ -78,8 +79,6 @@ export default {
     }
   },
   mounted() {
-    console.log(this.bounds);
-
     this.updatePoints();
   },
   methods: {
@@ -100,7 +99,7 @@ export default {
         innerPoints.splice(firstIndexHigher, 0, {
           beat,
           value,
-          type: "flat"
+          type: 1
         });
 
         const points = [
@@ -122,18 +121,25 @@ export default {
       const newGraphicsNeeded = this.points.length - this.graphics.length;
       range(newGraphicsNeeded).forEach(() => {
         const newGraphic = new window.PIXI.Graphics();
+        newGraphic.interactive = true;
+        newGraphic.buttonMode = true;
+        newGraphic
+          .on("mousedown", this.curveDragStart(this.graphics.length))
+          .on("mouseup", this.curveDragStop(this.graphics.length))
+          .on("mouseupoutside", this.curveDragStop(this.graphics.length))
+          .on("mousemove", this.curveDragMove(this.graphics.length));
         const index = this.graphics.push(newGraphic);
-        this.container.addChild(newGraphic);
+        this.container.addChildAt(newGraphic, 0);
       });
 
       let previousPoint = {
-        ...this.points[this.points.length - 1],
+        ...this.points[0],
         beat: this.bounds[0]
       };
       for (let i = 1; i < this.points.length - 1; i++) {
         const graphic = this.graphics[i];
         const thisPoint = this.points[i];
-        this.drawSegment(previousPoint, thisPoint, graphic);
+        this.drawSegment(previousPoint, thisPoint, graphic, i === 1);
         previousPoint = thisPoint;
       }
 
@@ -142,7 +148,8 @@ export default {
       this.drawSegment(
         previousPoint,
         { ...lastPoint, beat: this.bounds[2] },
-        lastGraphic
+        lastGraphic,
+        true
       );
 
       const extraHandleGraphics = this.pointHandles.length - this.points.length;
@@ -175,12 +182,34 @@ export default {
       });
 
       const firstPointHandle = this.pointHandles[0];
-      firstPointHandle.position.x = this.bounds[0];
-      firstPointHandle.position.y = this.points[0].value;
+      if (this.points.length > 3 && this.points[1].beat > this.bounds[0]) {
+        firstPointHandle.visible = true;
+        firstPointHandle.position.x = this.bounds[0];
+        firstPointHandle.position.y = this.points[0].value;
+        firstPointHandle.scale.set(
+          1 / this.$refs.graph.pxPerX,
+          1 / this.$refs.graph.pxPerY
+        );
+      } else {
+        firstPointHandle.visible = false;
+      }
 
       const lastPointHandle = this.pointHandles[this.pointHandles.length - 1];
-      lastPointHandle.position.x = this.bounds[2];
-      lastPointHandle.position.y = this.points[this.points.length - 1].value;
+      if (
+        this.points.length > 3 &&
+        this.points[this.points.length - 2].beat < this.bounds[2]
+      ) {
+        lastPointHandle.visible = true;
+
+        lastPointHandle.position.x = this.bounds[2];
+        lastPointHandle.position.y = this.points[this.points.length - 1].value;
+        lastPointHandle.scale.set(
+          1 / this.$refs.graph.pxPerX,
+          1 / this.$refs.graph.pxPerY
+        );
+      } else {
+        lastPointHandle.visible = false;
+      }
 
       let i = 1;
       for (; i < this.points.length - 1; i++) {
@@ -193,70 +222,8 @@ export default {
           1 / this.$refs.graph.pxPerY
         );
       }
-
-      const extraCurveHandleGraphics =
-        this.curveHandles.length - this.points.length - 1;
-      range(extraCurveHandleGraphics).forEach(() => {
-        const oldGraphic = this.curveHandles.pop();
-        this.container.removeChild(oldGraphic);
-      });
-
-      const newCurveHandleGraphicsNeeded =
-        this.points.length - this.curveHandles.length + 1;
-      range(newCurveHandleGraphicsNeeded).forEach(() => {
-        const circle = new window.PIXI.Graphics();
-        const newLength = this.curveHandles.push(circle);
-        const index = newLength - 1;
-        circle.lineStyle(2, 0xcccccc, 1);
-        circle.drawCircle(0, 0, 10);
-        circle.endFill();
-        this.container.addChild(circle);
-        circle.interactive = true;
-        circle.buttonMode = true;
-        circle
-          .on("mousedown", this.curveDragStart(index))
-          .on("mouseup", this.curveDragStop(index))
-          .on("mouseupoutside", this.curveDragStop(index))
-          .on("mousemove", this.curveDragMove(index));
-        circle.scale.set(
-          1 / this.$refs.graph.pxPerX,
-          1 / this.$refs.graph.pxPerY
-        );
-      });
-
-      //Opening handle either goes to infinity or isn't there
-      //so it needs some special logic
-      if (this.bounds[0] - this.points[1].beat > 1 / 4) {
-        this.positionCurveHandle(
-          {
-            beat: this.bounds[0],
-            value: this.points[0].value
-          },
-          {
-            beat: this.points[1].beat,
-            value: this.points[1].value
-          },
-          this.curveHandles[0]
-        );
-      } else {
-        this.curveHandles[0].clear();
-      }
-
-      for (let j = 2; j < this.points.length; j++) {
-        const thisPoint = this.points[j];
-        const lastPoint = this.points[j - 1];
-        let circle = this.curveHandles[j];
-        this.positionCurveHandle(lastPoint, thisPoint, circle);
-      }
     },
-    positionCurveHandle(from, to, graphic) {
-      graphic.position.x = (to.beat + from.beat) / 2;
-      graphic.position.y = (to.value + from.value) / 2;
-      graphic.scale.set(
-        1 / this.$refs.graph.pxPerX,
-        1 / this.$refs.graph.pxPerY
-      );
-    },
+
     // Builds a handler to change a segment at a given index
     async onMouseWheel(e) {
       const change = e.deltaY / 1;
@@ -282,17 +249,26 @@ export default {
       }
       this.updatePoints();
     },
-    drawSegment(from, to, graphic) {
-      // console.log(from.beat, from.value, to.beat, to.value, graphic);
+    drawSegment(from, to, graphic, cap) {
       graphic.clear();
       graphic.beginFill(0x50fb9f);
       graphic.moveTo(from.beat, 0);
       graphic.lineTo(from.beat, from.value);
-      if (to.type === "flat") {
+      if (to.type === 0 || cap) {
         graphic.lineTo(from.beat, to.value);
         graphic.lineTo(to.beat, to.value);
-      } else if (to.type === "ramp") {
-        graphic.lineTo(to.beat, to.value);
+      } else {
+        // Ramp to by default
+        if (from.value > 0 !== to.value > 0) {
+          const intercept =
+            (from.value / (to.value - from.value)) * (to.beat - from.beat);
+          graphic.lineTo(from.beat - intercept, 0);
+          graphic.lineTo(to.beat, 0);
+          graphic.lineTo(to.beat, to.value);
+          graphic.lineTo(from.beat - intercept, 0);
+        } else {
+          graphic.lineTo(to.beat, to.value);
+        }
       }
       graphic.lineTo(to.beat, 0);
       graphic.lineTo(from.beat, 0);
@@ -301,7 +277,7 @@ export default {
       this.$store;
     },
     async pan({ x, y }) {
-      if (this.draggingIndex !== -1) return;
+      if (this.draggingIndex !== -1 || this.curveDraggingIndex !== -1) return;
       this.$store.commit("PAN_TRACK_VIEW", { deltaX: x });
       const view = [
         this.bounds[0],
@@ -323,23 +299,65 @@ export default {
       };
     },
     pointDragMove(i) {
-      return e => {
+      return async e => {
         if (i !== this.draggingIndex) return;
-        console.log("drag:", i);
         const x = e.data.originalEvent.movementX;
         const y = e.data.originalEvent.movementY;
         const beats = x / this.$refs.graph.pxPerX;
         const value = y / this.$refs.graph.pxPerY;
-        const points = this.$store.state.curves[this.curveId].points;
-        points[i].beat += beats;
+        const points = [...this.$store.state.curves[this.curveId].points];
+
         points[i].value += value;
+
+        // These things don't happen to end points
+        if (i !== 0 && i !== points.length - 1) {
+          points[i].beat += beats;
+
+          this.points.forEach((point, j, arr) => {
+            if (j > i && point.beat < points[i].beat) {
+              points[j].beat = points[i].beat;
+            } else if (i > j && point.beat > points[i].beat) {
+              points[j].beat = points[i].beat;
+            }
+          });
+          await this.$store.commit("SET_CURVE", { id: this.curveId, points });
+        }
 
         this.updatePoints();
       };
     },
-    curveDragStart(i) {},
-    curveDragStop(i) {},
-    curveDragMove(i) {}
+    curveDragStart(i) {
+      return e => {
+        this.curveDraggingIndex = i;
+        this.curveStartX = e.data.originalEvent.clientX;
+        this.curveStartY = e.data.originalEvent.clientY;
+      };
+    },
+    curveDragStop(i) {
+      return e => {
+        this.curveDraggingIndex = -1;
+        this.curveProgressX = 0;
+        this.curveProgressY = 0;
+      };
+    },
+    curveDragMove(i) {
+      return e => {
+        if (i !== this.curveDraggingIndex) return;
+        const x = e.data.originalEvent.movementX;
+        const y = e.data.originalEvent.movementY;
+        this.curveProgressX += x;
+        this.curveProgressY += y;
+        if (Math.abs(this.curveProgressX) > 120) {
+          const points = [...this.$store.state.curves[this.curveId].points];
+          const increment = this.curveProgressX > 0 ? 1 : -1;
+          points[i].type += increment;
+          if (points[i].type < 0) points[i].type = 1;
+          if (points[i].type > 1) points[i].type = 0;
+          this.curveProgressX = this.curveProgressX / 2;
+          this.updatePoints();
+        }
+      };
+    }
   }
 };
 </script>

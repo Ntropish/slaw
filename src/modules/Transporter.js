@@ -31,6 +31,7 @@ export default class Transporter extends EventEmitter {
     this.isPlaying = true
     this.jump(this.position)
     this.schedule()
+    this.emit('play', { now, position: this.position })
     // Update 60 times a second
     this.positionUpdateID = setInterval(() => {
       this.emit('positionUpdate', this.currentPosition)

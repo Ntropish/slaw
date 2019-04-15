@@ -51,12 +51,12 @@ export default {
   mounted() {
     this.resize();
     this.$refs.root.appendChild(this.app.view);
-    document.addEventListener("resize", this.resize);
-    document.addEventListener("mouseup", this.dragStop);
+    window.addEventListener("resize", this.resize);
+    window.addEventListener("mouseup", this.dragStop);
   },
   beforeDestroy() {
-    document.removeEventListener("resize", this.resize);
-    document.removeEventListener("mouseup", this.dragStop);
+    window.removeEventListener("resize", this.resize);
+    window.removeEventListener("mouseup", this.dragStop);
   },
   methods: {
     pxOfX(x) {
@@ -70,6 +70,7 @@ export default {
       );
     },
     resize() {
+      console.log("resize");
       const styles = getComputedStyle(this.$refs.root);
       this.width = parseInt(styles.getPropertyValue("width"), 10);
       this.height = parseInt(styles.getPropertyValue("height"), 10);
@@ -83,10 +84,10 @@ export default {
       this.container.position.set(-x1 * this.pxPerX, -y1 * this.pxPerY);
     },
     dragStart(e) {
-      document.addEventListener("mousemove", this.dragMove);
+      window.addEventListener("mousemove", this.dragMove);
     },
     dragStop(e) {
-      document.removeEventListener("mousemove", this.dragMove);
+      window.removeEventListener("mousemove", this.dragMove);
     },
     dragMove(e) {
       this.$emit("pan", {
