@@ -7,13 +7,10 @@ for more dynamic and creative ways of generating sound. These interface choices 
 interfaces seen in traditional DAWs but seem like they will be far more effective.
 
 Slaw was initially created on electron and is currently being developed against Chrome. Because
-the Web Audio API used by Slaw is fairly new
+the Web Audio API used by Slaw is fairly new and primarily driven by Chrome support for other browsers
+is being held off for later.
 
-Install by cloning the repository and running `yarn` or `npm install` in the root directory.
-
-No production build process is currently available but slaw can be used in development mode with `yarn start`.
-
-_Note: I haven't verified that all dependencies are included in the `package.json`. I might accidentally be relying on some globally available packages. Be prepared to diagnose and manually add some packages if this is the case._
+Saving is currently done to local storage whenever a change is made.
 
 ## Controls
 

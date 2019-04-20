@@ -4,7 +4,6 @@
       v-for="nodeType in nodeTypes"
       :key="nodeType"
       class="node-type"
-      :class="{selected: nodeType === selectedNodeType}"
       @mousedown="onNodeTypeMouseDown(nodeType)"
     >{{ nodeType }}</div>
   </div>
@@ -13,12 +12,6 @@
 <script>
 import nodeMap from "nodes";
 export default {
-  props: {
-    selectedNodeType: {
-      type: String,
-      default: () => ""
-    }
-  },
   data() {
     return {};
   },
@@ -29,7 +22,7 @@ export default {
   },
   methods: {
     onNodeTypeMouseDown(nodeType) {
-      this.$emit("selected-node-type-change", nodeType);
+      this.$emit("drag-new-node", nodeType);
     }
   }
 };
@@ -44,6 +37,7 @@ export default {
   position: fixed;
   width: 180px;
   height: 100%;
+  user-select: none;
 }
 
 .node-type {

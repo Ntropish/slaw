@@ -22,11 +22,7 @@
       @handle-input-drop="handleInputDrop(node.id, $event.i)"
       @handle-output-drop="handleOutputDrop(node.id, $event.i)"
     />
-    <add-menu
-      class="add-menu"
-      :selected-node-type="selectedNodeType"
-      @selected-node-type-change="selectNodeType"
-    />
+    <add-menu class="add-menu" @drag-new-node="dragNewNode"/>
   </div>
 </template>
 
@@ -123,6 +119,21 @@ export default {
     }
   },
   methods: {
+    dragNewNode(type) {
+      window.addEventListener(
+        "mouseup",
+        e => {
+          if (e.target.closest(".node-editor>.graph")) {
+            this.$store.dispatch("addNode", {
+              type,
+              x: this.bounds[0] + e.offsetX / this.$refs.graph.pxPerX,
+              y: this.bounds[1] + e.offsetY / this.$refs.graph.pxPerY
+            });
+          }
+        },
+        { once: true }
+      );
+    },
     resize() {
       this.width = this.$refs.graph.width;
       this.height = this.$refs.graph.height;
@@ -340,13 +351,7 @@ export default {
     //   context.stroke();
     // },
     onPointerDown(e) {
-      if (this.keyboardState.includes("control")) {
-        this.$store.dispatch("addNode", {
-          type: this.selectedNodeType,
-          x: this.bounds[0] + e.offsetX / this.$refs.graph.pxPerX,
-          y: this.bounds[1] + e.offsetY / this.$refs.graph.pxPerY
-        });
-      } else if (this.mouseState.includes(0)) {
+      if (this.mouseState.includes(0)) {
         this.deselect();
       }
       this.update();
