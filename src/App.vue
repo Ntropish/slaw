@@ -102,11 +102,11 @@ export default {
     onKeyDown(e) {
       if (e.key === " ") this.transporter.pause();
       if (e.key === "s") this.transporter.pause();
-      else if (e.key === "Tab") {
-        if (this.mode === "split") this.mode = "midi";
-        else if (this.mode === "midi") this.mode = "node";
-        else if (this.mode === "node") this.mode = "split";
-      }
+      // else if (e.key === "Tab") {
+      //   if (this.mode === "split") this.mode = "midi";
+      //   else if (this.mode === "midi") this.mode = "node";
+      //   else if (this.mode === "node") this.mode = "split";
+      // }
     },
     onKeyUp(e) {
       if (e.key === " ") {
@@ -203,7 +203,6 @@ export default {
 </style>
 
 <style>
-
 /* Below is for tooltips */
 .tooltip {
   display: block !important;
