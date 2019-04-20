@@ -80,6 +80,16 @@ export default {
   },
   mounted() {
     this.updatePoints();
+    const ticks = new window.PIXI.Graphics();
+
+    ticks.lineStyle(1000 / this.$refs.graph.pxPerY, 0xffffff, 0.4);
+    ticks.moveTo(0, 100);
+    ticks.lineTo(0, -100);
+    ticks.lineStyle(10 / this.$refs.graph.pxPerX, 0xffffff, 0.4);
+    ticks.moveTo(-100, 0);
+    ticks.lineTo(100, 0);
+
+    this.$refs.graph.container.addChild(ticks);
   },
   methods: {
     onMouseDown(e) {
@@ -90,23 +100,16 @@ export default {
         const value =
           this.bounds[1] +
           (e.clientY - this.$el.offsetTop) / this.$refs.graph.pxPerY;
-        const innerPoints = this.points.slice(1, -1);
-        let firstIndexHigher = innerPoints.findIndex(
-          point => point.beat > beat
-        );
+        let firstIndexHigher = this.points.findIndex(p => p.beat > beat);
         if (firstIndexHigher === -1) firstIndexHigher = this.points.length;
 
-        innerPoints.splice(firstIndexHigher, 0, {
+        const points = [...this.points];
+        points.splice(firstIndexHigher, 0, {
           beat,
           value,
           type: 1
         });
 
-        const points = [
-          this.points[0],
-          ...innerPoints,
-          this.points[this.points.length - 1]
-        ];
         this.$store.commit("SET_CURVE", { id: this.curveId, points });
         this.updatePoints();
       }
@@ -132,25 +135,13 @@ export default {
         this.container.addChildAt(newGraphic, 0);
       });
 
-      let previousPoint = {
-        ...this.points[0],
-        beat: this.bounds[0]
-      };
-      for (let i = 1; i < this.points.length - 1; i++) {
+      let previousPoint = this.points[0];
+      for (let i = 1; i < this.points.length; i++) {
         const graphic = this.graphics[i];
         const thisPoint = this.points[i];
-        this.drawSegment(previousPoint, thisPoint, graphic, i === 1);
+        this.drawSegment(previousPoint, thisPoint, graphic);
         previousPoint = thisPoint;
       }
-
-      const lastGraphic = this.graphics[this.graphics.length - 1];
-      const lastPoint = this.points[this.points.length - 1];
-      this.drawSegment(
-        previousPoint,
-        { ...lastPoint, beat: this.bounds[2] },
-        lastGraphic,
-        true
-      );
 
       const extraHandleGraphics = this.pointHandles.length - this.points.length;
       range(extraHandleGraphics).forEach(() => {
@@ -181,39 +172,10 @@ export default {
         );
       });
 
-      const firstPointHandle = this.pointHandles[0];
-      if (this.points.length > 3 && this.points[1].beat > this.bounds[0]) {
-        firstPointHandle.visible = true;
-        firstPointHandle.position.x = this.bounds[0];
-        firstPointHandle.position.y = this.points[0].value;
-        firstPointHandle.scale.set(
-          1 / this.$refs.graph.pxPerX,
-          1 / this.$refs.graph.pxPerY
-        );
-      } else {
-        firstPointHandle.visible = false;
-      }
-
-      const lastPointHandle = this.pointHandles[this.pointHandles.length - 1];
-      if (
-        this.points.length > 3 &&
-        this.points[this.points.length - 2].beat < this.bounds[2]
-      ) {
-        lastPointHandle.visible = true;
-
-        lastPointHandle.position.x = this.bounds[2];
-        lastPointHandle.position.y = this.points[this.points.length - 1].value;
-        lastPointHandle.scale.set(
-          1 / this.$refs.graph.pxPerX,
-          1 / this.$refs.graph.pxPerY
-        );
-      } else {
-        lastPointHandle.visible = false;
-      }
-
-      let i = 1;
-      for (; i < this.points.length - 1; i++) {
+      let i = 0;
+      for (; i < this.points.length; i++) {
         const thisPoint = this.points[i];
+
         let circle = this.pointHandles[i];
         circle.position.x = thisPoint.beat;
         circle.position.y = thisPoint.value;
@@ -223,38 +185,50 @@ export default {
         );
       }
     },
-
-    // Builds a handler to change a segment at a given index
     async onMouseWheel(e) {
-      const change = e.deltaY / 1;
-      const deltaX = change / this.$refs.graph.pxPerX;
-      const deltaY = change / this.$refs.graph.pxPerY / 100;
-      if (this.curve.global) {
-        await this.$store.commit("ZOOM_TRACK_VIEW", { x: deltaX });
+      const change = e.deltaY / 1000;
+      const xOrigin = e.offsetX / this.$refs.graph.width;
+      const yOrigin = e.offsetY / this.$refs.graph.height;
+      this.zoom({
+        x: change,
+        y: change,
+        xOrigin,
+        yOrigin,
+        global: this.curve.global
+      });
+      this.updatePoints();
+    },
+    // Global mode has to update values in the store while normal mode
+    // just sets values on curve.view
+    async zoom({ x, y, xOrigin, yOrigin, global }) {
+      if (global) {
+        await this.$store.commit("ZOOM_TRACK_VIEW", {
+          x,
+          xOrigin
+        });
         const view = [
           this.bounds[0],
-          this.bounds[1] - deltaY / 2,
+          this.bounds[1] - y * yOrigin,
           this.bounds[2],
-          this.bounds[3] + deltaY / 2
+          this.bounds[3] + y * (1 - yOrigin)
         ];
         await this.$store.commit("SET_CURVE", { id: this.curveId, view });
       } else {
         const view = [
-          this.bounds[0] - deltaX / 2,
-          this.bounds[1] - deltaY / 2,
-          this.bounds[2] + deltaX / 2,
-          this.bounds[3] + deltaY / 2
+          this.bounds[0] - x * xOrigin,
+          this.bounds[1] - y * yOrigin,
+          this.bounds[2] + x * (1 - xOrigin),
+          this.bounds[3] + y * (1 - yOrigin)
         ];
         await this.$store.commit("SET_CURVE", { id: this.curveId, view });
       }
-      this.updatePoints();
     },
-    drawSegment(from, to, graphic, cap) {
+    drawSegment(from, to, graphic) {
       graphic.clear();
       graphic.beginFill(0x50fb9f);
       graphic.moveTo(from.beat, 0);
       graphic.lineTo(from.beat, from.value);
-      if (to.type === 0 || cap) {
+      if (to.type === 0) {
         graphic.lineTo(from.beat, to.value);
         graphic.lineTo(to.beat, to.value);
       } else {
@@ -272,9 +246,6 @@ export default {
       }
       graphic.lineTo(to.beat, 0);
       graphic.lineTo(from.beat, 0);
-    },
-    addPoint() {
-      this.$store;
     },
     async pan({ x, y }) {
       if (this.draggingIndex !== -1 || this.curveDraggingIndex !== -1) return;
@@ -301,6 +272,7 @@ export default {
     pointDragMove(i) {
       return async e => {
         if (i !== this.draggingIndex) return;
+
         const x = e.data.originalEvent.movementX;
         const y = e.data.originalEvent.movementY;
         const beats = x / this.$refs.graph.pxPerX;
@@ -309,19 +281,16 @@ export default {
 
         points[i].value += value;
 
-        // These things don't happen to end points
-        if (i !== 0 && i !== points.length - 1) {
-          points[i].beat += beats;
+        points[i].beat += beats;
 
-          this.points.forEach((point, j, arr) => {
-            if (j > i && point.beat < points[i].beat) {
-              points[j].beat = points[i].beat;
-            } else if (i > j && point.beat > points[i].beat) {
-              points[j].beat = points[i].beat;
-            }
-          });
-          await this.$store.commit("SET_CURVE", { id: this.curveId, points });
-        }
+        this.points.forEach((point, j, arr) => {
+          if (j > i && point.beat < points[i].beat) {
+            points[j].beat = points[i].beat;
+          } else if (i > j && point.beat > points[i].beat) {
+            points[j].beat = points[i].beat;
+          }
+        });
+        await this.$store.commit("SET_CURVE", { id: this.curveId, points });
 
         this.updatePoints();
       };

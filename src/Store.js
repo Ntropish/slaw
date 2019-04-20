@@ -75,12 +75,15 @@ export default () => {
         state.viewStart += deltaX
         state.viewEnd += deltaX
       },
-      ZOOM_TRACK_VIEW(state, { x }) {
+      ZOOM_TRACK_VIEW(state, { x, xOrigin = 0.5 }) {
+        console.log(x, xOrigin)
         const width = state.viewEnd - state.viewStart
-        const newWidth = clamp(4, x + width, 160)
+        console.log('?', width * x + width)
+        const newWidth = clamp(4, width * x + width, 160)
+        console.log(width, newWidth)
         const deltaX = width - newWidth
-        state.viewStart += deltaX / 2
-        state.viewEnd -= deltaX / 2
+        state.viewStart += deltaX * xOrigin
+        state.viewEnd -= deltaX * (1 - xOrigin)
       },
       SET_TRACK_VIEW(state, { viewStart, viewEnd }) {
         state.viewStart = viewStart
@@ -164,10 +167,7 @@ export default () => {
       ADD_CURVE(state, { id, points, global, view }) {
         const curve = {
           id,
-          points: points || [
-            { beat: -Infinity, value: 0, type: 0 },
-            { beat: Infinity, value: 0, type: 0 },
-          ],
+          points: points || [],
           global: typeof global === 'boolean' ? global : true,
           view: view || [-1, 2, 6, -1],
         }

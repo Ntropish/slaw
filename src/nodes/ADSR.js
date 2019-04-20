@@ -7,7 +7,7 @@ export default class ADSR extends Brain {
     this.transporter = transporter
     const { context } = transporter
     this.gainNode = context.createGain()
-    this.adsr = [0.02, 0.02, 0.2, 0.2]
+    this.adsr = [0.04, 0.02, 0.5, 0.3]
     this.valueScheduler = ValueScheduler(null)
 
     transporter.on('clear', () => {

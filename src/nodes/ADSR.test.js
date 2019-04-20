@@ -5,6 +5,7 @@ expect.extend({
   // Unlike toEqual this just makes sure numbers are close
   toMatchParamCallList(recieved, list) {
     for (const [i, call] of Object.entries(list)) {
+      // Verify the call type here, the first item in the "call" array
       if (recieved[i][0] !== call[0]) {
         return {
           pass: false,
@@ -12,6 +13,7 @@ expect.extend({
             `expected call ${i}, "${recieved[i][0]}", to be "${call[0]}"`,
         }
       }
+      // Verify the call parameters here, the remaining items in "call"
       for (let num = 1; num < call.length; num++) {
         if (Math.abs(recieved[i][num] - call[num]) > 0.001) {
           return {
@@ -26,6 +28,7 @@ expect.extend({
         }
       }
     }
+    // If the above logic didn't fail the test then it passed!
     return {
       pass: true,
     }

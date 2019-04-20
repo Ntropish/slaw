@@ -115,7 +115,7 @@ export default {
 
       if (this.dragStart) this.dragEnd = { x, y };
 
-      if (this.mouseState.includes(2) && this.mouseState.length <= 2) {
+      if (this.mouseState.includes(0) && this.mouseState.length <= 2) {
         this.$emit("pan", {
           x: -e.movementX / this.pxPerX,
           y: -e.movementY / this.pxPerY
@@ -126,7 +126,9 @@ export default {
         const growthFactor = 2.0;
         this.$emit("zoom2d", {
           x: (-e.movementX / this.pxPerX) * growthFactor,
-          y: (-e.movementY / this.pxPerY) * growthFactor
+          y: (-e.movementY / this.pxPerY) * growthFactor,
+          xOrigin: e.offsetX / this.canvasWidth,
+          yOrigin: e.offsetY / this.canvasHeight
         });
       }
 
@@ -145,8 +147,8 @@ export default {
     },
     onWheel(e) {
       this.$emit("zoom", {
-        x: e.deltaX / 100,
-        y: e.deltaY / 100,
+        x: e.deltaY / 1000,
+        y: e.deltaY / 1000,
         xOrigin: e.offsetX / this.canvasWidth,
         yOrigin: e.offsetY / this.canvasHeight
       });

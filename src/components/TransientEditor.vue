@@ -11,6 +11,7 @@
       @pan="pan"
       @mousemove="mouseMove"
       @zoom2d="zoom2d"
+      @zoom="zoom"
     />
   </div>
 </template>
@@ -329,7 +330,10 @@ export default {
         const beat = Math.round(unsnappedBeat / this.xSnap) * this.xSnap;
         selectedNotes.splice(0);
         // Ctrl click to add note
-        if (this.keyboardState.includes("control")) {
+        if (
+          this.mouseState.includes(0) &&
+          this.keyboardState.includes("control")
+        ) {
           this.$store.dispatch("addEvent", {
             type: "note",
             beat,
@@ -338,12 +342,10 @@ export default {
             trackId: this.track.id
           });
         } else if (
-          this.mouseState.includes(0) &&
+          this.mouseState.includes(2) &&
           !this.keyboardState.includes("shift")
         ) {
-          // Else just move the cursor to the clicked location
-          // Snapping can't be disabled on click because ctrl click
-          // is already for adding notes
+          // Else, with right click, just move the cursor to the clicked location
           this.$store.commit("SET_PLAYBACK_START", beat);
           this.transporter.jump(beat);
           this.transporter.pause();
@@ -395,7 +397,7 @@ export default {
         } else if (this.dragTool === "resize") {
           this.resizeTool(xMove, yMove);
         }
-      } else if (this.mouseState.includes(0)) {
+      } else if (this.mouseState.includes(2)) {
         const x = this.c.pxToX(e.offsetX);
         const beat = !this.keyboardState.includes("control")
           ? Math.round(x / this.xSnap) * this.xSnap
@@ -530,14 +532,24 @@ export default {
       this.$store.commit("PAN_TRACK_VIEW", { deltaX: data.x });
       this.render();
     },
-    zoom2d(data) {
+    async zoom({ x, y, xOrigin, yOrigin }) {
       const height = this.yStart - this.yEnd;
-      const newHeight = clamp(1200, height + data.y, 7 * 1200);
+      const newHeight = clamp(1200, height + height * y, 7 * 1200);
       const deltaY = newHeight - height;
-      this.yStart += deltaY / 2;
-      this.yEnd -= deltaY / 2;
+      this.yStart += deltaY * yOrigin;
+      this.yEnd -= deltaY * (1 - yOrigin);
 
-      this.$store.commit("ZOOM_TRACK_VIEW", data);
+      await this.$store.commit("ZOOM_TRACK_VIEW", { x, xOrigin });
+      this.render();
+    },
+    zoom2d({ y, x, xOrigin, yOrigin }) {
+      const height = this.yStart - this.yEnd;
+      const newHeight = clamp(1200, height + y, 7 * 1200);
+      const deltaY = newHeight - height;
+      this.yStart += deltaY * yOrigin;
+      this.yEnd -= deltaY * (1 - yOrigin);
+
+      this.$store.commit("ZOOM_TRACK_VIEW", { x: x / 10, xOrigin });
       this.render();
     }
   }
