@@ -203,13 +203,6 @@ export default {
 </style>
 
 <style>
-html,
-body {
-  height: 100%;
-  width: 100%;
-  margin: 0;
-  background: hsla(0, 0%, 10%, 1);
-}
 
 /* Below is for tooltips */
 .tooltip {
