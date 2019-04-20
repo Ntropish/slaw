@@ -13,7 +13,6 @@ export default class Parameter extends Brain {
     transporter.on('play', ({ now, position }) => {
       const curveId = store.state.nodes[this.nodeId].data.curveId
       const curve = store.state.curves[curveId]
-      console.log(data, store.state.nodes[this.nodeId].data.curveId)
       const pointBelow = curve.points
         .slice(1, curve.points.length - 1)
         .reduce((result, candidate) => {

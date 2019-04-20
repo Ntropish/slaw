@@ -61,6 +61,9 @@ export default {
     contexts() {
       return this.canvases.map(c => c.getContext("2d"));
     },
+    dragging() {
+      return this.dragStart && this.mouseState.includes(0);
+    },
     ...mapState(["focus", "mouseState"])
   },
   mounted() {

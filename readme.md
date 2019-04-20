@@ -21,11 +21,11 @@ Controls are changing very frequently right now, but experiment with `ctrl`, `sh
 
 Play with `space`, pause with `s`
 
-`right click` to pan
+`left click` to pan
 
 `middle click` or `mouse scroll` to zoom
 
-`ctrl click` to add notes, alt click to remove them
+`ctrl click` to add notes or nodes, alt click to remove them
 
 box select by holding `shift` and dragging
 

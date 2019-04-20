@@ -76,11 +76,8 @@ export default () => {
         state.viewEnd += deltaX
       },
       ZOOM_TRACK_VIEW(state, { x, xOrigin = 0.5 }) {
-        console.log(x, xOrigin)
         const width = state.viewEnd - state.viewStart
-        console.log('?', width * x + width)
         const newWidth = clamp(4, width * x + width, 160)
-        console.log(width, newWidth)
         const deltaX = width - newWidth
         state.viewStart += deltaX * xOrigin
         state.viewEnd -= deltaX * (1 - xOrigin)

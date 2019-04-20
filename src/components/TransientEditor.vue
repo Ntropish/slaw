@@ -266,7 +266,7 @@ export default {
         );
       });
 
-      if (this.boxSelecting) {
+      if (this.boxSelecting && this.c.dragStart) {
         ctx.strokeStyle = `hsla(0, 0%, 100%, 0.4)`;
         // Draw box selector
         ctx.strokeRect(
@@ -524,6 +524,8 @@ export default {
       return foundNotes;
     },
     pan(data) {
+      if (this.selectedNotes.length) return;
+      if (this.boxSelecting) return;
       if (data.y > 0 && this.yStart > 1200 * 8) return;
       if (data.y < 0 && this.yEnd < -1200 * 8) return;
       this.yStart += data.y;

@@ -70,7 +70,6 @@ export default {
       );
     },
     resize() {
-      console.log("resize");
       const styles = getComputedStyle(this.$refs.root);
       this.width = parseInt(styles.getPropertyValue("width"), 10);
       this.height = parseInt(styles.getPropertyValue("height"), 10);
