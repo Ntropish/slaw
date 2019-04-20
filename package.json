@@ -18,6 +18,7 @@
     "eslint": "^5.15.3",
     "eslint-plugin-vue": "^5.2.2",
     "events": "^3.0.0",
+    "express": "^4.16.4",
     "fs-extra": "^7.0.1",
     "lodash": "^4.17.11",
     "node-addon-api": "^1.6.2",
@@ -37,7 +38,9 @@
     "webpack-dev-server": "^3.2.1"
   },
   "scripts": {
-    "start": "webpack-dev-server --open --config ./webpack.config.js",
+    "build": "webpack --config ./webpack.config.js",
+    "start": "node ./src/server/server.js",
+    "dev": "webpack-dev-server --open --config ./webpack.config.js",
     "test": "jest --watch",
     "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --watch"
   },

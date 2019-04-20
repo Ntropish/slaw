@@ -6,8 +6,8 @@ providing a high speed midi editor and, second, by leveraging the power of a nod
 for more dynamic and creative ways of generating sound. These interface choices diverge from the more hardware-like
 interfaces seen in traditional DAWs but seem like they will be far more effective.
 
-Initially Slaw was being developed on Electron but after further research it seems that won't be necessary. Eventually
-it will be moved to a standard web app.
+Slaw was initially created on electron and is currently being developed against Chrome. Because
+the Web Audio API used by Slaw is fairly new
 
 Install by cloning the repository and running `yarn` or `npm install` in the root directory.
 
