@@ -22,7 +22,9 @@ Play with `space`, pause with `s`
 
 `middle click` or `mouse scroll` to zoom
 
-`ctrl click` to add notes or nodes, alt click to remove them
+`ctrl click` to add notes, alt click to remove them
+
+Drag node types onto the node graph to add them, alt click to remove them
 
 box select by holding `shift` and dragging
 
