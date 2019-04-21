@@ -20,14 +20,25 @@ export default class Curve extends Brain {
   onPlay({ now, position }) {
     const curveId = store.state.nodes[this.nodeId].data.curveId
     const points = store.state.curves[curveId].points
-    points.forEach((point, i) => {
+    points.forEach((point, i, arr) => {
       const beatDifference = point.beat - position
       const timeDifference = beatDifference / this.transporter.bps
       const time = now + timeDifference
       if (i === 0) {
         this.constantSource.offset.setTargetAtTime(point.value, time, 0.002)
       } else {
-        this.constantSource.offset.linearRampToValueAtTime(point.value, time)
+        if (point.type === 0) {
+          this.constantSource.offset.setTargetAtTime(point.value, time, 0.003)
+        } else {
+          this.constantSource.offset.linearRampToValueAtTime(
+            point.value,
+            time - 0.000001,
+          )
+          this.constantSource.offset.setValueAtTime(point.value, time)
+        }
+      }
+      if (i === arr.length - 1) {
+        this.constantSource.offset.setTargetAtTime(0, time, 0.003)
       }
     })
   }

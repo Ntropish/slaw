@@ -42,7 +42,7 @@ export default () => {
       keyboardState: [],
       mouseState: [],
       mousePosition: { x: 0, y: 0 },
-      // Last element clicked - scan upwards to see the focus
+      // Last element clicked - scan upwards to see the focus ( element.closest() )
       focus: null,
     },
     mutations: {
@@ -77,7 +77,7 @@ export default () => {
       },
       ZOOM_TRACK_VIEW(state, { x, xOrigin = 0.5 }) {
         const width = state.viewEnd - state.viewStart
-        const newWidth = clamp(4, width * x + width, 160)
+        const newWidth = clamp(1, width * x + width, 160)
         const deltaX = width - newWidth
         state.viewStart += deltaX * xOrigin
         state.viewEnd -= deltaX * (1 - xOrigin)
@@ -166,6 +166,8 @@ export default () => {
           id,
           points: points || [],
           global: typeof global === 'boolean' ? global : true,
+          min: 0,
+          max: 1,
           view: view || [-1, 2, 6, -1],
         }
         Vue.set(state.curves, curve.id, curve)
@@ -277,6 +279,11 @@ export default () => {
           nodeX: oldState.nodeX,
           nodeY: oldState.nodeY,
           nodeWidth: oldState.nodeWidth,
+        })
+
+        store.commit('SET_TRACK_VIEW', {
+          viewStart: oldState.viewStart,
+          viewEnd: oldState.viewEnd,
         })
 
         // Build connections here now that new node ids are known

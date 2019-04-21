@@ -101,6 +101,14 @@ export default {
       "nodeWidth"
     ])
   },
+  watch: {
+    nodes: {
+      handler() {
+        this.update();
+      },
+      deep: true
+    }
+  },
   mounted() {
     this.render();
     window.addEventListener("pointermove", this.onPointerMove);
@@ -110,14 +118,7 @@ export default {
     window.removeEventListener("pointermove", this.onPointerMove);
     window.removeEventListener("mouseup", this.handleRelease);
   },
-  watch: {
-    nodes: {
-      handler() {
-        this.update();
-      },
-      deep: true
-    }
-  },
+
   methods: {
     dragNewNode(type) {
       window.addEventListener(
@@ -352,7 +353,7 @@ export default {
     // },
     onPointerDown(e) {
       if (this.mouseState.includes(0)) {
-        this.deselect();
+        // this.deselect();
       }
       this.update();
     },

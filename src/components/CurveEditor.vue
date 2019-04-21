@@ -32,7 +32,12 @@ export default {
     draggingIndex: -1,
     curveDraggingIndex: -1,
     curveProgressX: 0,
-    curveProgressY: 0
+    curveProgressY: 0,
+    graphMarks: {
+      xAxis: new window.PIXI.Graphics(),
+      yAxis: new window.PIXI.Graphics(),
+      bounds: new window.PIXI.Graphics()
+    }
   }),
   computed: {
     curve() {
@@ -84,19 +89,12 @@ export default {
     }
   },
   mounted() {
+    this.$refs.graph.container.addChildAt(this.graphMarks.yAxis, 0);
+    this.$refs.graph.container.addChildAt(this.graphMarks.xAxis, 0);
+    this.$refs.graph.container.addChildAt(this.graphMarks.bounds, 0);
     this.updatePoints();
-    const ticks = new window.PIXI.Graphics();
 
     window.addEventListener("resize", this.updatePoints);
-
-    ticks.lineStyle(1000 / this.$refs.graph.pxPerY, 0xffffff, 0.4);
-    ticks.moveTo(0, 100);
-    ticks.lineTo(0, -100);
-    ticks.lineStyle(10 / this.$refs.graph.pxPerX, 0xffffff, 0.4);
-    ticks.moveTo(-100, 0);
-    ticks.lineTo(100, 0);
-
-    this.$refs.graph.container.addChild(ticks);
   },
 
   beforeDestroy() {
@@ -126,6 +124,35 @@ export default {
       }
     },
     updatePoints() {
+      this.graphMarks.xAxis.clear();
+      // Width of the x axis is along the y axis so it must be scaled to that
+      this.graphMarks.xAxis.lineStyle(
+        -1 / this.$refs.graph.pxPerY,
+        0xff0000,
+        0.4
+      );
+      this.graphMarks.xAxis.moveTo(this.bounds[0], 0);
+      this.graphMarks.xAxis.lineTo(this.bounds[2], 0);
+
+      this.graphMarks.yAxis.clear();
+      this.graphMarks.yAxis.lineStyle(
+        1 / this.$refs.graph.pxPerX,
+        0x00ff00,
+        0.4
+      );
+      this.graphMarks.yAxis.moveTo(0, this.bounds[1]);
+      this.graphMarks.yAxis.lineTo(0, this.bounds[3]);
+
+      this.graphMarks.bounds.clear();
+      this.graphMarks.bounds.beginFill(0x000000, 0.3);
+      this.graphMarks.bounds.drawRect(
+        this.bounds[0],
+        this.curve.max,
+        this.bounds[2] - this.bounds[0],
+        -1 * (this.curve.max - this.curve.min)
+      );
+      this.graphMarks.bounds.endFill();
+
       const extraGraphics = this.graphics.length - this.points.length;
       range(extraGraphics).forEach(() => {
         const oldGraphic = this.graphics.pop();
@@ -143,7 +170,8 @@ export default {
           .on("mouseupoutside", this.curveDragStop(this.graphics.length))
           .on("mousemove", this.curveDragMove(this.graphics.length));
         const index = this.graphics.push(newGraphic);
-        this.container.addChildAt(newGraphic, 0);
+        // 1 is in front of the bounds shadow but behind the axes
+        this.container.addChildAt(newGraphic, 1);
       });
 
       let previousPoint = this.points[0];
@@ -219,9 +247,9 @@ export default {
         });
         const view = [
           this.bounds[0],
-          this.bounds[1] - y * yOrigin,
+          this.bounds[1] - y * yOrigin * (this.bounds[3] - this.bounds[1]),
           this.bounds[2],
-          this.bounds[3] + y * (1 - yOrigin)
+          this.bounds[3] + y * (1 - yOrigin) * (this.bounds[3] - this.bounds[1])
         ];
         await this.$store.commit("SET_CURVE", { id: this.curveId, view });
       } else {
@@ -240,7 +268,7 @@ export default {
       graphic.moveTo(from.beat, 0);
       graphic.lineTo(from.beat, from.value);
       if (to.type === 0) {
-        graphic.lineTo(from.beat, to.value);
+        graphic.lineTo(to.beat, from.value);
         graphic.lineTo(to.beat, to.value);
       } else {
         // Ramp to by default
