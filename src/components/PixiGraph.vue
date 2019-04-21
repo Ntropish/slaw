@@ -4,6 +4,7 @@
 
 <script>
 import "pixi.js";
+import { mapState, mapGetters } from "vuex";
 
 export default {
   props: {

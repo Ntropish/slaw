@@ -1,4 +1,4 @@
-const ValueScheduler = require('./util').ValueScheduler
+import { ValueScheduler } from './util'
 
 test('adding an event works', () => {
   const scheduler = ValueScheduler(false)

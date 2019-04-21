@@ -2,7 +2,7 @@ import Brain from './Brain'
 import Interface from 'components/nodeInterfaces/Curve.vue'
 import { store } from '../index'
 
-export default class Parameter extends Brain {
+export default class Curve extends Brain {
   constructor(transporter, { id: nodeId, data }) {
     super(transporter)
     this.constantSource = transporter.context.createConstantSource()
@@ -10,41 +10,25 @@ export default class Parameter extends Brain {
     this.constantSource.start()
     this.nodeId = nodeId
 
-    transporter.on('play', ({ now, position }) => {
-      const curveId = store.state.nodes[this.nodeId].data.curveId
-      const curve = store.state.curves[curveId]
-      const pointBelow = curve.points
-        .slice(1, curve.points.length - 1)
-        .reduce((result, candidate) => {
-          if (candidate.beat < position) {
-            if (!result) return candidate
-            if (candidate.beat > result.beat) return candidate
-            return result
-          }
-        }, null)
-      const scheduleFrom = pointBelow ? curve.points.indexOf(pointBelow) + 1 : 0
+    transporter.on('play', this.onPlay.bind(this))
+    transporter.on('clear', () => {
+      this.constantSource.offset.cancelScheduledValues(0)
+      this.constantSource.offset.setTargetAtTime(0, 0, 0.001)
+    })
+  }
 
-      // if (!pointBelow) {
-
-      // }
-
-      // Send events in this schedule chunk in order
-      // Object.values(store.getters.eventsOfTrack(trackId))
-      //   .filter(
-      //     event =>
-      //       event.beat >= data.beat && event.beat < data.beat + data.beats,
-      //   )
-      //   .map(event => {
-      //     const now = transporter.context.getOutputTimestamp().contextTime
-      //     const time = data.at + (event.beat - data.beat) / transporter.bps
-      //     return { ...event, time }
-      //   })
-      //   .sort(timeSort)
-      //   .forEach(event => {
-      //     this.eventSender.dispatchEvent(
-      //       new CustomEvent('event', { detail: event }),
-      //     )
-      //   })
+  onPlay({ now, position }) {
+    const curveId = store.state.nodes[this.nodeId].data.curveId
+    const points = store.state.curves[curveId].points
+    points.forEach((point, i) => {
+      const beatDifference = point.beat - position
+      const timeDifference = beatDifference / this.transporter.bps
+      const time = now + timeDifference
+      if (i === 0) {
+        this.constantSource.offset.setTargetAtTime(point.value, time, 0.002)
+      } else {
+        this.constantSource.offset.linearRampToValueAtTime(point.value, time)
+      }
     })
   }
 
@@ -63,11 +47,11 @@ export default class Parameter extends Brain {
   }
 }
 
-Parameter.title = 'Curve'
+Curve.title = 'Curve'
 
-Parameter.prototype.inputs = []
+Curve.prototype.inputs = []
 
-Parameter.prototype.outputs = [
+Curve.prototype.outputs = [
   {
     type: 'buffer',
     connect: (n, node, index) => {
@@ -80,4 +64,4 @@ Parameter.prototype.outputs = [
   },
 ]
 
-Parameter.interface = Interface
+Curve.interface = Interface

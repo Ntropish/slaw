@@ -31,6 +31,7 @@ module.exports = {
       nodes: path.resolve(__dirname, './src/nodes'),
       components: path.resolve(__dirname, './src/components'),
       modules: path.resolve(__dirname, './src/modules'),
+      test: path.resolve(__dirname, './src/test'),
     },
   },
   devtool: 'inline-source-maps',

@@ -5,7 +5,7 @@
       class="root graph"
       :bounds="bounds"
       @resize="resize"
-      @pointerdown.native="onPointerDown"
+      @mousedown.native="onPointerDown"
     />
     <Audio-node
       v-for="(node, id) in nodes"

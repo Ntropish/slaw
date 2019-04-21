@@ -165,6 +165,9 @@ export default {
     },
     events(val) {
       this.render();
+    },
+    viewStart(val) {
+      this.render();
     }
   },
   mounted() {

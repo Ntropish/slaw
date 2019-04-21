@@ -1,11 +1,14 @@
 module.exports = function(api) {
-  api.cache(true)
-
-  const presets = [require('@babel/preset-env')]
-  const plugins = []
+  if (api) {
+    api.cache(true)
+  }
 
   return {
-    presets,
-    plugins,
+    presets: [['@babel/preset-env', { modules: false }]],
+    env: {
+      test: {
+        presets: [['@babel/preset-env', { targets: { node: 'current' } }]],
+      },
+    },
   }
 }

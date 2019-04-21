@@ -5,7 +5,7 @@ export default class Transporter extends EventEmitter {
   constructor(position, context) {
     super()
 
-    this.context = context || new AudioContext()
+    this.context = context || new window.AudioContext()
     // Position is in beats, beats after this still need to be scheduled
     this.position = position || 0
     // Store this to make calculating stuff easier
@@ -31,7 +31,7 @@ export default class Transporter extends EventEmitter {
     this.isPlaying = true
     this.jump(this.position)
     this.schedule()
-    this.emit('play', { now, position: this.position })
+    this.emit('play', { now, position: this.startPosition })
     // Update 60 times a second
     this.positionUpdateID = setInterval(() => {
       this.emit('positionUpdate', this.currentPosition)

@@ -61,7 +61,8 @@ export default {
       "songEnd",
       "viewStart",
       "viewEnd",
-      "keyboardState"
+      "keyboardState",
+      "selectedNodes"
     ])
   },
   watch: {
@@ -76,11 +77,17 @@ export default {
           viewEnd: 5
         });
       }
+    },
+    selectedNodes() {
+      this.$refs.graph.resize();
+      this.updatePoints();
     }
   },
   mounted() {
     this.updatePoints();
     const ticks = new window.PIXI.Graphics();
+
+    window.addEventListener("resize", this.updatePoints);
 
     ticks.lineStyle(1000 / this.$refs.graph.pxPerY, 0xffffff, 0.4);
     ticks.moveTo(0, 100);
@@ -90,6 +97,10 @@ export default {
     ticks.lineTo(100, 0);
 
     this.$refs.graph.container.addChild(ticks);
+  },
+
+  beforeDestroy() {
+    window.removeEventListener("resize", this.updatePoints);
   },
   methods: {
     onMouseDown(e) {
@@ -335,5 +346,7 @@ export default {
 .root {
   height: 100%;
   width: 100%;
+  overflow: hidden;
+  position: relative;
 }
 </style>

@@ -7,6 +7,7 @@
         v-for="block in displayBlocks"
         :key="block.node.id"
         :brain="block.brain"
+        class="interface"
       />
     </div>
     <transport-bar class="transport-bar app-item"/>
@@ -189,6 +190,10 @@ export default {
 .interfaces {
   display: flex;
   color: hsla(0, 0%, 100%, 0.9);
+}
+.interface {
+  min-width: 0;
+  min-height: 0;
 }
 .interfaces > div {
   flex: 1 1 0;
