@@ -1,6 +1,5 @@
 import Brain from './Brain'
 import Interface from 'components/nodeInterfaces/Analyser.vue'
-import { store } from '../index'
 
 export default class Analyser extends Brain {
   constructor(transporter, { id: nodeId, data }) {
@@ -11,12 +10,27 @@ export default class Analyser extends Brain {
     var bufferLength = this.analyser.frequencyBinCount
     var dataArray = new Uint8Array(bufferLength)
     this.analyser.getByteTimeDomainData(dataArray)
+
+    // transporter.on('positionUpdate', e => {
+    //   console.log(e)
+    // })
+  }
+  getData() {
+    var bufferLength = this.analyser.frequencyBinCount
+    var dataArray = new Uint8Array(bufferLength)
+    this.analyser.getByteTimeDomainData(dataArray)
+    return dataArray
   }
 }
 
 Analyser.title = 'Analyser'
 
-Analyser.prototype.inputs = []
+Analyser.prototype.inputs = [
+  {
+    type: 'buffer',
+    args: n => [n.analyser],
+  },
+]
 
 Analyser.prototype.outputs = []
 

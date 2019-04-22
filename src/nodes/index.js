@@ -5,6 +5,7 @@ import SinFactory from './Sin'
 import Parameter from './Parameter'
 import Gain from './Gain'
 import Curve from './Curve'
+import Analyser from './Analyser'
 
 export default {
   adsr: ADSR,
@@ -14,6 +15,7 @@ export default {
   parameter: Parameter,
   gain: Gain,
   curve: Curve,
+  analyser: Analyser,
 }
 
 export const interfaces = {}

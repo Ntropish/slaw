@@ -7673,6 +7673,11 @@ vue@^2.6.8:
   resolved "https://registry.yarnpkg.com/vue/-/vue-2.6.8.tgz#f21cbc536bfc14f7d1d792a137bb12f69e60ea91"
   integrity sha512-+vp9lEC2Kt3yom673pzg1J7T1NVGuGzO9j8Wxno+rQN2WYVBX2pyo/RGQ3fXCLh2Pk76Skw/laAPCuBuEQ4diw==
 
+vuetrend@^0.3.2:
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/vuetrend/-/vuetrend-0.3.2.tgz#13100862ded562c78d3704c3865cd38c582e586a"
+  integrity sha512-nXza0yeoynEdrdV8RKStHA0KykPyVXNHjcQOqxc+5rW5051V3RMrsI9ob1+kiJM8azoww6t6XiC/+AS7aiqEew==
+
 vuex@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/vuex/-/vuex-3.1.0.tgz#634b81515cf0cfe976bd1ffe9601755e51f843b9"
