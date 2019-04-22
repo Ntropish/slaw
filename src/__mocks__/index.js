@@ -36,6 +36,7 @@ export const store = {
             value: 1,
           },
           {
+            type: 0,
             beat: 2.1,
             value: 0.1,
           },

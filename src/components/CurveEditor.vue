@@ -124,6 +124,7 @@ export default {
       }
     },
     updatePoints() {
+      // X Axis
       this.graphMarks.xAxis.clear();
       // Width of the x axis is along the y axis so it must be scaled to that
       this.graphMarks.xAxis.lineStyle(
@@ -134,6 +135,7 @@ export default {
       this.graphMarks.xAxis.moveTo(this.bounds[0], 0);
       this.graphMarks.xAxis.lineTo(this.bounds[2], 0);
 
+      // Y Axis
       this.graphMarks.yAxis.clear();
       this.graphMarks.yAxis.lineStyle(
         1 / this.$refs.graph.pxPerX,
@@ -143,6 +145,7 @@ export default {
       this.graphMarks.yAxis.moveTo(0, this.bounds[1]);
       this.graphMarks.yAxis.lineTo(0, this.bounds[3]);
 
+      // Unit Mark/black shadow
       this.graphMarks.bounds.clear();
       this.graphMarks.bounds.beginFill(0x000000, 0.3);
       this.graphMarks.bounds.drawRect(
@@ -153,6 +156,7 @@ export default {
       );
       this.graphMarks.bounds.endFill();
 
+      // Curves
       const extraGraphics = this.graphics.length - this.points.length;
       range(extraGraphics).forEach(() => {
         const oldGraphic = this.graphics.pop();
@@ -174,6 +178,7 @@ export default {
         this.container.addChildAt(newGraphic, 1);
       });
 
+      // Points
       let previousPoint = this.points[0];
       for (let i = 1; i < this.points.length; i++) {
         const graphic = this.graphics[i];

@@ -34,7 +34,7 @@ export default class Curve extends Brain {
             point.value,
             time - 0.000001,
           )
-          this.constantSource.offset.setValueAtTime(point.value, time)
+          // this.constantSource.offset.setValueAtTime(point.value, time)
         }
       }
       if (i === arr.length - 1) {
