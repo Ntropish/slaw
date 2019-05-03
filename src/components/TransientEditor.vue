@@ -439,12 +439,11 @@ export default {
       this.bufferNotes();
       if (this.dragStart) {
         this.dragStart = this.dragEnd;
-        this.dragStart = this.dragEnd;
+        this.dragEnd = this.dragStart;
       }
     },
     moveToolUpdate(xMove, yMove) {
       Object.values(this.noteBuffer).forEach(note => {
-        // if (!this.events[note.id]) return
         note.beat = this.events[note.id].beat + xMove;
         note.data.pitch = this.events[note.id].data.pitch + yMove;
       });
@@ -533,7 +532,6 @@ export default {
       if (data.y < 0 && this.yEnd < -1200 * 8) return;
       this.yStart += data.y;
       this.yEnd += data.y;
-      // this.$emit("pan", data);
       this.$store.commit("PAN_TRACK_VIEW", { deltaX: data.x });
       this.render();
     },

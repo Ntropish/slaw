@@ -1,41 +1,6 @@
 import ADSR from './ADSR'
 import { watchMaker } from '../test/util'
 
-// expect.extend({
-//   // This is all for the fact that numbers can be off by 0.00001-ish
-//   // Unlike toEqual this just makes sure numbers are close
-//   toMatchParamCallList(recieved, list) {
-//     for (const [i, call] of Object.entries(list)) {
-//       // Verify the call type here, the first item in the "call" array
-//       if (recieved[i][0] !== call[0]) {
-//         return {
-//           pass: false,
-//           message: () =>
-//             `expected call ${i}, "${recieved[i][0]}", to be "${call[0]}"`,
-//         }
-//       }
-//       // Verify the call parameters here, the remaining items in "call"
-//       for (let num = 1; num < call.length; num++) {
-//         if (Math.abs(recieved[i][num] - call[num]) > 0.001) {
-//           return {
-//             pass: false,
-//             message: () =>
-//               `expected "${
-//                 call[0]
-//               }" call numbers to match for call ${i} and argument ${num}\n\nRecieved: ${
-//                 recieved[i][num]
-//               }\n\nExpected: ${call[num]} `,
-//           }
-//         }
-//       }
-//     }
-//     // If the above logic didn't fail the test then it passed!
-//     return {
-//       pass: true,
-//     }
-//   },
-// })
-
 test('schedules an envelope correctly', () => {
   const [env, gainWatcher] = buildMocks()
   env.adsr = [0.1, 0.2, 0.3, 0.5]
@@ -96,6 +61,11 @@ test('schedules a retrigger envelope intersecting previous release', () => {
       [['linearRampToValueAtTime'], [0.3, 0.8]],
       [['linearRampToValueAtTime'], [0.3, 1.5]],
       [['linearRampToValueAtTime'], [0, 2]],
+
+      // Envelope intersects at beat/second 1.69 so
+      // everything after that is canceled and the new
+      // envelope is scheduled on top. 0.905 is the value
+      // at the intersection point
       [['cancelScheduledValues'], [1.69]],
       [['linearRampToValueAtTime'], [0.905, 1.69]],
       [['linearRampToValueAtTime'], [1, 1.7]],
@@ -121,7 +91,6 @@ function buildMocks() {
     on: () => {},
     bps: 1,
   }
-  // const transporter = new Transporter(0)
   const env = new ADSR(transporter)
   return [env, gainWatcher.gain]
 }
