@@ -1,7 +1,6 @@
 <template>
   <div class="root">
-    Analyser
-    <trend class="graph" :data="dataArray" :gradient="['#6fa8dc', '#42b983', '#2c3e50']" smooth/>
+    <trend class="graph" :data="dataArray" :gradient="['#6fa8dc', '#ff0000', '#ffff00']" smooth/>
   </div>
 </template>
 <script>

@@ -1,9 +1,12 @@
 import { Store } from 'vuex'
-import Transporter from 'modules/Transporter'
 import inputTracker from './inputTracker'
 import nodeMap from 'nodes'
 import Vue from 'vue'
-import { clamp } from './util'
+import { clamp } from '../util'
+
+import * as project from 'backendApi/project'
+import defaultState from './defaultState'
+import projectModule from './project'
 
 const lastIds = {
   event: 4,
@@ -17,35 +20,14 @@ function getId(type) {
 
 export default () => {
   const store = new Store({
-    state: {
-      selectedTrackId: '',
-      transporter: new Transporter(),
-      playbackStart: 0,
-      playbackPosition: 0,
-      songStart: 0,
-      songEnd: 24,
-      viewStart: 0,
-      viewEnd: 4,
-      // Node editor
-      nodeX: 0,
-      nodeY: 0,
-      nodeWidth: 800,
-      beatSnap: 1 / 4,
-      centsSnap: 100,
-      events: {},
-      tracks: {},
-      nodes: {},
-      curves: {},
-      selectedNodes: [],
-      brains: {},
-      edges: {},
-      keyboardState: [],
-      mouseState: [],
-      mousePosition: { x: 0, y: 0 },
-      // Last element clicked - scan upwards to see the focus ( element.closest() )
-      focus: null,
+    modules: {
+      project: projectModule,
     },
+    state: defaultState(),
     mutations: {
+      SET_PROJECT_ID(state, id) {
+        state._id = id
+      },
       ZOOM_NODE_EDITOR(state, { amount, xOrigin, yOrigin, yRatio }) {
         // Orthographic viewport, so zoom both axis the same
         state.nodeWidth += amount
@@ -215,92 +197,6 @@ export default () => {
       },
     },
     actions: {
-      // Action for loading a saved state
-      async setState(context, oldState) {
-        const nodeIdMap = {}
-        const connections = []
-
-        // Remake each node, but save connections/outputs until later
-        // when the node id map is completely full
-        for (const oldNode of Object.values(oldState.nodes)) {
-          const { type, x, y, data, outputs, id: oldId } = oldNode
-
-          const newNodeId = await context.dispatch('addNode', {
-            type,
-            data: data || {},
-            x,
-            y,
-          })
-          nodeIdMap[oldId] = newNodeId
-          if (type === 'track') {
-            const oldTrack = oldState.tracks[data.trackId]
-            const trackId = context.state.nodes[newNodeId].data.trackId
-            if (oldTrack.hue) {
-              context.commit('SET_TRACK', { id: trackId, hue: oldTrack.hue })
-            }
-            oldTrack.events.forEach(eventId => {
-              const oldEvent = oldState.events[eventId]
-              store.dispatch('addEvent', { ...oldEvent })
-            })
-          }
-          if (type === 'curve') {
-            const oldCurve = oldState.curves[data.curveId]
-            const newCurveId = context.state.nodes[newNodeId].data.curveId
-            context.commit('ADD_CURVE', {
-              id: newCurveId,
-              points: oldCurve.points,
-              global: oldCurve.global,
-              view: oldCurve.view,
-            })
-          }
-
-          connections.push(
-            ...outputs.map(([output, to, input]) => ({
-              from: newNodeId,
-              output,
-              to,
-              input,
-            })),
-          )
-        }
-
-        if (oldState.selectedNodes) {
-          store.commit(
-            'SET_SELECTED_NODES',
-            oldState.selectedNodes.map(oldId => nodeIdMap[oldId]),
-          )
-        }
-
-        if (oldState.selectedTrackId) {
-          store.commit('SET_SELECTED_TRACK', oldState.selectedTrackId)
-        }
-
-        store.commit('SET_NODE_EDITOR', {
-          nodeX: oldState.nodeX,
-          nodeY: oldState.nodeY,
-          nodeWidth: oldState.nodeWidth,
-        })
-
-        store.commit('SET_TRACK_VIEW', {
-          viewStart: oldState.viewStart,
-          viewEnd: oldState.viewEnd,
-        })
-
-        // Build connections here now that new node ids are known
-        for (const { from, to: oldTo, input, output } of connections) {
-          for (const num of [from, oldTo, input, output]) {
-            if (typeof num !== 'number' && typeof num !== 'string') {
-              return
-            }
-          }
-          context.dispatch('addEdge', {
-            from,
-            output,
-            to: nodeIdMap[oldTo],
-            input,
-          })
-        }
-      },
       removeEvents(context, events) {
         events.forEach(event => context.commit('REMOVE_EVENT', event))
       },
@@ -366,6 +262,7 @@ export default () => {
           id: newId,
           node: { ...node, brain: brain.id },
         })
+
         return newId
       },
       async removeNode(context, id) {
@@ -427,10 +324,14 @@ export default () => {
       },
     },
   })
+
   inputTracker(store)
+
   store.state.transporter.on('positionUpdate', position => {
     store.commit('SET_PLAYBACK_POSITION', position)
   })
+
+  // Save whenever the state changes that's part of the project
   store.subscribe((mutation, state) => {
     if (mutation.type === 'FOCUS_ELEMENT') return
     window.requestAnimationFrame(() => {

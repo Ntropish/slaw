@@ -30,6 +30,7 @@ export default class EventTrack extends Brain {
         })
         .sort(timeSort)
         .forEach(event => {
+          // console.log(event)
           this.eventSender.dispatchEvent(
             new CustomEvent('event', { detail: event }),
           )

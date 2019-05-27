@@ -70,9 +70,13 @@ export default {
       ];
     },
     nodeHeight() {
+      // Height of the node editor is calculated
+      // with the canvas aspect ratio
       return (this.nodeWidth * this.height) / this.width;
     },
     handleSpacing() {
+      // Handle space is dependent on scale so this is
+      // to conveniently calculate it
       return (
         this.handleSpace * (this.$refs.graph ? this.$refs.graph.pxPerY : 1)
       );
@@ -83,8 +87,8 @@ export default {
     isDraggingEditor() {
       return (
         this.mouseState.includes(0) &&
-        this.$store.state.focus &&
-        this.$store.state.focus.closest(".graph")
+        this.focus &&
+        this.focus.closest(".graph")
       );
     },
     ...mapState([
@@ -98,7 +102,8 @@ export default {
       "brains",
       "nodeX",
       "nodeY",
-      "nodeWidth"
+      "nodeWidth",
+      "focus"
     ])
   },
   watch: {
@@ -269,21 +274,21 @@ export default {
         }
 
         const portXy = this.xyOfPort(type, node, port);
-        const mouseXy = this.xyOfMouse();
+        const Xy = this.xyOfMouse();
 
         if (type === "output") {
           this.drawEdgeGraphic(
             graphic,
             portXy.x,
             portXy.y,
-            mouseXy.x,
-            mouseXy.y
+            this.mousePosition.x,
+            this.mousePosition.y
           );
         } else {
           this.drawEdgeGraphic(
             graphic,
-            mouseXy.x,
-            mouseXy.y,
+            this.mousePosition.x,
+            this.mousePosition.y,
             portXy.x,
             portXy.y
           );

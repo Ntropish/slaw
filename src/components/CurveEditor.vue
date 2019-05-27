@@ -129,7 +129,7 @@ export default {
       // Width of the x axis is along the y axis so it must be scaled to that
       this.graphMarks.xAxis.lineStyle(
         -1 / this.$refs.graph.pxPerY,
-        0xff0000,
+        0xeeeeee,
         0.4
       );
       this.graphMarks.xAxis.moveTo(this.bounds[0], 0);
@@ -139,7 +139,7 @@ export default {
       this.graphMarks.yAxis.clear();
       this.graphMarks.yAxis.lineStyle(
         1 / this.$refs.graph.pxPerX,
-        0x00ff00,
+        0xeeeeee,
         0.4
       );
       this.graphMarks.yAxis.moveTo(0, this.bounds[1]);

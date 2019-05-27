@@ -32,11 +32,16 @@ module.exports = {
       components: path.resolve(__dirname, './src/components'),
       modules: path.resolve(__dirname, './src/modules'),
       test: path.resolve(__dirname, './src/test'),
+      backendApi: path.resolve(__dirname, './src/backendApi'),
+      root: path.resolve(__dirname),
     },
   },
   devtool: 'inline-source-maps',
   devServer: {
     contentBase: path.resolve('static/'),
+    proxy: {
+      '/api': 'http://localhost:8088',
+    },
   },
   plugins: [
     new CleanWebpackPlugin(),

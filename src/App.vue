@@ -11,6 +11,7 @@
       />
     </div>
     <transport-bar class="transport-bar app-item"/>
+    <menu-panel/>
   </div>
 </template>
 
@@ -39,7 +40,7 @@ export default {
       viewStart: -1,
       viewEnd: 2,
       mode: "split",
-      displayBlockHeight: 200
+      displayBlockHeight: 50
     };
   },
 
@@ -66,7 +67,7 @@ export default {
     },
     displayBlocksStyle() {
       return {
-        flex: "0 0 " + this.displayBlockHeight + "px"
+        flex: "0 0 " + this.displayBlockHeight + "vh"
       };
     },
     ...mapState([
@@ -177,9 +178,6 @@ export default {
   flex: 0 0 30px;
 }
 
-.menu-panel {
-  flex: 0 0 30px;
-}
 .app.midi > .node-editor {
   display: none;
 }
@@ -189,8 +187,13 @@ export default {
 
 .interfaces {
   display: flex;
-  color: hsla(0, 0%, 100%, 0.9);
+  color: var(--primary-text);
+  flex-direction: column;
 }
+
+/* 
+This is important, fixes layout issues with canvas resizing
+ */
 .interface {
   min-width: 0;
   min-height: 0;
@@ -200,7 +203,7 @@ export default {
 }
 
 .app-item {
-  color: hsla(0, 0%, 80%, 0.8);
+  color: var(--primary-text);
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -208,6 +211,12 @@ export default {
 </style>
 
 <style>
+:root {
+  --tinted-background: hsl(0, 0%, 20%);
+  --primary-background: hsl(0, 0%, 15%);
+  --shaded-background: hsl(0, 0%, 10%);
+  --primary-text: hsl(0, 0%, 85%);
+}
 /* Below is for tooltips */
 .tooltip {
   display: block !important;

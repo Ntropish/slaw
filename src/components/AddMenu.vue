@@ -31,12 +31,12 @@ export default {
 <style scoped>
 .root {
   border-radius: 2.5px;
-  background: hsla(0, 0%, 15%, 0.8);
+  background: var(--primary-background);
   box-shadow: 0 0 6px hsla(0, 0%, 0%, 0.3);
   padding: 0.4em;
   position: fixed;
-  width: 180px;
-  height: 100%;
+  max-width: 20vw;
+  max-height: 100%;
   user-select: none;
 }
 
@@ -44,6 +44,7 @@ export default {
   cursor: pointer;
   padding: 0.4em;
   border-radius: 2.5px;
+  font-size: 1.2em;
 }
 
 .node-type:hover {
