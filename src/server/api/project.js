@@ -67,6 +67,9 @@ router.get(
 router.post(
   '/',
   endpointGuard(async (req, res) => {
+    if (!req.authenticated) {
+      res.status(401).send('Unauthorized')
+    }
     const newProject = new Project(req.body)
     const saveResult = newProject.save()
     res.json(saveResult)
@@ -75,17 +78,21 @@ router.post(
 
 router.put(
   '/:id',
-  endpointGuard(async ({ params, body }, res) => {
-    console.log('BODY:', body)
+  endpointGuard(async ({ params, body, authenticated }, res) => {
+    if (!authenticated) {
+      res.status(401).send('Unauthorized')
+    }
     const updateResult = await Project.findByIdAndUpdate(params.id, body).exec()
     res.json(updateResult)
-    // res.send('ok')
   }),
 )
 
 router.delete(
   '/',
   endpointGuard(async (req, res) => {
+    if (!req.authenticated) {
+      res.status(401).send('Unauthorized')
+    }
     const deleteResult = await Project.findByIdAndDelete(req.params.id).exec()
     res.json(deleteResult)
   }),

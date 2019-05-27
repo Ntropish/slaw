@@ -16,7 +16,6 @@ const actions = {
   // has some nuggets where stuff that can't be serialized
   // is built so it's needed until those are pulled out
   async setState(context, oldState) {
-    console.log('setState')
     const nodeIdMap = {}
     const connections = []
     // Fill in missing properties if not present on oldState so

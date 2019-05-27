@@ -59,11 +59,9 @@ export default {
     },
     async saveProject() {
       const result = await put(this.$store.state);
-      console.log(`save result: `, result);
     },
     async addProject() {
       const result = await post();
-      console.log(result);
     },
     ...mapActions(["loadProject"])
   }
