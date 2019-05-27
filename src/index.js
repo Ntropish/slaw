@@ -4,13 +4,19 @@ import App from './App.vue'
 import Store from './Store'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faBars, faSave, faPlusCircle } from '@fortawesome/free-solid-svg-icons'
+import {
+  faBars,
+  faSave,
+  faUser,
+  faPlusCircle,
+} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { put } from 'backendApi/project'
 import { VTooltip } from 'v-tooltip'
 
 library.add(faBars)
 library.add(faSave)
+library.add(faUser)
 library.add(faPlusCircle)
 Vue.component('font-awesome-icon', FontAwesomeIcon)
 Vue.config.productionTip = false

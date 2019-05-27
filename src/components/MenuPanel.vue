@@ -6,6 +6,7 @@
     <div v-if="open" class="menu">
       <div class="project-toolbar">
         {{$store.state._id}}
+        <font-awesome-icon class="icon-button" icon="user" @mousedown="login"/>
         <font-awesome-icon class="icon-button" icon="save" @mousedown="saveProject"/>
         <font-awesome-icon class="icon-button" icon="plus-circle" @mousedown="addProject"/>
       </div>
@@ -24,6 +25,7 @@
 import { getAll } from "backendApi/project";
 import { mapActions } from "vuex";
 import { put, post } from "backendApi/project";
+import auth from "../authService";
 
 export default {
   data: () => ({
@@ -62,6 +64,10 @@ export default {
     },
     async addProject() {
       const result = await post();
+    },
+    async login() {
+      const result = await auth.login();
+      console.log(result);
     },
     ...mapActions(["loadProject"])
   }
