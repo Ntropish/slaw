@@ -38,7 +38,10 @@ module.exports = {
   },
   devtool: 'inline-source-maps',
   devServer: {
-    contentBase: path.resolve('static/'),
+    contentBase: [
+      path.resolve('static/'),
+      path.resolve('./node_modules/auth0-js/build/'),
+    ],
     proxy: {
       '/api': 'http://localhost:8088',
     },

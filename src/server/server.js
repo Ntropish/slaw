@@ -20,6 +20,11 @@ try {
   // the built application and the static assets
   app.use(express.static(path.resolve(process.cwd(), './static')))
   app.use(express.static(path.resolve(process.cwd(), './dist')))
+  app.use(
+    express.static(
+      path.resolve(process.cwd(), '../../node_modules/auth0-js/build/'),
+    ),
+  )
 
   const api = express.Router()
   api.use('/project', projectRouter)

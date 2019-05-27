@@ -1,4 +1,4 @@
-import '../node_modules/auth0-js/build/auth0'
+// import '../node_modules/auth0-js/build/auth0'
 import auth0 from 'auth0-js'
 import EventEmitter from 'events'
 import authConfig from '../auth_config.json'
