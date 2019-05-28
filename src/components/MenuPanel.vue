@@ -25,7 +25,7 @@
 import { getAll } from "backendApi/project";
 import { mapActions } from "vuex";
 import { put, post } from "backendApi/project";
-import auth from "../authService";
+import auth from "../auth0";
 
 export default {
   data: () => ({
@@ -66,7 +66,7 @@ export default {
       const result = await post();
     },
     async login() {
-      const result = await auth.login();
+      const result = await auth.authorize();
       console.log(result);
     },
     ...mapActions(["loadProject"])

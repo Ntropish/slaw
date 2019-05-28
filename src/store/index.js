@@ -7,6 +7,7 @@ import { clamp } from '../util'
 import * as project from 'backendApi/project'
 import defaultState from './defaultState'
 import projectModule from './project'
+import userModule from './user'
 
 const lastIds = {
   event: 4,
@@ -22,6 +23,7 @@ export default () => {
   const store = new Store({
     modules: {
       project: projectModule,
+      user: userModule,
     },
     state: defaultState(),
     mutations: {

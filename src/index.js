@@ -13,6 +13,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { put } from 'backendApi/project'
 import { VTooltip } from 'v-tooltip'
+import { registerEventListener as userLoginAtStart } from './store/user'
 
 library.add(faBars)
 library.add(faSave)
@@ -38,7 +39,7 @@ new Vue({
 
 // TEST CODE: Loads this project at startup for easy development
 store.dispatch('loadProject', '5ccd09ddc208c42a2c73ef3e')
-
+userLoginAtStart(store)
 window.addEventListener('beforeunload', e => {
   // put(store.state)
 })
