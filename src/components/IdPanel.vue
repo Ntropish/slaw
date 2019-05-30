@@ -29,7 +29,6 @@ export default {
   computed: {
     ...mapState(["user"]),
     loaded() {
-      console.log(this.user.loaded);
       return this.user.loaded;
     }
   },
