@@ -242,6 +242,16 @@ This is important, fixes layout issues with canvas resizing
 .bright-button:hover {
   background: var(--tint);
 }
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Below is for tooltips */
 .tooltip {
   display: block !important;

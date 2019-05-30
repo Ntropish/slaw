@@ -1,11 +1,12 @@
 <template>
-  <div>
+  <div class="card">
+    <div v-if="!loaded">Loading...</div>
     <div
       v-if="loaded && (!user || (user && !user.profile))"
-      class="card login-button bright-button"
+      class="login-button bright-button"
       @click="login"
     >Login</div>
-    <div v-if="loaded && (user && user.profile)" class="card">
+    <div v-if="loaded && (user && user.profile)" class="logged-in-card">
       <div class="card-image">
         <img :src="user.profile.picture">
       </div>
@@ -43,19 +44,26 @@ export default {
 
 <style>
 .card {
-  box-shadow: 0 0 2vw hsla(0, 0%, 0%, 0.4);
-  display: flex;
+  box-shadow: 0 0 1vw hsla(0, 0%, 0%, 0.3);
   height: 16vh;
 }
 
+.card > div {
+  display: flex;
+}
+
 .card-image {
-  max-width: 16vh;
-  max-height: 100%;
+  max-height: 16vh;
+  min-width: 0;
 }
 
 .card-image > img {
-  max-width: 100%;
-  max-height: 100%;
+  max-height: 16vh;
+  min-width: 0;
+}
+
+.logged-in-card {
+  animation: fadein 0.2s;
 }
 
 .details {
