@@ -1,14 +1,15 @@
 <template>
   <div>
-    <div class="menu-panel icon-button" @mousedown="onMouseDown">
+    <div class="menu-panel bright-icon-button" @mousedown="onMouseDown">
       <font-awesome-icon class="menu-icon" icon="bars"/>
     </div>
     <div v-if="open" class="menu">
+      <!-- <div v-if="user.profile">{{profile.nickname}}</div> -->
+      <id-panel/>
       <div class="project-toolbar">
         {{$store.state._id}}
-        <font-awesome-icon class="icon-button" icon="user" @mousedown="login"/>
-        <font-awesome-icon class="icon-button" icon="save" @mousedown="saveProject"/>
-        <font-awesome-icon class="icon-button" icon="plus-circle" @mousedown="addProject"/>
+        <font-awesome-icon class="bright-icon-button" icon="save" @mousedown="saveProject"/>
+        <font-awesome-icon class="bright-icon-button" icon="plus-circle" @mousedown="addProject"/>
       </div>
       <h3>Open Project</h3>
       <div
@@ -23,11 +24,15 @@
 
 <script>
 import { getAll } from "backendApi/project";
-import { mapActions } from "vuex";
+import { mapActions, mapState } from "vuex";
 import { put, post } from "backendApi/project";
 import auth from "../auth0";
+import IdPanel from "./IdPanel.vue";
 
 export default {
+  components: {
+    IdPanel
+  },
   data: () => ({
     open: true,
     projectsAreLoaded: false,
@@ -67,26 +72,20 @@ export default {
     },
     async login() {
       const result = await auth.authorize();
-      console.log(result);
     },
     ...mapActions(["loadProject"])
+  },
+  computed: {
+    ...mapState(["user"]),
+    displayName() {
+      return this.user && this.user.profile && this.user.profile.nickname;
+    }
   }
 };
 </script>
 
 
 <style scoped>
-.icon-button {
-  padding: 0.4em;
-  background: hsla(0, 0%, 100%, 0.05);
-  border-radius: 2.5px;
-  font-size: 2.5em;
-  color: hsla(0, 0%, 100%, 0.1);
-  line-height: 0em;
-}
-.icon-button:hover {
-  color: hsla(0, 0%, 100%, 0.15);
-}
 .menu-panel {
   position: fixed;
   top: 0;
@@ -108,7 +107,7 @@ export default {
   color: var(--primary-text);
   background: hsla(0, 0%, 15%, 1);
   z-index: 11;
-  box-shadow: 0 0 6vw hsla(0, 0%, 0%, 0.4);
+  box-shadow: 0 0 2vw hsla(0, 0%, 0%, 0.3);
   display: flex;
   flex-direction: column;
 }

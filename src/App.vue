@@ -212,10 +212,35 @@ This is important, fixes layout issues with canvas resizing
 
 <style>
 :root {
+  --tintish: hsla(0, 0%, 100%, 0.04);
+  --tint: hsla(0, 0%, 100%, 0.1);
+  --tinter: hsla(0, 0%, 100%, 0.2);
+  --shade: hsla(0, 0%, 0%, 0.1);
+  --shader: hsla(0, 0%, 0%, 0.2);
   --tinted-background: hsl(0, 0%, 20%);
   --primary-background: hsl(0, 0%, 15%);
   --shaded-background: hsl(0, 0%, 10%);
   --primary-text: hsl(0, 0%, 85%);
+}
+.bright-icon-button {
+  user-select: none;
+  padding: 0.4em;
+  border-radius: 2.5px;
+  font-size: 2.5em;
+  line-height: 0em;
+  background: var(--tintish);
+  color: var(--tint);
+}
+.bright-icon-button:hover {
+  background: var(--tint);
+  color: var(--primary-text);
+}
+.bright-button {
+  user-select: none;
+  background: var(--tintish);
+}
+.bright-button:hover {
+  background: var(--tint);
 }
 /* Below is for tooltips */
 .tooltip {

@@ -5,6 +5,7 @@ const defaultState = () => ({
   accessToken: '',
   idToken: '',
   profile: null,
+  loaded: false,
 })
 
 const mutations = {
@@ -15,19 +16,41 @@ const mutations = {
   SET_PROFILE(state, profile) {
     state.profile = profile
   },
+  USER_LOAD_COMPLETE(state) {
+    state.loaded = true
+  },
+}
+
+const actions = {
+  logout(context) {
+    context.commit('SET_USER', { accessToken: '', idToken: '' })
+    localStorage.removeItem('user')
+    auth.logout({
+      returnTo: window.location.origin,
+    })
+  },
 }
 
 export default {
   state: defaultState(),
+  actions,
   mutations,
 }
 
+// Manages user loading at startup
+//
+// Stores user in store for access by the application
+// and another copy in localStorage to load from on
+// subsequent page re/loads
 export function registerEventListener(store) {
+  const user = JSON.parse(localStorage.getItem('user'))
   window.addEventListener('load', function() {
-    if (store.state.user.accessToken && store.state.user.idToken) {
+    if (user && user.accessToken && user.idToken) {
       renewTokens()
-    } else {
+    } else if (window.location.hash) {
       handleAuthentication()
+    } else {
+      store.commit('USER_LOAD_COMPLETE')
     }
     window.location.hash = ''
   })
@@ -42,14 +65,19 @@ export function registerEventListener(store) {
 
   function handleUserResponse(err, result) {
     const { accessToken, idToken } = result || {}
+    // To track if a callback will commit the USER_LOAD_COMPLETE later
+    let willLoad = false
     if (accessToken && idToken) {
       // Result came back with correct tokens so the user
       // can now be set
       store.commit('SET_USER', result)
+      localStorage.setItem('user', JSON.stringify(result))
+      willLoad = true
       auth.client.userInfo(accessToken, (err, profile) => {
         if (profile) {
           store.commit('SET_PROFILE', profile)
         }
+        store.commit('USER_LOAD_COMPLETE')
       })
     } else if (err) {
       // alert('Coult not get a new token')
@@ -58,9 +86,14 @@ export function registerEventListener(store) {
       }
       logout()
     }
+
+    if (!willLoad) {
+      store.commit('USER_LOAD_COMPLETE')
+    }
   }
 
   function logout() {
     store.commit('SET_USER', { accessToken: '', idToken: '' })
+    localStorage.removeItem('user')
   }
 }
