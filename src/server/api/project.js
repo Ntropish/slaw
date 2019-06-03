@@ -1,5 +1,6 @@
 const express = require('express')
 const mongoose = require('mongoose')
+const jwtMiddleware = require('../jwtMiddleware')
 
 const util = require('../util')
 const endpointGuard = util.endpointGuard
@@ -43,59 +44,66 @@ const projectSchema = new mongoose.Schema({
 
 const Project = new mongoose.model('Project', projectSchema)
 
-const router = express.Router()
-router.use(express.json())
+module.exports = jwks => {
+  const router = express.Router()
+  router.use(express.json())
+  router.use(jwtMiddleware(jwks))
 
-router.get(
-  '/all',
-  endpointGuard(async (req, res) => {
-    const project = await Project.find().exec()
-    if (!project) res.status(404)
-    res.json(project)
-  }),
-)
+  router.get(
+    '/all',
+    endpointGuard(async (req, res) => {
+      console.log(req.user)
+      const project = await Project.find().exec()
+      if (!project) res.status(404)
+      res.json(project)
+    }),
+  )
 
-router.get(
-  '/:id',
-  endpointGuard(async (req, res) => {
-    const project = await Project.findById(req.params.id).exec()
-    if (!project) res.status(404)
-    else res.json(project)
-  }),
-)
+  router.get(
+    '/:id',
+    endpointGuard(async (req, res) => {
+      const project = await Project.findById(req.params.id).exec()
+      if (!project) res.status(404)
+      else res.json(project)
+    }),
+  )
 
-router.post(
-  '/',
-  endpointGuard(async (req, res) => {
-    if (!req.authenticated) {
-      return res.status(401).send('Unauthorized')
-    }
-    const newProject = new Project(req.body)
-    const saveResult = newProject.save()
-    res.json(saveResult)
-  }),
-)
+  router.post(
+    '/',
+    endpointGuard(async (req, res) => {
+      if (!req.authenticated) {
+        return res.status(401).send('Unauthorized')
+      }
+      const newProject = new Project(req.body)
+      const saveResult = newProject.save()
+      res.json(saveResult)
+    }),
+  )
 
-router.put(
-  '/:id',
-  endpointGuard(async ({ params, body, authenticated }, res) => {
-    if (!authenticated) {
-      return res.status(401).send('Unauthorized')
-    }
-    const updateResult = await Project.findByIdAndUpdate(params.id, body).exec()
-    res.json(updateResult)
-  }),
-)
+  router.put(
+    '/:id',
+    endpointGuard(async ({ params, body, authenticated }, res) => {
+      if (!authenticated) {
+        return res.status(401).send('Unauthorized')
+      }
+      const updateResult = await Project.findByIdAndUpdate(
+        params.id,
+        body,
+      ).exec()
+      res.json(updateResult)
+    }),
+  )
 
-router.delete(
-  '/',
-  endpointGuard(async (req, res) => {
-    if (!req.authenticated) {
-      return res.status(401).send('Unauthorized')
-    }
-    const deleteResult = await Project.findByIdAndDelete(req.params.id).exec()
-    res.json(deleteResult)
-  }),
-)
+  router.delete(
+    '/',
+    endpointGuard(async (req, res) => {
+      if (!req.authenticated) {
+        return res.status(401).send('Unauthorized')
+      }
+      const deleteResult = await Project.findByIdAndDelete(req.params.id).exec()
+      res.json(deleteResult)
+    }),
+  )
 
-module.exports = router
+  return router
+}

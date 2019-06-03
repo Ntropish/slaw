@@ -1,4 +1,7 @@
 import Transporter from 'modules/Transporter'
+import { callbackPromise } from '../util'
+
+const [loadedPromise, loadedResolver] = callbackPromise()
 
 export default () => ({
   _id: '',
@@ -28,4 +31,6 @@ export default () => ({
   mousePosition: { x: 0, y: 0 },
   // Last element clicked - scan upwards to see the focus ( element.closest() )
   focus: null,
+  userLoaded: loadedPromise,
+  userLoadedResolver: loadedResolver,
 })

@@ -1,4 +1,5 @@
 {
   "domain": "slaw.auth0.com",
-  "clientId": "qeKHg4vH3xgG38MaNtUzcKnj9ofdTGpi"
+  "clientId": "qeKHg4vH3xgG38MaNtUzcKnj9ofdTGpi",
+  "audience": "server"
 }

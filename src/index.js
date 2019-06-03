@@ -1,7 +1,10 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
 import App from './App.vue'
-import Store from './store'
+import storeConfig from './store'
+import inputTracker from './store/inputTracker'
+import { Store } from 'vuex'
+import axios from 'axios'
 
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
@@ -25,8 +28,20 @@ Vue.config.productionTip = false
 Vue.directive('tooltip', VTooltip)
 
 Vue.use(Vuex)
+const store = new Store(storeConfig)
 
-export const store = Store()
+inputTracker(store)
+store.state.transporter.on('positionUpdate', position => {
+  store.commit('SET_PLAYBACK_POSITION', position)
+})
+// Save whenever the state changes that's part of the project
+// store.subscribe((mutation, state) => {
+//   if (mutation.type === 'FOCUS_ELEMENT') return
+//   window.requestAnimationFrame(() => {
+//     const { focus, ...stateToStore } = state
+//     localStorage.setItem('store', JSON.stringify(stateToStore))
+//   })
+// })
 
 new Vue({
   el: '#app',
@@ -43,3 +58,22 @@ userLoginAtStart(store)
 window.addEventListener('beforeunload', e => {
   // put(store.state)
 })
+
+// var tokenGetSettings = {
+//   crossDomain: true,
+//   url: 'https://slaw.auth0.com/oauth/token',
+//   method: 'POST',
+//   headers: {
+//     'content-type': 'application/json',
+//   },
+//   data:
+//     '{"client_id":"uT8eqs93fP6GOcLcEyx4T6CE9blviwPh","client_secret":"YkXYxZT-jSA0erUM0swI4FeLkrHtp56SonpbAk2yeFUkaZGE4gcCYt4S2_4mTyKF","audience":"server","grant_type":"client_credentials"}',
+// }
+
+// axios(tokenGetSettings).then(response => {
+//   console.log(response)
+//   return
+//   // store.dispatch('SET_API_ACCESS_TOKEN', 'token')
+// })
+
+export { store }

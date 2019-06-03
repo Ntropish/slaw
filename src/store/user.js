@@ -1,11 +1,10 @@
 import auth from '../auth0'
+import { callbackPromise } from '../util'
 
 const defaultState = () => ({
-  username: '',
   accessToken: '',
   idToken: '',
   profile: null,
-  loaded: false,
 })
 
 const mutations = {
@@ -13,11 +12,11 @@ const mutations = {
     state.accessToken = accessToken
     state.idToken = idToken
   },
+  SET_API_ACCESS_TOKEN(state, token) {
+    state.apiAccessToken = token
+  },
   SET_PROFILE(state, profile) {
     state.profile = profile
-  },
-  USER_LOAD_COMPLETE(state) {
-    state.loaded = true
   },
 }
 
@@ -28,6 +27,9 @@ const actions = {
     auth.logout({
       returnTo: window.location.origin,
     })
+  },
+  flagUserLoad(context) {
+    context.rootState.userLoadedResolver()
   },
 }
 
@@ -50,7 +52,7 @@ export function registerEventListener(store) {
     } else if (window.location.hash) {
       handleAuthentication()
     } else {
-      store.commit('USER_LOAD_COMPLETE')
+      store.dispatch('flagUserLoad')
     }
     window.location.hash = ''
   })
@@ -77,7 +79,7 @@ export function registerEventListener(store) {
         if (profile) {
           store.commit('SET_PROFILE', profile)
         }
-        store.commit('USER_LOAD_COMPLETE')
+        store.dispatch('flagUserLoad')
       })
     } else if (err) {
       // alert('Coult not get a new token')
@@ -88,7 +90,7 @@ export function registerEventListener(store) {
     }
 
     if (!willLoad) {
-      store.commit('USER_LOAD_COMPLETE')
+      store.dispatch('flagUserLoad')
     }
   }
 

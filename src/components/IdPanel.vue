@@ -26,12 +26,15 @@ import { mapActions, mapState } from "vuex";
 import auth from "../auth0";
 
 export default {
-  data: () => ({}),
+  data: () => ({
+    loaded: false
+  }),
   computed: {
-    ...mapState(["user"]),
-    loaded() {
-      return this.user.loaded;
-    }
+    ...mapState(["user"])
+  },
+  async mounted() {
+    await this.$store.state.userLoaded;
+    this.loaded = true;
   },
   methods: {
     async login() {
@@ -45,7 +48,7 @@ export default {
 <style>
 .card {
   box-shadow: 0 0 1vw hsla(0, 0%, 0%, 0.3);
-  height: 16vh;
+  height: 10em;
 }
 
 .card > div {
@@ -53,12 +56,12 @@ export default {
 }
 
 .card-image {
-  max-height: 16vh;
+  max-height: 10em;
   min-width: 0;
 }
 
 .card-image > img {
-  max-height: 16vh;
+  height: 10em;
   min-width: 0;
 }
 
@@ -69,6 +72,8 @@ export default {
 .details {
   margin: 0.5em;
   flex-grow: 1;
+  background: var(--primary-background);
+  padding: 0.5em;
 }
 
 .tools {
@@ -76,6 +81,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
+  flex: 0 0 10em;
 }
 
 .login-button {
@@ -84,6 +90,8 @@ export default {
   color: hsla(0, 0%, 100%, 0.4);
   justify-content: space-around;
   align-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 .tool-button {

@@ -58,6 +58,11 @@ export default {
       }
     },
     async loadProjects(e) {
+      if (!this.$store.state.user.loaded) {
+        return setTimeout(() => {
+          this.loadProjects();
+        }, 100);
+      }
       this.projectsAreLoaded = false;
       const response = await getAll();
 
@@ -86,6 +91,17 @@ export default {
 
 
 <style scoped>
+@media (max-width: 1200px) {
+  .menu {
+    width: 100%;
+  }
+}
+@media (min-width: 1201px) {
+  .menu {
+    width: 40vw;
+    max-width: 40em;
+  }
+}
 .menu-panel {
   position: fixed;
   top: 0;
@@ -100,7 +116,6 @@ export default {
 
 .menu {
   position: fixed;
-  width: 40vw;
   height: 100%;
   top: 0;
   left: 0;
@@ -111,7 +126,6 @@ export default {
   display: flex;
   flex-direction: column;
 }
-
 .menu > * {
   margin: 0.5em;
 }
