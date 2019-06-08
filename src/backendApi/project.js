@@ -6,11 +6,10 @@ const path = '/api/project'
 // so the appropriate credentials are available
 async function getConfigObject() {
   await store.state.userLoaded
-  console.log('loaded')
   if (store.state && store.state.user && store.state.user.accessToken) {
     return {
       headers: {
-        Authorization: `Bearer ${store.state.user.idToken}`,
+        Authorization: `Bearer ${store.state.user.accessToken}`,
       },
     }
   } else {

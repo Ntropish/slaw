@@ -38,7 +38,9 @@ export default {
   },
   methods: {
     async login() {
-      const result = await auth.authorize();
+      // Using audience: "server" will get the idToken as a jwt
+      // we can use to authenticate with our api, known as "server" to auth0
+      const result = await auth.authorize({ audience: "server" });
     },
     ...mapActions(["logout"])
   }

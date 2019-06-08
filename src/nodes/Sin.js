@@ -11,10 +11,7 @@ export default class Sin extends Brain {
     this.osc = context.createOscillator()
     this.osc.start()
     this.gainNode = context.createGain()
-    this.gainNode.gain.setValueAtTime(
-      0,
-      context.getOutputTimestamp().contextTime,
-    )
+    this.gainNode.gain.setValueAtTime(0, context.currentTime)
     this.osc.connect(this.gainNode)
     this.gainScheduler = ValueScheduler(0)
     this.frequencyScheduler = ValueScheduler(440)
@@ -24,20 +21,14 @@ export default class Sin extends Brain {
     transporter.on('clear', () => {
       this.gainScheduler.schedulings = []
       this.frequencyScheduler.schedulings = []
-      this.gainNode.gain.cancelScheduledValues(
-        context.getOutputTimestamp().contextTime,
-      )
-      this.gainNode.gain.setTargetAtTime(
-        0,
-        context.getOutputTimestamp().contextTime,
-        0.01,
-      )
+      this.gainNode.gain.cancelScheduledValues(context.currentTime)
+      this.gainNode.gain.setTargetAtTime(0, context.currentTime, 0.01)
     })
   }
 
   onEvent({ detail: { beats, time, data, id } }) {
     const frequency = pitchToFrequency(data.pitch)
-    const now = this.context.getOutputTimestamp().contextTime
+    const now = this.context.currentTime
     const eventEnd = time + beats / this.bps
     this.gainNode.gain.cancelScheduledValues(now)
     this.osc.frequency.cancelScheduledValues(now)

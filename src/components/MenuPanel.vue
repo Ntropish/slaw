@@ -58,11 +58,7 @@ export default {
       }
     },
     async loadProjects(e) {
-      if (!this.$store.state.user.loaded) {
-        return setTimeout(() => {
-          this.loadProjects();
-        }, 100);
-      }
+      await this.$store.state.userLoaded;
       this.projectsAreLoaded = false;
       const response = await getAll();
 

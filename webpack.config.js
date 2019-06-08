@@ -36,7 +36,7 @@ module.exports = {
       root: path.resolve(__dirname),
     },
   },
-  devtool: 'inline-source-maps',
+  devtool: 'cheap-module-source-map',
   devServer: {
     contentBase: [
       path.resolve('static/'),
