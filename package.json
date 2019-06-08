@@ -55,7 +55,7 @@
   },
   "scripts": {
     "build": "webpack --config ./webpack.config.js",
-    "start": "node ./src/server/server.js --experimental-modules",
+    "start": "nodemon ./src/server/server.js --experimental-modules",
     "dev": "webpack-dev-server --open --config ./webpack.config.js",
     "test": "cross-env BABEL_ENV=test jest --watch",
     "test:debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand --watch"

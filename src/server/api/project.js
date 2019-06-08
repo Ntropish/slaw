@@ -3,7 +3,18 @@ const mongoose = require('mongoose')
 const jwtMiddleware = require('../jwtMiddleware')
 
 const util = require('../util')
-const endpointGuard = util.endpointGuard
+const _endpointGuard = util.endpointGuard
+
+// All endpoints need to be authorized so it's injected here
+const endpointGuard = cb => {
+  return _endpointGuard((req, res) => {
+    if (!req.user) return unauthorized(res)
+    return cb(req, res)
+  })
+}
+
+// Util so each of these is the same
+const unauthorized = res => res.status(401).send('Unauthorized')
 
 connect()
 
@@ -25,7 +36,7 @@ const projectSchema = new mongoose.Schema({
   viewStart: Number,
   viewEnd: Number,
 
-  // Node editor
+  // Node editor viewport position
   nodeX: Number,
   nodeY: Number,
   nodeWidth: Number,
@@ -40,6 +51,8 @@ const projectSchema = new mongoose.Schema({
   edges: { type: Map, of: {} },
 
   selectedNodes: [String],
+
+  owner: String,
 })
 
 const Project = new mongoose.model('Project', projectSchema)
@@ -52,8 +65,7 @@ module.exports = jwks => {
   router.get(
     '/all',
     endpointGuard(async (req, res) => {
-      console.log(req.user)
-      const project = await Project.find().exec()
+      const project = await Project.find({ owner: req.user.sub }).exec()
       if (!project) res.status(404)
       res.json(project)
     }),
@@ -63,7 +75,7 @@ module.exports = jwks => {
     '/:id',
     endpointGuard(async (req, res) => {
       const project = await Project.findById(req.params.id).exec()
-      if (!project) res.status(404)
+      if (!project || project.owner !== req.user.sub) res.status(404)
       else res.json(project)
     }),
   )
@@ -71,10 +83,7 @@ module.exports = jwks => {
   router.post(
     '/',
     endpointGuard(async (req, res) => {
-      if (!req.authenticated) {
-        return res.status(401).send('Unauthorized')
-      }
-      const newProject = new Project(req.body)
+      const newProject = new Project({ ...req.body, owner: req.user.sub })
       const saveResult = newProject.save()
       res.json(saveResult)
     }),
@@ -82,10 +91,9 @@ module.exports = jwks => {
 
   router.put(
     '/:id',
-    endpointGuard(async ({ params, body, authenticated }, res) => {
-      if (!authenticated) {
-        return res.status(401).send('Unauthorized')
-      }
+    endpointGuard(async ({ params, body, user }, res) => {
+      const project = await Project.findById(params.id)
+      if (project.owner !== user.sub) return unauthorized(res)
       const updateResult = await Project.findByIdAndUpdate(
         params.id,
         body,
@@ -95,12 +103,11 @@ module.exports = jwks => {
   )
 
   router.delete(
-    '/',
-    endpointGuard(async (req, res) => {
-      if (!req.authenticated) {
-        return res.status(401).send('Unauthorized')
-      }
-      const deleteResult = await Project.findByIdAndDelete(req.params.id).exec()
+    '/:id',
+    endpointGuard(async ({ params, user }, res) => {
+      const project = await Project.findById(params.id)
+      if (project.owner !== user.sub) return unauthorized(res)
+      const deleteResult = await Project.findByIdAndDelete(params.id).exec()
       res.json(deleteResult)
     }),
   )
