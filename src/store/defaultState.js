@@ -7,6 +7,7 @@ export default () => ({
   _id: '',
   selectedTrackId: '',
   transporter: new Transporter(),
+  panelShelfHeight: 50,
   playbackStart: 0,
   playbackPosition: 0,
   songStart: 0,

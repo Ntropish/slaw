@@ -25,6 +25,9 @@ export default {
   },
   state: defaultState(),
   mutations: {
+    SET_PANEL_SHELF_HEIGHT(state, value) {
+      state.panelShelfHeight = clamp(5, Math.round(value), 95)
+    },
     SET_PROJECT_ID(state, id) {
       state._id = id
     },

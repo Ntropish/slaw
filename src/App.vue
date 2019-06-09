@@ -1,6 +1,13 @@
 <template>
-  <div class="app" :class="mode" :style="appGridStyle" @keydown="onKeyDown">
+  <div class="app" :style="appGridStyle" @keydown="onKeyDown">
     <node-editor ref="nodeEditor" class="node-editor app-item"/>
+    <div class="split-handle-container">
+      <drag class="split-handle-buffer" @drag="splitHandleDrag">
+        <div class="split-handle">
+          <font-awesome-icon class="handle-icon" icon="bars"/>
+        </div>
+      </drag>
+    </div>
     <div class="interfaces app-item" :style="displayBlocksStyle">
       <component
         :is="block.interface"
@@ -21,8 +28,9 @@ import TransportBar from "components/TransportBar.vue";
 import TransientEditor from "components/TransientEditor.vue";
 import MenuPanel from "components/MenuPanel.vue";
 import NodeEditor from "components/NodeEditor.vue";
+import Drag from "components/Drag.vue";
 import Transporter from "modules/Transporter.js";
-import { clearTimeout } from "timers";
+import { clearTimeout, setInterval } from "timers";
 import { clamp } from "./util";
 import { mapState } from "vuex";
 import nodeMap from "nodes";
@@ -33,14 +41,14 @@ export default {
   components: {
     TransportBar,
     NodeEditor,
-    MenuPanel
+    MenuPanel,
+    Drag
   },
   data: () => {
     return {
       viewStart: -1,
       viewEnd: 2,
-      mode: "split",
-      displayBlockHeight: 50
+      isSplitOpen: true
     };
   },
 
@@ -48,7 +56,7 @@ export default {
     appGridStyle() {
       // Defines css grid lines dynamically so user
       // can eventually change layout of app.
-      return this.mode === "split"
+      return this.isSplitOpen
         ? {
             gridTemplateColumns: `1`,
             gridTemplateRows: `6em ${this.split}fr ${1 - this.split}fr`
@@ -67,7 +75,7 @@ export default {
     },
     displayBlocksStyle() {
       return {
-        flex: "0 0 " + this.displayBlockHeight + "vh"
+        flex: "0 0 " + this.panelShelfHeight + "vh"
       };
     },
     ...mapState([
@@ -75,7 +83,8 @@ export default {
       "playbackStart",
       "selectedNodes",
       "nodes",
-      "brains"
+      "brains",
+      "panelShelfHeight"
     ])
   },
   watch: {
@@ -149,6 +158,13 @@ export default {
       const deltaX = width - newWidth;
       this.viewStart += deltaX / 2;
       this.viewEnd -= deltaX / 2;
+    },
+    splitHandleDrag(e) {
+      console.log(e, e.clientY, window.innerHeight);
+      this.$store.commit(
+        "SET_PANEL_SHELF_HEIGHT",
+        (1 - (e.clientY + 30) / window.innerHeight) * 100
+      );
     }
   }
 };
@@ -167,20 +183,10 @@ export default {
   font-family: VarelaRound;
 }
 
-.app.node > .midi-editor {
-  display: none;
-}
-.midi-editor {
-  flex: 1 1 0;
-}
-
 .transport-bar {
   flex: 0 0 30px;
 }
 
-.app.midi > .node-editor {
-  display: none;
-}
 .node-editor {
   flex: 2 1 0;
 }
@@ -189,6 +195,36 @@ export default {
   display: flex;
   color: var(--primary-text);
   flex-direction: column;
+}
+
+.split-handle-container {
+  position: relative;
+}
+
+.split-handle-buffer {
+  position: absolute;
+  left: calc(50% - 2em);
+  top: -2em;
+  width: 4em;
+  height: 4em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.split-handle {
+  padding: 0.2em 1em;
+  position: absolute;
+  z-index: 99;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--tintish);
+}
+
+.handle-icon {
+  transform: rotate(90deg);
+  color: var(--tint);
 }
 
 /* 
@@ -200,6 +236,11 @@ This is important, fixes layout issues with canvas resizing
 }
 .interfaces > div {
   flex: 1 1 0;
+}
+.interfaces {
+  border-top: var(--tint);
+  border-top-width: 1px;
+  border-top-style: solid;
 }
 
 .app-item {
