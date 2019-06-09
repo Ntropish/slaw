@@ -70,6 +70,12 @@ export default {
     },
     async addProject() {
       const result = await post();
+
+      // Reload projects
+      this.projectsAreLoaded = false;
+      const response = await getAll();
+      this.projects = response.data;
+      this.projectsAreLoaded = true;
     },
     async login() {
       const result = await auth.authorize();

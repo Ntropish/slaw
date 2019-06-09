@@ -1,27 +1,6 @@
 <template>
   <div class="node-editor" @wheel="onWheel">
-    <pixi-graph
-      ref="graph"
-      class="root graph"
-      :bounds="bounds"
-      @resize="resize"
-      @mousedown.native="onPointerDown"
-    />
-    <Audio-node
-      v-for="(node, id) in nodes"
-      :key="id"
-      class="node"
-      :node="node"
-      :style="computeNodeStyle(node)"
-      :handle-spacing="handleSpacing"
-      :px-per-unit="pxPerUnit"
-      :selected="selectedNodes.includes(node.id)"
-      @drag="dragNode"
-      @handle-input-drag="handleInputDrag(node.id, $event.i)"
-      @handle-output-drag="handleOutputDrag(node.id, $event.i)"
-      @handle-input-drop="handleInputDrop(node.id, $event.i)"
-      @handle-output-drop="handleOutputDrop(node.id, $event.i)"
-    />
+    <Slaw-canvas ref="canvas" class="viewport" @resize="render"/>
     <add-menu class="add-menu" @drag-new-node="dragNewNode"/>
   </div>
 </template>
@@ -39,10 +18,12 @@ import DestinationFactory from "nodes/Destination";
 import { mapState } from "vuex";
 import nodeMap from "nodes";
 import PixiGraph from "./PixiGraph.vue";
-
+import SlawCanvas from "./SlawCanvas.vue";
+import zdog from "zdog";
+import { differ } from "../util";
 const tools = {};
 export default {
-  components: { AudioNode, AddMenu, PixiGraph },
+  components: { AddMenu, SlawCanvas },
   props: {},
   data: () => ({
     gridSize: 25,
@@ -52,14 +33,14 @@ export default {
     edgeGraphics: {},
     xSnap: 25,
     ySnap: 25,
-    width: 1,
-    height: 1,
     isDraggingHandle: false,
     handleSpace: 28,
     selectedNodeType: "track",
-    backgroundGraphic: new window.PIXI.Graphics()
+    backgroundGraphic: new window.PIXI.Graphics(),
+    illo: null,
+    nodeDiff: differ.array([]),
+    nodeGraphics: {}
   }),
-
   computed: {
     bounds() {
       return [
@@ -91,6 +72,8 @@ export default {
         this.focus.closest(".graph")
       );
     },
+    width: () => 10,
+    height: () => 10,
     ...mapState([
       "nodes",
       "selectedNodes",
@@ -108,16 +91,24 @@ export default {
   },
   watch: {
     nodes: {
-      handler() {
+      handler(newNodes) {
         this.update();
       },
       deep: true
     }
   },
   mounted() {
-    this.render();
     window.addEventListener("pointermove", this.onPointerMove);
     window.addEventListener("mouseup", this.handleRelease);
+    window.addEventListener("resize", this.renderNextTick);
+    this.illo = new zdog.Illustration({
+      element: ".viewport",
+      onDragStart(e) {
+        console.log(e);
+      }
+    });
+
+    this.renderNextTick();
   },
   beforeDestroy() {
     window.removeEventListener("pointermove", this.onPointerMove);
@@ -125,6 +116,13 @@ export default {
   },
 
   methods: {
+    renderNextTick() {
+      setImmediate(
+        (() => {
+          this.illo.updateRenderGraph();
+        }).bind(this)
+      );
+    },
     dragNewNode(type) {
       window.addEventListener(
         "mouseup",
@@ -139,10 +137,6 @@ export default {
         },
         { once: true }
       );
-    },
-    resize() {
-      this.width = this.$refs.graph.width;
-      this.height = this.$refs.graph.height;
     },
     onWheel(e) {
       const amount = (e.deltaY / 1000) * this.nodeWidth;
@@ -205,102 +199,38 @@ export default {
       this.update();
     },
     render() {
-      const container = this.$refs.graph ? this.$refs.graph.container : null;
-      if (!container) {
-        return requestAnimationFrame(() => this.render());
-      }
-      container.removeChildren();
-
-      const backgroundGraphic = this.backgroundGraphic;
-
-      const lines = range(-5000, 5000, 100);
-      backgroundGraphic.lineStyle(2, 0x222222, 1);
-
-      for (const length of lines) {
-        backgroundGraphic.moveTo(length, -5000);
-        backgroundGraphic.lineTo(length, 5000);
-        backgroundGraphic.moveTo(-5000, length);
-        backgroundGraphic.lineTo(5000, length);
-      }
-      container.addChild(backgroundGraphic);
-      this.update();
+      if (!this.illo) return;
+      this.illo.updateRenderGraph();
     },
     update() {
-      const container = this.$refs.graph ? this.$refs.graph.container : null;
-      if (!container) return;
+      const nodeKeys = Object.keys(this.nodes);
+      console.log(nodeKeys);
+      const { add, remove } = this.nodeDiff(nodeKeys);
+      console.log(add, remove);
 
-      const touchedEdgeKeys = [];
-      for (const node of Object.values(this.nodes)) {
-        if (typeof node.outputs[Symbol.iterator] === "function") {
-          node.outputs.forEach(([output, to, input]) => {
-            const key = node.id + output + to + input;
-            touchedEdgeKeys.push(key);
-            let graphic = this.edgeGraphics[key];
-            if (graphic) {
-              this.edgeGraphics[key].clear();
-            } else {
-              graphic = new window.PIXI.Graphics();
-              Vue.set(this.edgeGraphics, key, graphic);
-              container.addChild(graphic);
-            }
-            this.drawEdgeGraphicFromPorts(graphic, [
-              node.id,
-              output,
-              to,
-              input
-            ]);
-          });
-        }
+      for (const item of add) {
+        console.log("add:", item);
+        const node = this.nodes[item];
+        const { x, y, width, height } = node;
+        const rect = new zdog.Rect({
+          addTo: this.illo,
+          width,
+          height,
+          translate: { z: 10, x, y },
+          fill: 10,
+          color: "#636"
+        });
+        Vue.set(this.nodeGraphics, item, rect);
       }
 
-      for (const key of Object.keys(this.edgeGraphics)) {
-        if (!touchedEdgeKeys.includes(key)) {
-          container.removeChild(this.edgeGraphics[key]);
-          Vue.delete(this.edgeGraphics, key);
-        }
+      for (const item of remove) {
+        console.log("remove:", item);
+        const graphic = this.nodeGraphics[item];
+        const index = this.illo.children.indexOf(graphic);
+        this.illo.children.splice(index, 1);
+        Vue.delete(this.nodeGraphics, item);
       }
-
-      const touchedTempEdgeKeys = [];
-      for (const [type, node, port] of this.temporaryEdges) {
-        const key = type + node + port;
-        touchedTempEdgeKeys.push(key);
-        let graphic = this.temporaryEdgeGraphics[key];
-        if (graphic) {
-          graphic.clear();
-        } else {
-          graphic = new window.PIXI.Graphics();
-          Vue.set(this.temporaryEdgeGraphics, key, graphic);
-          container.addChild(this.temporaryEdgeGraphics[key]);
-        }
-
-        const portXy = this.xyOfPort(type, node, port);
-        const Xy = this.xyOfMouse();
-
-        if (type === "output") {
-          this.drawEdgeGraphic(
-            graphic,
-            portXy.x,
-            portXy.y,
-            this.mousePosition.x,
-            this.mousePosition.y
-          );
-        } else {
-          this.drawEdgeGraphic(
-            graphic,
-            this.mousePosition.x,
-            this.mousePosition.y,
-            portXy.x,
-            portXy.y
-          );
-        }
-      }
-
-      for (const key of Object.keys(this.temporaryEdgeGraphics)) {
-        if (!touchedTempEdgeKeys.includes(key)) {
-          container.removeChild(this.temporaryEdgeGraphics[key]);
-          Vue.delete(this.temporaryEdgeGraphics, key);
-        }
-      }
+      this.render();
     },
     drawEdgeGraphic(graphic, x1, y1, x2, y2) {
       graphic.lineStyle(4, 0x595959, 1);

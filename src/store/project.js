@@ -9,7 +9,8 @@ const mutations = {
 const actions = {
   async loadProject(context, id) {
     const { data: projectToLoad } = await project.get(id)
-    context.dispatch('setState', projectToLoad)
+    await context.dispatch('setState', projectToLoad)
+    document.dispatchEvent(new CustomEvent('resize'))
   },
   // Action for loading a saved state
   // This was made before I knew about replaceState but it

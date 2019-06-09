@@ -14,3 +14,29 @@ export const callbackPromise = () => {
   })
   return [promise, resolver, rejecter]
 }
+
+export const differ = {
+  array: (array, comparer) => {
+    let lastArray = array
+    return newArray => {
+      const add = differ.arrayDifference(newArray, lastArray, comparer)
+      const remove = differ.arrayDifference(lastArray, newArray, comparer)
+      lastArray = newArray
+      return {
+        add,
+        remove,
+      }
+    }
+  },
+  arrayDifference: (a, b, _comparer) => {
+    const comparer = _comparer || ((a, b) => a == b)
+    const result = [...a]
+    for (const bItem of b) {
+      const index = result.findIndex(a => comparer(a, bItem))
+      if (index !== -1) {
+        result.splice(index, 1)
+      }
+    }
+    return result
+  },
+}

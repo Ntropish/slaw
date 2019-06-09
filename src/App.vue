@@ -157,11 +157,15 @@ export default {
       this.viewStart += deltaX / 2;
       this.viewEnd -= deltaX / 2;
     },
-    splitHandleDrag(e) {
-      this.$store.commit(
+    async splitHandleDrag(e) {
+      await this.$store.commit(
         "SET_PANEL_SHELF_HEIGHT",
         (1 - (e.clientY + 30) / window.innerHeight) * 100
       );
+      // This change will require layout recalculation. Many
+      // components rely on the window resize event for that so I'm going
+      // to try putting these wherever they happen
+      document.dispatchEvent(new CustomEvent("resize"));
     },
     splitHandleDown(e) {
       if (!this.isSplitOpen) {
@@ -207,9 +211,9 @@ export default {
 .split-handle-buffer {
   position: absolute;
   left: calc(50% - 2em);
-  top: -2em;
+  top: -1.5em;
   width: 4em;
-  height: 4em;
+  height: 3em;
   display: flex;
   justify-content: center;
   align-items: center;
