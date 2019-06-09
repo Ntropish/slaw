@@ -154,6 +154,8 @@ export default {
   bottom: calc(100% + 4px);
   width: 100%;
   text-align: center;
+  user-select: none;
+  -moz-user-select: none;
 }
 
 .ports {

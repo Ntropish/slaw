@@ -38,6 +38,7 @@ export default {
   max-width: 20vw;
   max-height: 100%;
   user-select: none;
+  -moz-user-select: none;
 }
 
 .node-type {
@@ -45,6 +46,8 @@ export default {
   padding: 0.4em;
   border-radius: 2.5px;
   font-size: 1.2em;
+  user-select: none;
+  -moz-user-select: none;
 }
 
 .node-type:hover {
