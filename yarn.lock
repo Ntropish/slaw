@@ -8448,3 +8448,8 @@ yauzl@2.4.1:
   integrity sha1-lSj0QtqxsihOWLQ3m7GU4i4MQAU=
   dependencies:
     fd-slicer "~1.0.1"
+
+zdog@^1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/zdog/-/zdog-1.0.2.tgz#f2a64a727ff0c3d1a067083124e652abcb392a15"
+  integrity sha512-QjLJ5G5H9X4wowICh8Gx7EC4D738qtspaEr6JnUwXcbZ5bDwgHWG/Q3099Lj91mrFODKL3V/ob8VWZUdXr1YoA==
