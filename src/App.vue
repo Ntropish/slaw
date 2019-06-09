@@ -2,13 +2,13 @@
   <div class="app" :style="appGridStyle" @keydown="onKeyDown">
     <node-editor ref="nodeEditor" class="node-editor app-item"/>
     <div class="split-handle-container">
-      <drag class="split-handle-buffer" @drag="splitHandleDrag">
+      <drag class="split-handle-buffer" @drag="splitHandleDrag" @down="splitHandleDown">
         <div class="split-handle">
           <font-awesome-icon class="handle-icon" icon="bars"/>
         </div>
       </drag>
     </div>
-    <div class="interfaces app-item" :style="displayBlocksStyle">
+    <div v-if="isSplitOpen" class="interfaces app-item" :style="displayBlocksStyle">
       <component
         :is="block.interface"
         v-for="block in displayBlocks"
@@ -113,11 +113,9 @@ export default {
     onKeyDown(e) {
       if (e.key === " ") this.transporter.pause();
       if (e.key === "s") this.transporter.pause();
-      // else if (e.key === "Tab") {
-      //   if (this.mode === "split") this.mode = "midi";
-      //   else if (this.mode === "midi") this.mode = "node";
-      //   else if (this.mode === "node") this.mode = "split";
-      // }
+      else if (e.key === "Tab") {
+        this.isSplitOpen = !this.isSplitOpen;
+      }
     },
     onKeyUp(e) {
       if (e.key === " ") {
@@ -160,11 +158,16 @@ export default {
       this.viewEnd -= deltaX / 2;
     },
     splitHandleDrag(e) {
-      console.log(e, e.clientY, window.innerHeight);
       this.$store.commit(
         "SET_PANEL_SHELF_HEIGHT",
         (1 - (e.clientY + 30) / window.innerHeight) * 100
       );
+    },
+    splitHandleDown(e) {
+      if (!this.isSplitOpen) {
+        this.$store.commit("SET_PANEL_SHELF_HEIGHT", 0);
+        this.isSplitOpen = true;
+      }
     }
   }
 };
