@@ -39,8 +39,8 @@ export default {
       state.nodeY -= amount * yOrigin * yRatio
     },
     PAN_NODE_EDITOR(state, { x, y }) {
-      state.nodeX -= x
-      state.nodeY -= y
+      state.nodeX += x
+      state.nodeY += y
     },
     SET_NODE_EDITOR(state, { nodeX, nodeY, nodeWidth }) {
       state.nodeX = nodeX
@@ -51,6 +51,7 @@ export default {
       Vue.set(state, 'selectedNodes', nodes)
     },
     SELECT_NODE(state, id) {
+      if (state.selectedNodes.includes(id)) return
       state.selectedNodes.push(id)
     },
     REMOVE_NODE(state, id) {
@@ -106,6 +107,8 @@ export default {
     },
     PAN_NODES(state, { x, y, nodeIds }) {
       for (const id of nodeIds) {
+        const node = state.nodes[id]
+
         state.nodes[id].x += x
         state.nodes[id].y += y
       }

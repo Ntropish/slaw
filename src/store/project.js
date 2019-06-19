@@ -10,6 +10,8 @@ const actions = {
   async loadProject(context, id) {
     const { data: projectToLoad } = await project.get(id)
     await context.dispatch('setState', projectToLoad)
+    // Loading a new project can change the split view location
+    // so a resize must be fired
     document.dispatchEvent(new CustomEvent('resize'))
   },
   // Action for loading a saved state
@@ -121,6 +123,10 @@ const actions = {
         to: nodeIdMap[oldTo],
         input,
       })
+    }
+
+    if (typeof oldState.panelShelfHeight === 'number') {
+      context.commit('SET_PANEL_SHELF_HEIGHT', oldState.panelShelfHeight)
     }
   },
 }

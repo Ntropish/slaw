@@ -9,10 +9,12 @@ export default class EventTrack extends Brain {
     transporter,
     {
       data: { trackId },
+      id: nodeId,
     },
   ) {
     super(transporter)
     this.eventSender = new EventTarget()
+    this.nodeId = nodeId
     this.trackId = trackId
     this.eventHandler = null
 
@@ -30,12 +32,72 @@ export default class EventTrack extends Brain {
         })
         .sort(timeSort)
         .forEach(event => {
-          // console.log(event)
           this.eventSender.dispatchEvent(
             new CustomEvent('event', { detail: event }),
           )
         })
     })
+  }
+
+  addGraphics(illo) {
+    const { x, y } = store.state.nodes[this.nodeId]
+
+    this.rect = new Zdog.RoundedRect({
+      addTo: illo,
+      width: 100,
+      height: 50,
+      translate: { z: 0, x, y },
+      fill: 10,
+      color: '#636',
+    })
+    illo.updateRenderGraph()
+    setImmediate(() => {
+      this.unregisterDrag = this.registerDragGraphic({
+        graphic: this.rect,
+        pan: true,
+        onDown: e => {
+          const selectedIndex = store.state.selectedNodes.indexOf(this.nodeId)
+          if (!e.ctrlKey) {
+            // Select just the clicked node
+            store.commit('SET_SELECTED_NODES', [this.nodeId])
+          } else if (selectedIndex !== -1) {
+            // Deselect the clicked node
+            store.commit('SET_SELECTED_NODES', [
+              ...store.state.selectedNodes.slice(0, selectedIndex),
+              ...store.state.selectedNodes.slice(selectedIndex + 1),
+            ])
+          } else {
+            // Else just select the node
+            store.commit('SELECT_NODE', this.nodeId)
+          }
+        },
+        onDrag: e => {
+          store.commit('PAN_NODES', {
+            x: e.movementX / 2,
+            y: e.movementY / 2,
+            nodeIds: store.state.selectedNodes,
+          })
+        },
+      })
+    })
+    this.graphic = new Zdog.RoundedRect({
+      addTo: this.rect,
+      color: '#933',
+      width: 8,
+      height: 3,
+      translate: { z: 10, x: 5, y: 5 },
+      fill: 3,
+    })
+  }
+  updateGraphics(illo, rotate) {
+    const { x, y } = store.state.nodes[this.nodeId]
+    this.rect.translate = { z: 10, x, y }
+    this.rect.rotate = rotate
+  }
+  removeGraphics(illo) {
+    if (this.unregisterGraphic) this.unregisterGraphic()
+    this.removeGraphic(illo, this.rect)
+    this.removeGraphic(illo, this.graphic)
   }
 }
 

@@ -35,6 +35,7 @@ const projectSchema = new mongoose.Schema({
   songEnd: Number,
   viewStart: Number,
   viewEnd: Number,
+  panelShelfHeight: Number,
 
   // Node editor viewport position
   nodeX: Number,

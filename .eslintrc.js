@@ -9,6 +9,7 @@ module.exports = {
   extends: ['eslint:recommended', 'plugin:vue/recommended'],
   globals: {
     Atomics: 'readonly',
+    Zdog: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
   plugins: ['vue', 'jest'],

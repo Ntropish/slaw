@@ -64,6 +64,14 @@ export default {
 
       this.projects = response.data;
       this.projectsAreLoaded = true;
+      /* TEST CODE TEST CODE TEST CODE */
+      /* 
+      Loads up a project and closes the menu, 
+      make this a feature through a query variable 
+      */
+      this.loadProject(this.projects[0]._id);
+      // this.open = false;
+      /* TEST CODE TEST CODE TEST CODE */
     },
     async saveProject() {
       const result = await put(this.$store.state);

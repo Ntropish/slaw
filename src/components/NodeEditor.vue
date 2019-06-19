@@ -1,6 +1,17 @@
 <template>
   <div class="node-editor" @wheel="onWheel">
-    <Slaw-canvas ref="canvas" class="viewport" @resize="render"/>
+    {{tilt}}
+    <drag
+      ref="drag"
+      class="dragDiv"
+      handle="svg"
+      @down="onViewportDown"
+      @drag="onViewportDrag"
+      @up="onViewportUp"
+      @disabled="disabled"
+    >
+      <Slaw-canvas ref="canvas" class="viewport" @resize="render"/>
+    </drag>
     <add-menu class="add-menu" @drag-new-node="dragNewNode"/>
   </div>
 </template>
@@ -19,29 +30,79 @@ import { mapState } from "vuex";
 import nodeMap from "nodes";
 import PixiGraph from "./PixiGraph.vue";
 import SlawCanvas from "./SlawCanvas.vue";
-import zdog from "zdog";
-import { differ } from "../util";
+import Drag from "components/Drag.vue";
+import Victor from "victor";
+import { differ, clamp } from "../util";
+
 const tools = {};
+const vector0 = new Victor(0, 0);
 export default {
-  components: { AddMenu, SlawCanvas },
+  components: { AddMenu, SlawCanvas, Drag },
   props: {},
-  data: () => ({
-    gridSize: 25,
-    nodeBuffer: [],
-    temporaryEdges: [],
-    temporaryEdgeGraphics: [],
-    edgeGraphics: {},
-    xSnap: 25,
-    ySnap: 25,
-    isDraggingHandle: false,
-    handleSpace: 28,
-    selectedNodeType: "track",
-    backgroundGraphic: new window.PIXI.Graphics(),
-    illo: null,
-    nodeDiff: differ.array([]),
-    nodeGraphics: {}
-  }),
+  data() {
+    return {
+      gridSize: 25,
+      nodeBuffer: [],
+      xSnap: 25,
+      ySnap: 25,
+      isDraggingHandle: false,
+      handleSpace: 28,
+      selectedNodeType: "track",
+      backgroundGraphic: new window.PIXI.Graphics(),
+      illo: null,
+      nodeDiff: differ.array([]),
+      nodeGraphics: {},
+      tilt: {
+        vector: new Victor(0, 0),
+        delay: 0,
+        timer: null
+      },
+      tool: "default",
+      tools: {
+        "*": {
+          up: e => {
+            this.tool = "default";
+            0;
+          }
+        },
+        default: {
+          down: e => {
+            const node = this.getNodeForTarget(e.target);
+
+            if (!e.ctrlKey && node) {
+              this.$store.commit("SET_SELECTED_NODES", []);
+            }
+            if (node) {
+              this.$store.commit("SELECT_NODE", node.id);
+              this.tool = "move";
+            } else {
+              this.tool = "pan";
+            }
+          }
+        },
+        pan: {
+          drag: e => {
+            this.fillTilt({
+              x: e.movementX,
+              y: e.movementY
+            });
+            this.$store.commit("PAN_NODE_EDITOR", {
+              x: e.movementX,
+              y: e.movementY
+            });
+            this.update();
+          }
+        }
+      }
+    };
+  },
   computed: {
+    svg() {
+      return this.$refs.canvas ? this.$refs.canvas.$el : null;
+    },
+    scale() {
+      return this.nodeWidth / 200;
+    },
     bounds() {
       return [
         this.nodeX,
@@ -55,22 +116,8 @@ export default {
       // with the canvas aspect ratio
       return (this.nodeWidth * this.height) / this.width;
     },
-    handleSpacing() {
-      // Handle space is dependent on scale so this is
-      // to conveniently calculate it
-      return (
-        this.handleSpace * (this.$refs.graph ? this.$refs.graph.pxPerY : 1)
-      );
-    },
     pxPerUnit() {
       return this.$refs.graph ? this.$refs.graph.pxPerY : 1;
-    },
-    isDraggingEditor() {
-      return (
-        this.mouseState.includes(0) &&
-        this.focus &&
-        this.focus.closest(".graph")
-      );
     },
     width: () => 10,
     height: () => 10,
@@ -98,24 +145,115 @@ export default {
     }
   },
   mounted() {
-    window.addEventListener("pointermove", this.onPointerMove);
-    window.addEventListener("mouseup", this.handleRelease);
-    window.addEventListener("resize", this.renderNextTick);
-    this.illo = new zdog.Illustration({
-      element: ".viewport",
-      onDragStart(e) {
-        console.log(e);
+    document.addEventListener("resize", this.renderNextTick);
+
+    // "duck punch" to avoid zdog bug ======================
+    Zdog.Anchor.prototype.renderGraphSvg = function(svg) {
+      if (!svg) {
+        throw new Error(
+          "svg is " +
+            svg +
+            ". " +
+            "SVG required for render. Check .renderGraphSvg( svg )."
+        );
       }
+      this.flatGraph.forEach(function(item) {
+        item.render(svg, Zdog.SvgRenderer);
+      });
+    };
+    // ===================================================
+
+    this.illo = new Zdog.Illustration({
+      element: ".viewport"
+    });
+
+    document.addEventListener("resize", e => {
+      this.illo.resizeListener(e);
+      this.render();
     });
 
     this.renderNextTick();
   },
   beforeDestroy() {
-    window.removeEventListener("pointermove", this.onPointerMove);
-    window.removeEventListener("mouseup", this.handleRelease);
+    document.removeEventListener("pointermove", this.onPointerMove);
+    document.removeEventListener("mouseup", this.handleRelease);
+    document.removeEventListener("resize", this.illo.resizeListener);
   },
 
   methods: {
+    onViewportDown(e) {
+      if (this.tools[this.tool].down) {
+        this.tools[this.tool].down(e);
+      }
+      if (this.tools["*"].down) {
+        this.tools["*"].down(e);
+      }
+    },
+    onViewportDrag(e) {
+      // Simple way to only pan if dragging the svg itself
+      if (this.tools[this.tool].drag) {
+        this.tools[this.tool].drag(e);
+      }
+      if (this.tools["*"].drag) {
+        this.tools["*"].drag(e);
+      }
+    },
+    onViewportUp(e) {
+      if (this.tools[this.tool].up) {
+        this.tools[this.tool].up(e);
+      }
+      if (this.tools["*"].up) {
+        this.tools["*"].up(e);
+      }
+    },
+    disabled() {},
+    fillTilt({ x, y }) {
+      this.tilt.vector.add(new Victor(x / 20, y / 20));
+      const length = this.tilt.vector.length();
+      if (length > 7) {
+        const excessRatio = length / 7;
+        this.tilt.vector.divide(new Victor(excessRatio, excessRatio));
+      }
+      this.tilt.delay = 600;
+      if (!this.tilt.timer) {
+        this.emptyTilt();
+      }
+    },
+    emptyTilt() {
+      if (this.tilt.timer) {
+        window.clearTimeout(this.tilt.timer);
+      }
+      const startTime = Date.now();
+      this.tilt.timer = window.requestAnimationFrame(() => {
+        const timeElapsed = Date.now() - startTime;
+        const timeFactor = timeElapsed / 100;
+        this.tilt.timer = null;
+
+        this.tilt.delay = Math.max(0, this.tilt.delay - timeElapsed);
+        const delayFactor = Math.max(0, 1 - (this.tilt.delay / 700) ** 2);
+
+        this.tilt.vector.mix(vector0, 1 * timeFactor * delayFactor);
+
+        // Slam down to 0 when numbers get close to make logic easy below
+        if (Math.abs(this.tilt.vector.x) < 0.01) this.tilt.vector.x = 0;
+        if (Math.abs(this.tilt.vector.y) < 0.01) this.tilt.vector.y = 0;
+
+        // call this function again if there is still some left
+        if (this.tilt.vector.x || this.tilt.vector.y) {
+          this.emptyTilt();
+        }
+        this.update();
+      });
+    },
+    getNodeForTarget(target) {
+      for (const [key, value] of Object.entries(this.nodeGraphics)) {
+        if (value.svgElement === target) return this.nodes[key];
+      }
+      return null;
+    },
+    onResize() {
+      this.render();
+    },
     renderNextTick() {
       setImmediate(
         (() => {
@@ -124,7 +262,7 @@ export default {
       );
     },
     dragNewNode(type) {
-      window.addEventListener(
+      document.addEventListener(
         "mouseup",
         e => {
           if (e.target.closest(".node-editor>.graph")) {
@@ -139,16 +277,21 @@ export default {
       );
     },
     onWheel(e) {
-      const amount = (e.deltaY / 1000) * this.nodeWidth;
-      const viewportBounds = this.$refs.graph.$refs.root.getBoundingClientRect();
-      const xOrigin = (e.clientX - viewportBounds.left) / viewportBounds.width;
-      const yOrigin = (e.clientY - viewportBounds.top) / viewportBounds.height;
+      const amount = (e.deltaY / -50) * this.nodeWidth;
+      const viewportBounds = this.$refs.canvas.$refs.svg.getBoundingClientRect();
+      // Zdog centers things and it works out that these need to be multiplied by two.
+      // This can probably be done better by changing the model here to match Zdog more
+      const xOrigin =
+        ((e.clientX - viewportBounds.left) / viewportBounds.width) * 2;
+      const yOrigin =
+        ((e.clientY - viewportBounds.top) / viewportBounds.height) * 2;
       this.$store.commit("ZOOM_NODE_EDITOR", {
         amount,
         xOrigin,
         yOrigin,
         yRatio: viewportBounds.height / viewportBounds.width
       });
+      this.update();
     },
     computeNodeStyle(node) {
       const maxPorts = Math.max(
@@ -204,31 +347,62 @@ export default {
     },
     update() {
       const nodeKeys = Object.keys(this.nodes);
-      console.log(nodeKeys);
+      // Gets additions and removals since last time
       const { add, remove } = this.nodeDiff(nodeKeys);
-      console.log(add, remove);
 
+      this.illo.translate = {
+        x: this.nodeX,
+        y: this.nodeY
+      };
+
+      this.illo.scale = {
+        x: this.scale,
+        y: this.scale
+      };
+
+      // Fast path for when we know stuff below
+      // isn't needed
+      if (this.nodesWontChange) return;
+
+      // On add...
       for (const item of add) {
-        console.log("add:", item);
         const node = this.nodes[item];
-        const { x, y, width, height } = node;
-        const rect = new zdog.Rect({
-          addTo: this.illo,
-          width,
-          height,
-          translate: { z: 10, x, y },
-          fill: 10,
-          color: "#636"
-        });
-        Vue.set(this.nodeGraphics, item, rect);
+        this.brains[node.brain].addGraphics(this.illo);
       }
 
+      // On remove...
       for (const item of remove) {
-        console.log("remove:", item);
         const graphic = this.nodeGraphics[item];
         const index = this.illo.children.indexOf(graphic);
         this.illo.children.splice(index, 1);
         Vue.delete(this.nodeGraphics, item);
+      }
+
+      // On update (everything must update)...
+      for (const item of nodeKeys) {
+        const node = this.nodes[item];
+        // Goes to 0 as scale zooms in so when people are looking close
+        // up at the node editor the nodes don't twist around so much
+        const swayNoMoreFactor = 1 - (this.scale - 2) / 6;
+
+        const tiltPower = 0.1 * swayNoMoreFactor;
+        let rotate = {
+          x: 0,
+          y: 0
+        };
+        if (this.tool === "move" && this.selectedNodes.includes(item)) {
+          rotate = {
+            x: this.tilt.vector.y * tiltPower,
+            y: this.tilt.vector.x * tiltPower
+          };
+        } else if (this.tool === "pan") {
+          rotate = {
+            x: this.tilt.vector.y * tiltPower,
+            y: this.tilt.vector.x * tiltPower
+          };
+        }
+
+        this.brains[node.brain].updateGraphics(this.illo, rotate);
       }
       this.render();
     },
@@ -272,20 +446,6 @@ export default {
         };
       }
     },
-    // drawEdge(context, fromX, fromY, toX, toY) {
-    //   const widthApart = toX - fromX;
-    //   context.beginPath();
-    //   context.moveTo(fromX, fromY);
-    //   context.bezierCurveTo(
-    //     fromX + widthApart / 2,
-    //     fromY,
-    //     toX - widthApart / 2,
-    //     toY,
-    //     toX,
-    //     toY
-    //   );
-    //   context.stroke();
-    // },
     onPointerDown(e) {
       if (this.mouseState.includes(0)) {
         // this.deselect();
@@ -297,25 +457,6 @@ export default {
     },
     mouseUp(e) {
       this.temporaryEdges = [];
-    },
-    dragNode(e) {
-      this.$store.commit("PAN_NODES", {
-        x: e.movementX / this.pxPerUnit,
-        y: e.movementY / this.pxPerUnit,
-        nodeIds: this.selectedNodes
-      });
-    },
-
-    onPointerMove(e) {
-      if (this.isDraggingEditor) {
-        this.$store.commit("PAN_NODE_EDITOR", {
-          x: e.movementX / this.$refs.graph.pxPerX,
-          y: e.movementY / this.$refs.graph.pxPerY
-        });
-      }
-      if (this.isDraggingHandle) {
-        this.update();
-      }
     },
     selectNodeType(nodeType) {
       this.selectedNodeType = nodeType;
@@ -346,6 +487,11 @@ export default {
   position: absolute;
   right: 1em;
   top: 1em;
+}
+
+.dragDiv {
+  width: 100%;
+  height: 100%;
 }
 </style>
 

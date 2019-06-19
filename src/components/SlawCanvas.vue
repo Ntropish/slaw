@@ -1,5 +1,5 @@
 <template>
-  <canvas v-once ref="canvas"/>
+  <svg v-once ref="svg" class="svg"></svg>
 </template>
 
 <script>
@@ -15,15 +15,20 @@ export default {
   },
   methods: {
     resize(e) {
-      const canvas = this.$refs.canvas;
-      const styles = getComputedStyle(this.$refs.canvas.parentElement);
+      const svg = this.$refs.svg;
+      const styles = getComputedStyle(this.$refs.svg.parentElement);
       const w = parseInt(styles.getPropertyValue("width"), 10);
       const h = parseInt(styles.getPropertyValue("height"), 10);
-      canvas.width = w;
-      canvas.height = h;
 
       this.$emit("resize");
     }
   }
 };
 </script>
+
+<style scoped>
+.svg {
+  width: 100%;
+  height: 100%;
+}
+</style>

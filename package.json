@@ -43,6 +43,7 @@
     "rxjs": "^6.4.0",
     "setimmediate": "^1.0.5",
     "v-tooltip": "^2.0.0-rc.33",
+    "victor": "^1.1.0",
     "vue": "^2.6.8",
     "vue-jest": "^3.0.4",
     "vue-loader": "^15.7.0",
