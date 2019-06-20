@@ -1,6 +1,6 @@
 <template>
   <div class="node-editor" @wheel="onWheel">
-    {{tilt}}
+    {{dragPayload}}
     <drag
       ref="drag"
       class="dragDiv"
@@ -8,7 +8,6 @@
       @down="onViewportDown"
       @drag="onViewportDrag"
       @up="onViewportUp"
-      @disabled="disabled"
     >
       <Slaw-canvas ref="canvas" class="viewport" @resize="render"/>
     </drag>
@@ -133,11 +132,18 @@ export default {
       "nodeX",
       "nodeY",
       "nodeWidth",
-      "focus"
+      "focus",
+      "dragPayload"
     ])
   },
   watch: {
     nodes: {
+      handler(newNodes) {
+        this.update();
+      },
+      deep: true
+    },
+    selectedNodes: {
       handler(newNodes) {
         this.update();
       },
@@ -179,7 +185,6 @@ export default {
     document.removeEventListener("mouseup", this.handleRelease);
     document.removeEventListener("resize", this.illo.resizeListener);
   },
-
   methods: {
     onViewportDown(e) {
       if (this.tools[this.tool].down) {
@@ -206,7 +211,6 @@ export default {
         this.tools["*"].up(e);
       }
     },
-    disabled() {},
     fillTilt({ x, y }) {
       this.tilt.vector.add(new Victor(x / 20, y / 20));
       const length = this.tilt.vector.length();
@@ -265,11 +269,11 @@ export default {
       document.addEventListener(
         "mouseup",
         e => {
-          if (e.target.closest(".node-editor>.graph")) {
+          if (e.target.closest(".node-editor .viewport")) {
             this.$store.dispatch("addNode", {
               type,
-              x: this.bounds[0] + e.offsetX / this.$refs.graph.pxPerX,
-              y: this.bounds[1] + e.offsetY / this.$refs.graph.pxPerY
+              x: this.bounds[0] + e.offsetX * this.illo.scale,
+              y: this.bounds[1] + e.offsetY * this.illo.scale
             });
           }
         },
@@ -316,31 +320,6 @@ export default {
         this.temporaryEdges.push(["input", to, input]);
       }
     },
-    // Dragging an output can only create a new edge
-    handleOutputDrag(from, output) {
-      this.isDraggingHandle = true;
-      const ports = this.nodes[from].outputs.filter(edge => edge[0] === output);
-      this.temporaryEdges.push(["output", from, output]);
-    },
-    handleInputDrop(to, input) {
-      this.temporaryEdges.forEach(([type, from, output]) => {
-        // Can't drag an input to an input so just abort
-        if (type === "input") return;
-        this.$store.dispatch("addEdge", { from, to, input, output });
-      });
-    },
-    handleOutputDrop(from, output) {
-      this.temporaryEdges.forEach(([type, to, input]) => {
-        // Can't drag an output to an output so just abort
-        if (type === "output") return;
-        this.$store.dispatch("addEdge", { from, to, input, output });
-      });
-    },
-    handleRelease() {
-      this.temporaryEdges.splice(0);
-      this.isDraggingHandle = false;
-      this.update();
-    },
     render() {
       if (!this.illo) return;
       this.illo.updateRenderGraph();
@@ -385,7 +364,7 @@ export default {
         // up at the node editor the nodes don't twist around so much
         const swayNoMoreFactor = 1 - (this.scale - 2) / 6;
 
-        const tiltPower = 0.1 * swayNoMoreFactor;
+        const tiltPower = 0.15 * swayNoMoreFactor;
         let rotate = {
           x: 0,
           y: 0

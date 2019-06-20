@@ -18,6 +18,11 @@ function getId(type) {
   return (id + 1).toString()
 }
 
+// This file should eventually be sorted into modules to reduce file
+// size and make navigating the code easier. At the time of writing
+// however, the Vuex api has made everything super loosely coupled
+// so I'm not as worried about large file size here than I normally
+// would be.
 export default {
   modules: {
     project: projectModule,
@@ -25,6 +30,12 @@ export default {
   },
   state: defaultState(),
   mutations: {
+    DRAG(state, value) {
+      Vue.set(state, 'dragPayload', value)
+    },
+    DROP(state, value) {
+      Vue.delete(state, 'dragPayload')
+    },
     SET_PANEL_SHELF_HEIGHT(state, value) {
       state.panelShelfHeight = clamp(5, Math.round(value), 95)
     },

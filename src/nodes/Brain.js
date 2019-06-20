@@ -41,7 +41,6 @@ export default class NodeInterface {
   // Util to wrangle the event handlers needed for dragging.
   // Also adds a special option to send PAN_NODES events
   registerDragGraphic({ graphic, pan, onDrag, onDown }) {
-    this.panGraphic = graphic
     graphic.svgElement.addEventListener('pointerdown', down)
     function down(e) {
       if (onDown) onDown(e)
@@ -61,6 +60,38 @@ export default class NodeInterface {
       this.panGraphic.svgElement.removeEventListener('pointerdown', down)
       document.removeEventListener('pointermove', move)
       document.removeEventListener('pointerup', up)
+    }
+  }
+
+  registerPort({ graphic, type, nodeId, index }) {
+    graphic.svgElement.addEventListener('pointerdown', down)
+    graphic.svgElement.addEventListener('pointerup', up)
+    function down(e) {
+      graphic.svgElement.addEventListener('pointerup', () => {
+        store.commit('DROP')
+      })
+
+      store.commit('DRAG', {
+        type: 'NODE_PORT',
+        data: {
+          id: nodeId,
+          type,
+          index,
+        },
+      })
+    }
+    function up(e) {
+      // You have to add back temporary edges
+    }
+    handleOutputDrop(from, output) {
+      this.temporaryEdges.forEach(([type, to, input]) => {
+        // Can't drag an output to an output so just abort
+        if (type === "output") return;
+        this.$store.dispatch("addEdge", { from, to, input, output });
+    }
+    return function unregisterDragGraphic(graphic, nodeId) {
+      graphic.svgElement.removeEventListener('pointerdown', down)
+      graphic.svgElement.removeEventListener('pointerup', up)
     }
   }
 }

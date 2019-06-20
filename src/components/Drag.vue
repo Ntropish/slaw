@@ -1,3 +1,4 @@
+
 <template>
   <div ref="root" @pointerdown="down">
     <slot/>
@@ -5,6 +6,8 @@
 </template>
 
 <script>
+// Drag is for taking care of all the different event handlers
+// needed for drag inputs and cleaning up when done
 import { setImmediate } from "timers";
 export default {
   props: { handle: { type: String, default: null } },

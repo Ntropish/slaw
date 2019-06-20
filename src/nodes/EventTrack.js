@@ -42,19 +42,37 @@ export default class EventTrack extends Brain {
   addGraphics(illo) {
     const { x, y } = store.state.nodes[this.nodeId]
 
-    this.rect = new Zdog.RoundedRect({
+    this.root = new Zdog.RoundedRect({
       addTo: illo,
       width: 100,
-      height: 50,
+      height: 40,
       translate: { z: 0, x, y },
-      fill: 10,
+      stroke: 2,
+      cornerRadius: 20,
       color: '#636',
+    })
+    this.output = new Zdog.RoundedRect({
+      addTo: this.root,
+      color: '#877',
+      width: 80,
+      height: 30,
+      translate: { z: 25, x: 20, y: 0 },
+      fill: true,
+      cornerRadius: 5,
+    })
+
+    this.draggerGraphic = new Zdog.Hemisphere({
+      addTo: this.root,
+      color: '#636',
+      diameter: 40,
+      translate: { z: 50, x: -35, y: 0 },
+      stroke: false,
+      backface: '#933',
     })
     illo.updateRenderGraph()
     setImmediate(() => {
       this.unregisterDrag = this.registerDragGraphic({
-        graphic: this.rect,
-        pan: true,
+        graphic: this.draggerGraphic,
         onDown: e => {
           const selectedIndex = store.state.selectedNodes.indexOf(this.nodeId)
           if (!e.ctrlKey) {
@@ -70,34 +88,38 @@ export default class EventTrack extends Brain {
             // Else just select the node
             store.commit('SELECT_NODE', this.nodeId)
           }
+          console.log('render!')
+          illo.updateRenderGraph()
         },
         onDrag: e => {
           store.commit('PAN_NODES', {
-            x: e.movementX / 2,
-            y: e.movementY / 2,
+            x: e.movementX / illo.scale.x,
+            y: e.movementY / illo.scale.y,
             nodeIds: store.state.selectedNodes,
           })
         },
       })
-    })
-    this.graphic = new Zdog.RoundedRect({
-      addTo: this.rect,
-      color: '#933',
-      width: 8,
-      height: 3,
-      translate: { z: 10, x: 5, y: 5 },
-      fill: 3,
+      this.unregisterOutput = this.registerPort({
+        graphic: this.output,
+        type: 'output',
+        nodeId: this.nodeId,
+        index: 0,
+      })
     })
   }
   updateGraphics(illo, rotate) {
     const { x, y } = store.state.nodes[this.nodeId]
-    this.rect.translate = { z: 10, x, y }
-    this.rect.rotate = rotate
+    this.root.translate = { z: 20, x, y }
+    this.root.rotate = rotate
+    const isSelected = store.state.selectedNodes.includes(this.nodeId)
+    this.root.color = isSelected ? '#959' : '#636'
   }
   removeGraphics(illo) {
     if (this.unregisterGraphic) this.unregisterGraphic()
-    this.removeGraphic(illo, this.rect)
-    this.removeGraphic(illo, this.graphic)
+    if (this.unregisterOutput) this.unregisterOutput()
+    this.removeGraphic(illo, this.root)
+    this.removeGraphic(illo, this.output)
+    this.removeGraphic(illo, this.draggerGraphic)
   }
 }
 

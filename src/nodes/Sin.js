@@ -1,10 +1,12 @@
 import { pitchToFrequency, ValueScheduler } from './util'
+import { store } from '../index'
 
 import Brain from './Brain'
 
 export default class Sin extends Brain {
-  constructor(transporter) {
+  constructor(transporter, { id: nodeId }) {
     super(transporter)
+    this.nodeId = nodeId
     const { context, bps } = transporter
     this.context = context
     this.bps = bps
@@ -45,6 +47,103 @@ export default class Sin extends Brain {
     this.frequencyScheduler.schedulings.forEach(({ value, time }) => {
       this.osc.frequency.setTargetAtTime(value, time, 0.001)
     })
+  }
+  addGraphics(illo) {
+    const { x, y } = store.state.nodes[this.nodeId]
+
+    this.root = new Zdog.RoundedRect({
+      addTo: illo,
+      width: 100,
+      height: 40,
+      translate: { z: 0, x, y },
+      stroke: 2,
+      cornerRadius: 20,
+      color: '#663',
+    })
+    this.output = new Zdog.RoundedRect({
+      addTo: this.root,
+      color: '#877',
+      width: 50,
+      height: 30,
+      translate: { z: 25, x: 40, y: 0 },
+      fill: true,
+      cornerRadius: 5,
+    })
+    this.input = new Zdog.RoundedRect({
+      addTo: this.root,
+      color: '#877',
+      width: 50,
+      height: 30,
+      translate: { z: 25, x: -40, y: 0 },
+      fill: true,
+      cornerRadius: 5,
+    })
+
+    this.draggerGraphic = new Zdog.Hemisphere({
+      addTo: this.root,
+      color: '#993',
+      diameter: 40,
+      translate: { z: 50, x: 0, y: 0 },
+      stroke: false,
+      backface: '#933',
+    })
+    illo.updateRenderGraph()
+    setImmediate(() => {
+      this.unregisterDrag = this.registerDragGraphic({
+        graphic: this.draggerGraphic,
+        pan: true,
+        onDown: e => {
+          const selectedIndex = store.state.selectedNodes.indexOf(this.nodeId)
+          if (!e.ctrlKey) {
+            // Select just the clicked node
+            store.commit('SET_SELECTED_NODES', [this.nodeId])
+          } else if (selectedIndex !== -1) {
+            // Deselect the clicked node
+            store.commit('SET_SELECTED_NODES', [
+              ...store.state.selectedNodes.slice(0, selectedIndex),
+              ...store.state.selectedNodes.slice(selectedIndex + 1),
+            ])
+          } else {
+            // Else just select the node
+            store.commit('SELECT_NODE', this.nodeId)
+          }
+        },
+        onDrag: e => {
+          store.commit('PAN_NODES', {
+            x: e.movementX / illo.scale.x,
+            y: e.movementY / illo.scale.y,
+            nodeIds: store.state.selectedNodes,
+          })
+        },
+      })
+      this.unregisterInput = this.registerPort({
+        graphic: this.input,
+        type: 'input',
+        nodeId: this.nodeId,
+        index: 0,
+      })
+      this.unregisterOutput = this.registerPort({
+        graphic: this.output,
+        type: 'output',
+        nodeId: this.nodeId,
+        index: 0,
+      })
+    })
+  }
+  updateGraphics(illo, rotate) {
+    const { x, y } = store.state.nodes[this.nodeId]
+    this.root.translate = { z: 20, x, y }
+    this.root.rotate = rotate
+    const isSelected = store.state.selectedNodes.includes(this.nodeId)
+    this.root.color = isSelected ? '#995' : '#441'
+  }
+  removeGraphics(illo) {
+    if (this.unregisterGraphic) this.unregisterGraphic()
+    if (this.unregisterInput) this.unregisterGraphic()
+    if (this.unregisterOutput) this.unregisterGraphic()
+    this.removeGraphic(illo, this.root)
+    this.removeGraphic(illo, this.output)
+    this.removeGraphic(illo, this.draggerGraphic)
   }
 }
 

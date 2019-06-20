@@ -29,9 +29,12 @@ export default () => ({
   edges: {},
   keyboardState: [],
   mouseState: [],
+  // Tracking this value ended up being a bad idea, too many events make dev tools unhappy
+  // TODO: If I'm bored I should search for places I use this and remove them/delete this.
   mousePosition: { x: 0, y: 0 },
   // Last element clicked - scan upwards to see the focus ( element.closest() )
   focus: null,
   userLoaded: loadedPromise,
   userLoadedResolver: loadedResolver,
+  dragPayload: null,
 })
