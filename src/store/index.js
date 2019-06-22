@@ -96,24 +96,36 @@ export default {
     ADD_NODE(state, { node, id }) {
       Vue.set(state.nodes, id, node)
     },
-    ADD_NODE_EDGE(state, { from, to, input, output }) {
-      state.nodes[from].outputs.push([output, to, input])
-      state.nodes[to].inputs.push([input, from, output])
-    },
-    REMOVE_NODE_EDGE(state, { from, to, input, output }) {
-      const index = state.nodes[from].outputs.findIndex(([a, b, c]) => {
-        return a === output && b === to && c === input
-      })
+    ADD_EDGE(state, edge) {
+      const { from, to } = edge
 
-      if (index !== -1) {
-        state.nodes[from].outputs.splice(index, 1)
+      // If an edge isn't to the pointer then it is to a node
+      // and needs to be added to those nodes
+      if (from.type !== 'pointer') {
+        Vue.set(state.nodes[from.id].outputs, from.index, {
+          id: to.id,
+          index: to.index,
+        })
       }
+      if (to.type !== 'pointer') {
+        Vue.set(state.nodes[to.id].inputs, to.index, {
+          id: from.id,
+          index: from.index,
+        })
+      }
+    },
+    REMOVE_EDGE(state, edge) {
+      const { from, to } = edge
 
-      const inputIndex = state.nodes[to].inputs.findIndex(([a, b, c]) => {
-        return a === input && b === from && c === output
-      })
-      if (inputIndex !== -1) {
-        state.nodes[to].inputs.splice(inputIndex, 1)
+      if (from.type !== 'pointer') {
+        const outputs = state.nodes[from.id].outputs
+        const index = outputs.indexOf(edge)
+        state.nodes[from.id].outputs.splice(index, 1)
+      }
+      if (to.type !== 'pointer') {
+        const inputs = state.nodes[to.id].inputs
+        const index = inputs.indexOf(edge)
+        state.nodes[to.id].inputs.splice(index, 1)
       }
     },
     PAN_NODES(state, { x, y, nodeIds }) {
@@ -215,36 +227,6 @@ export default {
   actions: {
     removeEvents(context, events) {
       events.forEach(event => context.commit('REMOVE_EVENT', event))
-    },
-    addEdge(context, { from, to, input, output }) {
-      context.commit('ADD_NODE_EDGE', {
-        from,
-        to,
-        input,
-        output,
-      })
-      const fromBrainId = context.state.nodes[from].brain
-      const toBrainId = context.state.nodes[to].brain
-      context.state.brains[fromBrainId].connect(
-        context.state.brains[toBrainId],
-        output,
-        input,
-      )
-    },
-    removeEdge(context, { from, to, input, output }) {
-      context.commit('REMOVE_NODE_EDGE', {
-        from,
-        to,
-        input,
-        output,
-      })
-      const fromBrainId = context.state.nodes[from].brain
-      const toBrainId = context.state.nodes[to].brain
-      context.state.brains[fromBrainId].disconnect(
-        context.state.brains[toBrainId],
-        output,
-        input,
-      )
     },
     async addNode(context, node) {
       const newId = getId('node')

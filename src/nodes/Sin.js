@@ -89,33 +89,7 @@ export default class Sin extends Brain {
     })
     illo.updateRenderGraph()
     setImmediate(() => {
-      this.unregisterDrag = this.registerDragGraphic({
-        graphic: this.draggerGraphic,
-        pan: true,
-        onDown: e => {
-          const selectedIndex = store.state.selectedNodes.indexOf(this.nodeId)
-          if (!e.ctrlKey) {
-            // Select just the clicked node
-            store.commit('SET_SELECTED_NODES', [this.nodeId])
-          } else if (selectedIndex !== -1) {
-            // Deselect the clicked node
-            store.commit('SET_SELECTED_NODES', [
-              ...store.state.selectedNodes.slice(0, selectedIndex),
-              ...store.state.selectedNodes.slice(selectedIndex + 1),
-            ])
-          } else {
-            // Else just select the node
-            store.commit('SELECT_NODE', this.nodeId)
-          }
-        },
-        onDrag: e => {
-          store.commit('PAN_NODES', {
-            x: e.movementX / illo.scale.x,
-            y: e.movementY / illo.scale.y,
-            nodeIds: store.state.selectedNodes,
-          })
-        },
-      })
+      this.unregisterDrag = this.registerDragGraphic(illo, this.draggerGraphic)
       this.unregisterInput = this.registerPort({
         graphic: this.input,
         type: 'input',
@@ -136,14 +110,6 @@ export default class Sin extends Brain {
     this.root.rotate = rotate
     const isSelected = store.state.selectedNodes.includes(this.nodeId)
     this.root.color = isSelected ? '#995' : '#441'
-  }
-  removeGraphics(illo) {
-    if (this.unregisterGraphic) this.unregisterGraphic()
-    if (this.unregisterInput) this.unregisterGraphic()
-    if (this.unregisterOutput) this.unregisterGraphic()
-    this.removeGraphic(illo, this.root)
-    this.removeGraphic(illo, this.output)
-    this.removeGraphic(illo, this.draggerGraphic)
   }
 }
 
