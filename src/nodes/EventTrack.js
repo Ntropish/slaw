@@ -1,8 +1,16 @@
 import { store } from '../index'
 import { pitchToFrequency, timeSort } from './util'
-import Brain from './Brain'
+import brainFactory from './Brain'
 
 import Interface from 'components/nodeInterfaces/EventTrack.vue'
+
+export default function eventTrackFactory(transporter, node) {
+
+  const eventSender = new EventTarget()
+  return brainFactory({
+    
+  })
+}
 
 export default class EventTrack extends Brain {
   constructor(
@@ -13,9 +21,6 @@ export default class EventTrack extends Brain {
     },
   ) {
     super(transporter)
-    this.eventSender = new EventTarget()
-    this.nodeId = nodeId
-    this.trackId = trackId
     this.eventHandler = null
     this.unregisterFunctions = []
     this.graphics = []

@@ -1,12 +1,7 @@
-import Brain from './Brain'
+import brainFactory from './Brain'
 
-export default class Destination extends Brain {}
-
-Destination.prototype.inputs = [
-  {
-    type: 'buffer',
-    args: n => [n.transporter.context.destination],
-  },
-]
-
-Destination.prototype.outputs = []
+export default function destinationFactory(transporter) {
+  return brainFactory({
+    inputs: [['buffer', () => [transporter.context.destination]]],
+  })
+}
