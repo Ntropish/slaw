@@ -24,7 +24,7 @@
     "eslint": "^5.15.3",
     "eslint-plugin-vue": "^5.2.2",
     "events": "^3.0.0",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "express-jwt": "^5.3.1",
     "fs-extra": "^7.0.1",
     "jest-environment-jsdom-fourteen": "^0.1.0",
